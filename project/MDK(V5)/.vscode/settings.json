@@ -1,0 +1,8 @@
+{
+    "KeilAssistant.MDK.Uv4Path": "G:\\stm32_study\\Keil_v5\\UV4\\UV4.exe",
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
+    "terminal.integrated.shell.windows": "C:\\Windows\\System32\\cmd.exe",
+    "terminal.integrated.automationProfile.windows": {
+        "path": "C:\\Windows\\System32\\cmd.exe"
+    }
+}
