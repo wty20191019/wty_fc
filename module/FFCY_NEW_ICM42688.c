@@ -1,5 +1,7 @@
 #include "FFCY_NEW_ICM42688.h"
-#include "i2c1.h"
+#include "stm32f4xx_i2c.h"
+#include "stm32f4xx_gpio.h"
+#include "stm32f4xx_rcc.h"
 
 #ifdef ICM42688_ENABLE_FULL_PIPELINE
 #include "../project/Headfile.h"
@@ -39,6 +41,24 @@ u32 IIC_Timeout_Cnt_noTimesClear = 0;
 
 static uint8_t s_device_address = ICM42688_ADDRESS_DEFAULT;
 
+static uint8_t ICM42688_WaitEvent(I2C_TypeDef* I2Cx, uint32_t I2C_EVENT)
+{
+    uint32_t Timeout = 2000U;
+
+    while (I2C_CheckEvent(I2Cx, I2C_EVENT) != SUCCESS)
+    {
+        Timeout--;
+        if (Timeout == 0U)
+        {
+            IIC_Timeout_Cnt++;
+            IIC_Timeout_Cnt_noTimesClear++;
+            return 0U;
+        }
+    }
+
+    return 1U;
+}
+
 static uint8_t icm42688_normalize_address(uint8_t dev_address)
 {
     if (dev_address > 0x7FU)
@@ -47,6 +67,37 @@ static uint8_t icm42688_normalize_address(uint8_t dev_address)
     }
 
     return dev_address;
+}
+
+static void ICM42688_I2C_Init(void)
+{
+    GPIO_InitTypeDef GPIO_InitStructure;
+    I2C_InitTypeDef I2C_InitStructure;
+
+    I2C_DeInit(I2C1);
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_I2C1);
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource7, GPIO_AF_I2C1);
+
+    I2C_StructInit(&I2C_InitStructure);
+    I2C_InitStructure.I2C_Mode = I2C_Mode_I2C;
+    I2C_InitStructure.I2C_ClockSpeed = 400000U;
+    I2C_InitStructure.I2C_DutyCycle = I2C_DutyCycle_2;
+    I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
+    I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
+    I2C_InitStructure.I2C_OwnAddress1 = 0x00;
+    I2C_Init(I2C1, &I2C_InitStructure);
+    I2C_AcknowledgeConfig(I2C1, ENABLE);
+    I2C_Cmd(I2C1, ENABLE);
 }
 
 static ICM42688_Status icm42688_probe_address(uint8_t addr)
@@ -64,28 +115,92 @@ static ICM42688_Status icm42688_probe_address(uint8_t addr)
 
 static ICM42688_Status icm42688_write_reg_current(uint8_t reg_addr, uint8_t data)
 {
-    I2C1_Status status = i2c1_mem_write(s_device_address, reg_addr, &data, 1U, 20000U);
-
-    if (status == I2C1_TIMEOUT)
+    I2C_GenerateSTART(I2C1, ENABLE);
+    if (ICM42688_WaitEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT) == 0U)
     {
-        IIC_Timeout_Cnt++;
-        IIC_Timeout_Cnt_noTimesClear++;
+        I2C_GenerateSTOP(I2C1, ENABLE);
+        return ICM42688_TIMEOUT;
     }
 
-    return (status == I2C1_OK) ? ICM42688_OK : ((status == I2C1_TIMEOUT) ? ICM42688_TIMEOUT : ICM42688_ERROR);
+    I2C_Send7bitAddress(I2C1, s_device_address, I2C_Direction_Transmitter);
+    if (ICM42688_WaitEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED) == 0U)
+    {
+        I2C_GenerateSTOP(I2C1, ENABLE);
+        return ICM42688_TIMEOUT;
+    }
+
+    I2C_SendData(I2C1, reg_addr);
+    if (ICM42688_WaitEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTING) == 0U)
+    {
+        I2C_GenerateSTOP(I2C1, ENABLE);
+        return ICM42688_TIMEOUT;
+    }
+
+    I2C_SendData(I2C1, data);
+    if (ICM42688_WaitEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED) == 0U)
+    {
+        I2C_GenerateSTOP(I2C1, ENABLE);
+        return ICM42688_TIMEOUT;
+    }
+
+    I2C_GenerateSTOP(I2C1, ENABLE);
+    return ICM42688_OK;
 }
 
 static ICM42688_Status icm42688_read_reg_current(uint8_t reg_addr, uint8_t *data)
 {
-    I2C1_Status status = i2c1_mem_read(s_device_address, reg_addr, data, 1U, 20000U);
-
-    if (status == I2C1_TIMEOUT)
+    if (data == 0)
     {
-        IIC_Timeout_Cnt++;
-        IIC_Timeout_Cnt_noTimesClear++;
+        return ICM42688_ERROR;
     }
 
-    return (status == I2C1_OK) ? ICM42688_OK : ((status == I2C1_TIMEOUT) ? ICM42688_TIMEOUT : ICM42688_ERROR);
+    I2C_GenerateSTART(I2C1, ENABLE);
+    if (ICM42688_WaitEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT) == 0U)
+    {
+        I2C_GenerateSTOP(I2C1, ENABLE);
+        return ICM42688_TIMEOUT;
+    }
+
+    I2C_Send7bitAddress(I2C1, s_device_address, I2C_Direction_Transmitter);
+    if (ICM42688_WaitEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED) == 0U)
+    {
+        I2C_GenerateSTOP(I2C1, ENABLE);
+        return ICM42688_TIMEOUT;
+    }
+
+    I2C_SendData(I2C1, reg_addr);
+    if (ICM42688_WaitEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED) == 0U)
+    {
+        I2C_GenerateSTOP(I2C1, ENABLE);
+        return ICM42688_TIMEOUT;
+    }
+
+    I2C_GenerateSTART(I2C1, ENABLE);
+    if (ICM42688_WaitEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT) == 0U)
+    {
+        I2C_GenerateSTOP(I2C1, ENABLE);
+        return ICM42688_TIMEOUT;
+    }
+
+    I2C_Send7bitAddress(I2C1, s_device_address, I2C_Direction_Receiver);
+    if (ICM42688_WaitEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED) == 0U)
+    {
+        I2C_GenerateSTOP(I2C1, ENABLE);
+        return ICM42688_TIMEOUT;
+    }
+
+    I2C_AcknowledgeConfig(I2C1, DISABLE);
+    I2C_GenerateSTOP(I2C1, ENABLE);
+    if (ICM42688_WaitEvent(I2C1, I2C_EVENT_MASTER_BYTE_RECEIVED) == 0U)
+    {
+        I2C_AcknowledgeConfig(I2C1, ENABLE);
+        return ICM42688_TIMEOUT;
+    }
+
+    *data = I2C_ReceiveData(I2C1);
+    I2C_AcknowledgeConfig(I2C1, ENABLE);
+
+    return ICM42688_OK;
 }
 
 ICM42688_Status ICM42688_ReadWhoAmI(uint8_t *who_am_i)
@@ -100,23 +215,15 @@ ICM42688_Status ICM42688_ReadWhoAmI(uint8_t *who_am_i)
 
 void ICM42688_WriteReg(uint8_t DevAddress, uint8_t RegAddress, uint8_t Data)
 {
-    I2C1_Status status = i2c1_mem_write(icm42688_normalize_address(DevAddress), RegAddress, &Data, 1U, 20000U);
-    if (status == I2C1_TIMEOUT)
-    {
-        IIC_Timeout_Cnt++;
-        IIC_Timeout_Cnt_noTimesClear++;
-    }
+    s_device_address = icm42688_normalize_address(DevAddress);
+    (void)icm42688_write_reg_current(RegAddress, Data);
 }
 
 uint8_t ICM42688_ReadReg(uint8_t DevAddress, uint8_t RegAddress)
 {
     uint8_t data = 0;
-    I2C1_Status status = i2c1_mem_read(icm42688_normalize_address(DevAddress), RegAddress, &data, 1U, 20000U);
-    if (status == I2C1_TIMEOUT)
-    {
-        IIC_Timeout_Cnt++;
-        IIC_Timeout_Cnt_noTimesClear++;
-    }
+    s_device_address = icm42688_normalize_address(DevAddress);
+    (void)icm42688_read_reg_current(RegAddress, &data);
 
     return data;
 }
@@ -137,25 +244,25 @@ int16_t GetData_Acc(uint8_t REG_Address)
 
 void ImuSensor_ReadReg_BuffAll(void)
 {
-    int16_t imu_sensor_buff[6];
+    int16_t ImuSensor_buff[6];
 
     IIC_Timeout_Cnt = 0;
 
-    imu_sensor_buff[0] = GetData_Gyro(ICM42688_GYRO_XOUT);
-    imu_sensor_buff[1] = GetData_Gyro(ICM42688_GYRO_YOUT);
-    imu_sensor_buff[2] = GetData_Gyro(ICM42688_GYRO_ZOUT);
-    imu_sensor_buff[3] = GetData_Acc(ICM42688_ACCEL_XOUT);
-    imu_sensor_buff[4] = GetData_Acc(ICM42688_ACCEL_YOUT);
-    imu_sensor_buff[5] = GetData_Acc(ICM42688_ACCEL_ZOUT);
+    ImuSensor_buff[0] = GetData_Gyro(ICM42688_GYRO_XOUT);
+    ImuSensor_buff[1] = GetData_Gyro(ICM42688_GYRO_YOUT);
+    ImuSensor_buff[2] = GetData_Gyro(ICM42688_GYRO_ZOUT);
+    ImuSensor_buff[3] = GetData_Acc(ICM42688_ACCEL_XOUT);
+    ImuSensor_buff[4] = GetData_Acc(ICM42688_ACCEL_YOUT);
+    ImuSensor_buff[5] = GetData_Acc(ICM42688_ACCEL_ZOUT);
 
     if (IIC_Timeout_Cnt == 0)
     {
-        MPU_Data.GyroX = imu_sensor_buff[0];
-        MPU_Data.GyroY = imu_sensor_buff[1];
-        MPU_Data.GyroZ = imu_sensor_buff[2];
-        MPU_Data.AccX = imu_sensor_buff[3];
-        MPU_Data.AccY = imu_sensor_buff[4];
-        MPU_Data.AccZ = imu_sensor_buff[5];
+        MPU_Data.GyroX = ImuSensor_buff[0];
+        MPU_Data.GyroY = ImuSensor_buff[1];
+        MPU_Data.GyroZ = ImuSensor_buff[2];
+        MPU_Data.AccX = ImuSensor_buff[3];
+        MPU_Data.AccY = ImuSensor_buff[4];
+        MPU_Data.AccZ = ImuSensor_buff[5];
         MPU_Data.Temp = (int16_t)(((uint16_t)ICM42688_ReadReg(s_device_address, ICM42688_TEMP_DATA1) << 8) |
                                   ICM42688_ReadReg(s_device_address, (uint8_t)(ICM42688_TEMP_DATA1 + 1U)));
     }
@@ -163,7 +270,9 @@ void ImuSensor_ReadReg_BuffAll(void)
 
 ICM42688_Status ICM42688_Init(void)
 {
-    i2c1_init(400000U);
+    ICM42688_I2C_Init();
+    IIC_Timeout_Cnt = 0;
+    IIC_Timeout_Cnt_noTimesClear = 0;
 
     if (icm42688_probe_address(ICM42688_ADDRESS_DEFAULT) != ICM42688_OK)
     {
