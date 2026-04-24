@@ -1,6 +1,15 @@
 #ifndef __FFCY_NEW_ICM42688_H__
 #define __FFCY_NEW_ICM42688_H__
 
+
+//========================================
+#define ICM42688 3
+#define IMU_SENSOR ICM42688 
+
+
+//========================================
+
+
 #include "stm32f4xx.h"
 
 #define ICM42688_ADDRESS_DEFAULT      0x68

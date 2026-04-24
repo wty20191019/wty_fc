@@ -2,6 +2,7 @@
 #include "i2c1.h"
 
 
+#if IMU_SENSOR == ICM42688
 
 ICM42688_RawData MPU_Data;
 u32 IIC_Timeout_Cnt = 0;
@@ -187,3 +188,8 @@ void GET_MPU_DATA(void)
 {
     ImuSensor_ReadReg_BuffAll();
 }
+
+
+
+#endif /* IMU_SENSOR == BMI088 */
+

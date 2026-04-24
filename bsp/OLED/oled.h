@@ -18,11 +18,11 @@
 
 //-----------------OLED¶Ë¿Ú¶¨Òå---------------- 
 
-#define OLED_SCL_Clr() GPIO_ResetBits(GPIOC,GPIO_Pin_0)//SCL
-#define OLED_SCL_Set() GPIO_SetBits(GPIOC,GPIO_Pin_0)
+#define OLED_SCL_Clr() GPIO_ResetBits(GPIOB,GPIO_Pin_10)//SCL
+#define OLED_SCL_Set() GPIO_SetBits(GPIOB,GPIO_Pin_10)
 
-#define OLED_SDA_Clr() GPIO_ResetBits(GPIOC,GPIO_Pin_1)//DIN
-#define OLED_SDA_Set() GPIO_SetBits(GPIOC,GPIO_Pin_1)
+#define OLED_SDA_Clr() GPIO_ResetBits(GPIOB,GPIO_Pin_11)//DIN
+#define OLED_SDA_Set() GPIO_SetBits(GPIOB,GPIO_Pin_11)
 
 //#define OLED_RES_Clr() GPIO_ResetBits(GPIOD,GPIO_Pin_4)//RES
 //#define OLED_RES_Set() GPIO_SetBits(GPIOD,GPIO_Pin_4)
