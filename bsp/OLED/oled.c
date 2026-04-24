@@ -43,9 +43,10 @@ void OLED_DisplayTurn(u8 i)
 **********************************************************/
 void IIC_delay(void)
 {
-        //delay_us(1);
-		uint32_t i = 1;
-		while(i--);
+	volatile uint32_t i = 500;
+	while(i--)
+	{
+	}
 }
 
 //起始信号
@@ -463,10 +464,13 @@ void OLED_Init(void)
 	//GPIO初始化设置
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;//开漏输出，更适合I2C
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
 	GPIO_Init(GPIOC, &GPIO_InitStructure);//初始化
+
+	OLED_SCL_Set();
+	OLED_SDA_Set();
 	
 	delay_ms(200);
 

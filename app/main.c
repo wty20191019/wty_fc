@@ -24,18 +24,25 @@ int main(void)
 	board_init();
 	
 	uart1_init(115200U);
-	ImuSensor_Init();
 
 	OLED_Init();     //≥ı ºªØOLED
-	OLED_Clear();
+
+	OLED_Clear();//=============================================================
+	OLED_ShowString(0, 0, (uint8_t *)"OLED OK", 8, 1);
+	OLED_ShowString(0, 16, (uint8_t *)"IMU INIT...", 8, 1);
+	OLED_Refresh();//===========================================================
+
+	delay_ms(200);
+
+	ImuSensor_Init();
 	
 	while(1) 
 	{
-		char line[22];
+		
 
 		ImuSensor_ReadReg_BuffAll();
-		OLED_Clear();
-
+		OLED_Clear();//=============================================================
+		char line[22];
 		snprintf(line, sizeof(line), "ICM42688 RAW");
 		OLED_ShowString(0, 0, (uint8_t *)line, 8, 1);
 
@@ -60,7 +67,7 @@ int main(void)
 		snprintf(line, sizeof(line), "T :%6d", MPU_Data.Temp);
 		OLED_ShowString(0, 56, (uint8_t *)line, 8, 1);
 
-		OLED_Refresh();
+		OLED_Refresh();//===========================================================
 		
 		delay_ms(100);
 					

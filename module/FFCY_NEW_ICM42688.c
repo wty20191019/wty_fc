@@ -1,5 +1,8 @@
 #include "stm32f4xx_i2c.h"
 #include "FFCY_NEW_ICM42688.h"
+#include "FFCY_NEW_ICM42688_compat.h"
+
+#define ICM42688_ENABLE_FULL_PIPELINE 1
 
 #ifndef IMU_SENSOR
 #define IMU_SENSOR ICM42688
