@@ -38,8 +38,9 @@
 //  陀螺仪 ------------------------------------
 #define BMI088 1
 #define MPU6050 2
-#define ICM24688 3
-#define IMU_SENSOR ICM24688 
+#define ICM42688 3
+#define ICM24688 ICM42688
+#define IMU_SENSOR ICM42688
 
 #if IMU_SENSOR==MPU6050
 #define AcceMax_1G      4096
@@ -51,7 +52,7 @@
 #define GRAVITY_MSS     9.80665f
 #define GYRO_CALIBRATION_COFF  2000.0f/32768.0f       //1000 deg/s
 
-#elif IMU_SENSOR == ICM24688
+#elif IMU_SENSOR == ICM42688
 #define AcceMax_1G      8192.0f
 #define GRAVITY_MSS     9.80665f
 #define GYRO_CALIBRATION_COFF  2000.0f/32768.0f
@@ -309,7 +310,7 @@ extern _Baro Baro_Show;
 
 
 /*************板载硬件驱动头文件***********************/
-/*
+
 #include "SBUS.h"
 #include "PPM.h"
 #include "FLASH.h"
@@ -331,7 +332,7 @@ extern _Baro Baro_Show;
 #include "DMA_UART4.h"
 #include "DMA_UART6.h"
 
-*/        //测试时注释掉  //正式使用时打开（应该要开）
+        //测试时注释掉  //正式使用时打开（应该要开）
 
 
 /************IMU传感器头文件**************/
@@ -339,42 +340,42 @@ extern _Baro Baro_Show;
 #include "FFCY_NEW_IMUSensor.h"
 #include "IMU_NEW.h"
 
-*/        //测试时注释掉  //正式使用时打开（应该要开）
+       //测试时注释掉  //正式使用时打开（应该要开）
 
 
 
 /*************姿态解算+滤波器+惯导+控制算法类头文件***********************/
 
-// #include "IMU.h"//姿态解算
-// #include "PID.h"//PID控制器
-// #include "FFCY_Parament.h"
-// #include "Total_Control.h"//飞控总控制器（位置+速度+加速度+姿态）
-// #include "SINS.h"//惯导融合
-// #include "Calibration.h"//传感器标定
-// #include "Filter.h"//传感器滤波
-// #include "Bling.h"//状态指示
+#include "IMU.h"//姿态解算
+#include "PID.h"//PID控制器
+#include "FFCY_Parament.h"
+#include "Total_Control.h"//飞控总控制器（位置+速度+加速度+姿态）
+#include "SINS.h"//惯导融合
+#include "Calibration.h"//传感器标定
+#include "Filter.h"//传感器滤波
+#include "Bling.h"//状态指示
 
-// #include "FFCY_OpticalFlow.h"
-// #include "FFCY_SDK.h"
-// #include "alt_ekf.h"
-// #include "control_config.h"
-// #include "control_althold.h"
-// #include "Flight_Parameter_Table.h"
-// #include "Flight_Control_Fault.h"
-// #include "NamelessCotrun_SDK.h"
-// #include "FFCY_Position_Ctrl.h"
+#include "FFCY_OpticalFlow.h"
+#include "FFCY_SDK.h"
+#include "alt_ekf.h"
+#include "control_config.h"
+#include "control_althold.h"
+#include "Flight_Parameter_Table.h"
+#include "Flight_Control_Fault.h"
+#include "NamelessCotrun_SDK.h"
+#include "FFCY_Position_Ctrl.h"
 
       
 
 
 
-// #include "FFCY_Menu.h"
-// #include "FFCY_Math.h"
-// #include "FFCY_vl53l0x.h"
-// #include "PMW3901.h"
-// #include "FFCY_ANO_Link.h"
+#include "FFCY_Menu.h"
+#include "FFCY_Math.h"
+#include "FFCY_vl53l0x.h"
+#include "PMW3901.h"
+#include "FFCY_ANO_Link.h"
 
-// #include "T265.h"
+#include "T265.h"
 
 #define Sensor_Selection  0	//T265的yaw给1，其余给0
 

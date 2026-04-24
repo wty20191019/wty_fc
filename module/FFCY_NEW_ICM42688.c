@@ -1,22 +1,15 @@
-#include "FFCY_NEW_ICM42688.h"
 #include "stm32f4xx_i2c.h"
-#include "stm32f4xx_gpio.h"
-#include "stm32f4xx_rcc.h"
+#include "FFCY_NEW_ICM42688.h"
 
-#ifdef ICM42688_ENABLE_FULL_PIPELINE
-#include "../project/Headfile.h"
+#ifndef IMU_SENSOR
+#define IMU_SENSOR ICM42688
 #endif
 
 #ifndef ICM42688_ENABLE_FULL_PIPELINE
 #define ICM42688_ENABLE_FULL_PIPELINE 0
 #endif
 
-#define ICM42688_ACCEL_XOUT    0x1F
-#define ICM42688_ACCEL_YOUT    0x21
-#define ICM42688_ACCEL_ZOUT    0x23
-#define ICM42688_GYRO_XOUT     0x25
-#define ICM42688_GYRO_YOUT     0x27
-#define ICM42688_GYRO_ZOUT     0x29
+#if IMU_SENSOR == ICM42688
 
 MPU6050_Data MPU_Data;
 
@@ -341,7 +334,6 @@ void GET_MPU_DATA(void)
     ImuSensor_ReadReg_BuffAll();
 
 #if ICM42688_ENABLE_FULL_PIPELINE
-
     int16_t ay = MPU_Data.AccX;
     int16_t ax = MPU_Data.AccY;
     int16_t az = MPU_Data.AccZ;
@@ -406,3 +398,5 @@ void GET_MPU_DATA(void)
     gyro_nofilter.z = Gyro.z * GYRO_CALIBRATION_COFF;
 #endif
 }
+
+#endif
