@@ -61,6 +61,7 @@ int main(void)
 		OLED_ShowString(0, 56, (uint8_t *)line, 8, 1);
 
 		OLED_Refresh();
+		
 		delay_ms(100);
 					
 	}
