@@ -231,3 +231,48 @@ I2C1_Status i2c1_read(uint8_t dev_addr, uint8_t *data, uint16_t len, uint32_t ti
 
     return I2C1_OK;
 }
+
+I2C1_Status i2c1_mem_write(uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len, uint32_t timeout)
+{
+    uint8_t buffer[33];
+    uint16_t index;
+
+    if (len > 32U)
+    {
+        return I2C1_TIMEOUT;
+    }
+
+    buffer[0] = reg_addr;
+
+    if ((data != 0) && (len != 0U))
+    {
+        for (index = 0; index < len; index++)
+        {
+            buffer[index + 1U] = data[index];
+        }
+
+        return i2c1_write(dev_addr, buffer, (uint16_t)(len + 1U), timeout);
+    }
+
+    return i2c1_write(dev_addr, buffer, 1U, timeout);
+}
+
+I2C1_Status i2c1_mem_read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len, uint32_t timeout)
+{
+    uint8_t reg = reg_addr;
+
+    if ((data == 0) || (len == 0U))
+    {
+        return I2C1_ERROR;
+    }
+
+    if (i2c1_write(dev_addr, &reg, 1U, timeout) != I2C1_OK)
+    {
+        return I2C1_TIMEOUT;
+    }
+
+    return i2c1_read(dev_addr, data, len, timeout);
+}
+
+
+

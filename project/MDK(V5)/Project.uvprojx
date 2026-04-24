@@ -656,6 +656,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\module\i2c1.c</FilePath>
             </File>
+            <File>
+              <FileName>FFCY_NEW_ICM42688.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\module\FFCY_NEW_ICM42688.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
