@@ -1,5 +1,12 @@
 #include "board.h"
-#include "bsp_uart.h"
+
+#include "DMA_UART1.h"
+#include "DMA_UART2.h"
+#include "DMA_UART3.h"
+#include "DMA_UART4.h"
+#include "DMA_UART5.h"
+#include "DMA_UART6.h"
+
 #include "i2c1.h"
 #include "FFCY_NEW_ICM42688.h"
 #include "Attitude6Axis.h"
@@ -9,31 +16,27 @@
 #include "tim2_scheduler.h"
 #include "pa0_LED_toggle.h"
 
-#define IMU_TASK_PERIOD_MS           (100U)
-#define ATT6_DT_SEC                  ((float)IMU_TASK_PERIOD_MS / 1000.0f)
-#define ICM42688_ACC_G_PER_LSB       (1.0f / 8192.0f)
-#define ICM42688_GYRO_DPS_PER_LSB    (1.0f / 16.4f)
+#define IMU_TASK_PERIOD_MS           (100U)                                 //IMU数据读取和OLED显示更新的周期，单位毫秒    
+#define ATT6_DT_SEC                  ((float)IMU_TASK_PERIOD_MS / 1000.0f)  //姿态算法更新周期，单位秒
+#define ICM42688_ACC_G_PER_LSB       (1.0f / 8192.0f)                       //ICM42688加速度计每LSB对应的重力加速度值，单位g
+#define ICM42688_GYRO_DPS_PER_LSB    (1.0f / 16.4f)                         //ICM42688陀螺仪每LSB对应的角速度值，单位度每秒
 
-static Attitude6AxisState g_attitude;
+static Attitude6AxisState g_attitude; //全局姿态算法状态变量
 
-static void FormatAngleLine(char *line, size_t lineSize, const char *name, float angleDeg)
+
+//==========================================================================
+////IMU数据读取和OLED显示更新任务
+//==========================================================================
+static void Task_ImuOledUpdate(void)  
 {
-    int32_t scaled = (int32_t)(angleDeg * 10.0f);
-    int32_t absScaled = (scaled < 0) ? (-scaled) : scaled;
-
-    snprintf(line, lineSize, "%s:%c%3ld.%1ld", name, (scaled < 0) ? '-' : '+', (long)(absScaled / 10), (long)(absScaled % 10));
-}
-
-static void Task_ImuOledUpdate(void)
-{
-    char line[22];
     float pitchDeg;
     float rollDeg;
     float yawDeg;
 
-    ImuSensor_ReadReg_BuffAll();
 
-    Attitude6Axis_UpdateRaw(
+    ImuSensor_ReadReg_BuffAll();//读取ICM42688的所有相关寄存器数据到全局变量MPU_Data中
+
+    Attitude6Axis_UpdateRaw(    //更新姿态算法状态
         &g_attitude,
         -MPU_Data.AccY,
         MPU_Data.AccX,
@@ -45,35 +48,26 @@ static void Task_ImuOledUpdate(void)
         ICM42688_GYRO_DPS_PER_LSB,
         ATT6_DT_SEC);
 
-    Attitude6Axis_GetEulerDeg(&g_attitude, &pitchDeg, &rollDeg, &yawDeg);
+    Attitude6Axis_GetEulerDeg(&g_attitude, &pitchDeg, &rollDeg, &yawDeg);//获取欧拉角度
 
-    OLED_Clear();
 
-    snprintf(line, sizeof(line), "ATTITUDE 6AX");
-    OLED_ShowString(0, 0, (uint8_t *)line, 8, 1);
 
-    FormatAngleLine(line, sizeof(line), "P", pitchDeg);
-    OLED_ShowString(0, 8, (uint8_t *)line, 8, 1);
+    OLED_Clear();//清屏====================================================
 
-    FormatAngleLine(line, sizeof(line), "R", rollDeg);
-    OLED_ShowString(0, 16, (uint8_t *)line, 8, 1);
+    OLED_Printf(0, 0, 8, 1, "ATTITUDE 6AX");
+    OLED_Printf(0, 8, 8, 1,  "P:%+3.2f", pitchDeg);
+    OLED_Printf(0, 16, 8, 1, "R:%+3.2f", rollDeg);
+    OLED_Printf(0, 24, 8, 1, "Y:%+3.2f", yawDeg);
+    OLED_Printf(0, 32, 8, 1, "AX:%+6d", MPU_Data.AccX);
+    OLED_Printf(0, 40, 8, 1, "AY:%+6d", MPU_Data.AccY);
+    OLED_Printf(0, 48, 8, 1, "AZ:%+6d", MPU_Data.AccZ);
+    OLED_Printf(0, 56, 8, 1, "T :%+6d", MPU_Data.Temp);
 
-    FormatAngleLine(line, sizeof(line), "Y", yawDeg);
-    OLED_ShowString(0, 24, (uint8_t *)line, 8, 1);
+    OLED_Refresh();//更新显示=============================================
 
-    snprintf(line, sizeof(line), "AX:%6d", MPU_Data.AccX);
-    OLED_ShowString(0, 32, (uint8_t *)line, 8, 1);
+    //Serial1_Printf("ax=%d ay=%d az=%d\r\n", MPU_Data.AccX, MPU_Data.AccY, MPU_Data.AccZ);
+    Serial1_Printf("[plot,%2.2f,%2.2f,%2.2f]\r\n", pitchDeg, rollDeg, yawDeg);
 
-    snprintf(line, sizeof(line), "AY:%6d", MPU_Data.AccY);
-    OLED_ShowString(0, 40, (uint8_t *)line, 8, 1);
-
-    snprintf(line, sizeof(line), "AZ:%6d", MPU_Data.AccZ);
-    OLED_ShowString(0, 48, (uint8_t *)line, 8, 1);
-
-    snprintf(line, sizeof(line), "T :%6d", MPU_Data.Temp);
-    OLED_ShowString(0, 56, (uint8_t *)line, 8, 1);
-
-    OLED_Refresh();
 }
 
 int main(void)
@@ -82,7 +76,10 @@ int main(void)
 
     PWM_Init();     //初始化TIM3的PWM输出
 
-    uart1_init(115200U);
+    PA0_LED_Toggle_Init(); // 初始化PA0引脚用于LED闪烁
+
+    DMA_USART1_Init(9600U);
+
 
     ImuSensor_Init();  //初始化ICM42688
     Attitude6Axis_Init(&g_attitude, 2.0f, 0.02f);
@@ -90,11 +87,11 @@ int main(void)
     OLED_Init();     //初始化OLED显示屏
     OLED_Clear();
 
-    PA0_LED_Toggle_Init(); // 初始化PA0引脚用于LED闪烁
+    
 
     SCH_Init();
 	//调度器====================================================================
-    SCH_AddTask(PA0_LED_Toggle			, 500U		, PRIORITY_HIGH	);
+    SCH_AddTask(PA0_LED_Toggle			, 10U		                , 14U			);
     SCH_AddTask(Task_ImuOledUpdate	    , IMU_TASK_PERIOD_MS		, 1U			);
     //==========================================================================
     while (1)

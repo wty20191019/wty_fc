@@ -1,5 +1,7 @@
 #include "oled.h"
 #include "stdlib.h"
+#include <stdarg.h>
+#include <stdio.h>
 #include "oledfont.h"  	 
 #include "board.h"
 
@@ -308,6 +310,22 @@ void OLED_ShowString(u8 x,u8 y,u8 *chr,u8 size1,u8 mode)
 		else x+=size1/2;
 		chr++;
   }
+}
+
+//格式化显示字符串
+//x,y:起点坐标
+//size1:字体大小
+//mode:0,反色显示;1,正常显示
+void OLED_Printf(u8 x,u8 y,u8 size1,u8 mode,const char *fmt,...)
+{
+	char buf[32];
+	va_list args;
+
+	va_start(args, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+
+	OLED_ShowString(x, y, (u8 *)buf, size1, mode);
 }
 
 //m^n

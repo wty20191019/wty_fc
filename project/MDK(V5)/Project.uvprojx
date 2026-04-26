@@ -417,14 +417,39 @@
           <GroupName>BSP</GroupName>
           <Files>
             <File>
-              <FileName>bsp_uart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\bsp\uart\bsp_uart.c</FilePath>
-            </File>
-            <File>
               <FileName>oled.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\bsp\OLED\oled.c</FilePath>
+            </File>
+            <File>
+              <FileName>DMA_UART1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\bsp\uart\DMA_UART1.c</FilePath>
+            </File>
+            <File>
+              <FileName>DMA_UART2.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\bsp\uart\DMA_UART2.c</FilePath>
+            </File>
+            <File>
+              <FileName>DMA_UART3.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\bsp\uart\DMA_UART3.c</FilePath>
+            </File>
+            <File>
+              <FileName>DMA_UART4.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\bsp\uart\DMA_UART4.c</FilePath>
+            </File>
+            <File>
+              <FileName>DMA_UART5.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\bsp\uart\DMA_UART5.c</FilePath>
+            </File>
+            <File>
+              <FileName>DMA_UART6.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\bsp\uart\DMA_UART6.c</FilePath>
             </File>
           </Files>
         </Group>
