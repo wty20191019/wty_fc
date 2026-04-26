@@ -468,7 +468,8 @@ void OLED_Init(void)
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
 	GPIO_Init(GPIOC, &GPIO_InitStructure);//初始化
 	
-	delay_ms(200);
+	systick_delay_ms(200);
+
 
 	OLED_WR_Byte(0xAE,OLED_CMD);//--turn off oled panel
 	OLED_WR_Byte(0x00,OLED_CMD);//---set low column address

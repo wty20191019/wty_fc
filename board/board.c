@@ -1,16 +1,4 @@
-/*
- * 立创开发板软硬件资料与相关扩展板软硬件资料官网全部开源
- * 开发板官网：www.lckfb.com
- * 技术支持常驻论坛，任何技术问题欢迎随时交流学习
- * 立创论坛：https://oshwhub.com/forum
- * 关注bilibili账号：【立创开发板】，掌握我们的最新动态！
- * 不靠卖板赚钱，以培养中国工程师为己任
- * 
 
- Change Logs:
- * Date           Author       Notes
- * 2024-03-07     LCKFB-LP    first version
- */
 #include <board.h>
 
 static __IO uint32_t g_system_tick = 0;
@@ -46,7 +34,7 @@ void board_init(void)
  -  @param  _us:要延时的us数
  -  @retval None
 */
-void delay_us(uint32_t _us)
+void systick_delay_us(uint32_t _us)
 {
     uint32_t ticks;
     uint32_t told, tnow, tcnt = 0;
@@ -84,8 +72,19 @@ void delay_us(uint32_t _us)
  -  @param  _ms:要延时的ms数
  -  @retval None
 */
-void delay_ms(uint32_t _ms) { delay_us(_ms * 1000); }
+void systick_delay_ms(uint32_t _ms) 
+{ 
+    systick_delay_us(_ms * 1000); 
+}
 
-void delay_1ms(uint32_t ms) { delay_us(ms * 1000); }
+void systick_delay_1ms(uint32_t ms) 
+{ 
+    systick_delay_us(ms * 1000); 
+}
 
-void delay_1us(uint32_t us) { delay_us(us); }
+void systick_delay_1us(uint32_t us) 
+{ 
+    systick_delay_us(us); 
+}
+
+

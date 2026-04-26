@@ -396,6 +396,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\module\stm32f4xx_it.c</FilePath>
             </File>
+            <File>
+              <FileName>tim2_scheduler.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\module\tim2_scheduler.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -652,14 +657,24 @@
           <GroupName>MODULE</GroupName>
           <Files>
             <File>
+              <FileName>FFCY_NEW_ICM42688.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\module\FFCY_NEW_ICM42688.c</FilePath>
+            </File>
+            <File>
+              <FileName>pwm_tim3.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\module\pwm_tim3.c</FilePath>
+            </File>
+            <File>
               <FileName>i2c1.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\module\i2c1.c</FilePath>
             </File>
             <File>
-              <FileName>FFCY_NEW_ICM42688.c</FileName>
+              <FileName>pa0_LED_toggle.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\module\FFCY_NEW_ICM42688.c</FilePath>
+              <FilePath>..\..\module\pa0_LED_toggle.c</FilePath>
             </File>
           </Files>
         </Group>
