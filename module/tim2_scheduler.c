@@ -84,23 +84,10 @@ void SCH_AddTask(TaskFunc func, uint32_t period, uint8_t priority)
 
 void SCH_Tick(void)
 {
+    uint32_t current_tick;
+
     tim2_tick++;
-}
-
-uint32_t SCH_GetTick(void)
-{
-    return tim2_tick;
-}
-
-void SCH_Dispatch(void)
-{
-    static uint32_t last_check = 0U;
-    uint32_t current_tick = tim2_tick;
-
-    if (current_tick == last_check) {
-        return;
-    }
-    last_check = current_tick;
+    current_tick = tim2_tick;
 
     for (uint32_t prio = PRIORITY_HIGH; prio <= PRIORITY_MAX; prio++) {
         for (uint32_t i = 0; i < task_count; i++) {
@@ -119,11 +106,17 @@ void SCH_Dispatch(void)
     }
 }
 
+uint32_t SCH_GetTick(void)
+{
+    return tim2_tick;
+}
+
+
 void SCH_Delay(uint32_t ms)
 {
     uint32_t start_tick = tim2_tick;
 
     while ((tim2_tick - start_tick) < ms) {
-        __WFI();
+        //__WFI();
     }
 }

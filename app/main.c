@@ -60,13 +60,15 @@ int main(void)
     SCH_Init();
 	//µ÷¶ÈÆ÷====================================================================
     SCH_AddTask(PA0_LED_Toggle			, 500U		, PRIORITY_HIGH	);
-    SCH_AddTask(Task_ImuOledUpdate	, 100U		, 1U			);
+    SCH_AddTask(Task_ImuOledUpdate	    , 100U		, 1U			);
     //==========================================================================
+
     while (1)
     {
-        SCH_Dispatch();
+        //__WFI();
     }
 
+    
 
 }
 
