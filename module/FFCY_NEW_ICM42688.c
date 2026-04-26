@@ -1,43 +1,131 @@
 #include "FFCY_NEW_ICM42688.h"
 #include "i2c1.h"
+#include "IMU_FilterPortable.h"
 
-#ifdef ICM42688_ENABLE_FULL_PIPELINE
-#include "../project/Headfile.h"
-#endif
-
-#ifndef ICM42688_ENABLE_FULL_PIPELINE
-#define ICM42688_ENABLE_FULL_PIPELINE 0
-#endif
-
-#define ICM42688_ACCEL_XOUT    0x1F
-#define ICM42688_ACCEL_YOUT    0x21
-#define ICM42688_ACCEL_ZOUT    0x23
-#define ICM42688_GYRO_XOUT     0x25
-#define ICM42688_GYRO_YOUT     0x27
-#define ICM42688_GYRO_ZOUT     0x29
+#define ICM42688_ACCEL_XOUT    0x1F//加速度计X轴数据寄存器地址
+#define ICM42688_ACCEL_YOUT    0x21//加速度计Y轴数据寄存器地址
+#define ICM42688_ACCEL_ZOUT    0x23//加速度计Z轴数据寄存器地址
+#define ICM42688_GYRO_XOUT     0x25//陀螺仪X轴数据寄存器地址
+#define ICM42688_GYRO_YOUT     0x27//陀螺仪Y轴数据寄存器地址
+#define ICM42688_GYRO_ZOUT     0x29//陀螺仪Z轴数据寄存器地址
 
 MPU6050_Data MPU_Data;
-
-#if ICM42688_ENABLE_FULL_PIPELINE
-Vector3f Accel, Gyro;
-float X_Origion, Y_Origion, Z_Origion;
-int16_t Acce_Correct[3] = {0};
-Vector3f accel_filter, gyro_filter_QU;
-Vector3f gyro_nofilter;
-
-float IMU_K[3] = {1.0f, 1.0f, 1.0f};
-float IMU_B[3] = {0.0f, 0.0f, 0.0f};
-
-Axis3f Gyro_feedback;
-
-Butter_Parameter Accel_Parameter, Butter_1HZ_Parameter_Acce, Gyro_Parameter, Gyro_Parameter_QU, Ins_Accel_Parameter;
-Butter_BufferData Butter_Buffer_SINS[3], Butter_Buffer_Correct[3], gyro_filter_buf[3], gyro_filter_QU_buf[3], accel_filter_buf[3];
-#endif
 
 u32 IIC_Timeout_Cnt = 0;
 u32 IIC_Timeout_Cnt_noTimesClear = 0;
 
+#if ICM42688_GYRO_BIAS_ENABLE
+static float s_gyro_bias_lsb[3] = {0.0f, 0.0f, 0.0f};
+static uint8_t s_gyro_bias_ready = 0U;
+#endif
+
+#if ICM42688_SOFT_FILTER_ENABLE
+static IMU_FilterPortableBiquadCoeff s_acc_lpf_coeff;
+static IMU_FilterPortableBiquadCoeff s_gyro_lpf_coeff;
+static IMU_FilterPortableBiquadState s_acc_lpf_state[3];
+static IMU_FilterPortableBiquadState s_gyro_lpf_state[3];
+#endif
+
 static uint8_t s_device_address = ICM42688_ADDRESS_DEFAULT;
+
+static int16_t icm42688_abs_i16(int16_t v)
+{
+    return (v >= 0) ? v : (int16_t)(-v);
+}
+
+static int16_t icm42688_sub_bias_lsb(int16_t raw, float bias)
+{
+    int32_t bias_i = (bias >= 0.0f) ? (int32_t)(bias + 0.5f) : (int32_t)(bias - 0.5f);
+    int32_t corrected = (int32_t)raw - bias_i;
+
+    if (corrected > 32767)
+    {
+        corrected = 32767;
+    }
+    else if (corrected < -32768)
+    {
+        corrected = -32768;
+    }
+
+    return (int16_t)corrected;
+}
+
+static uint8_t icm42688_acc_norm_is_valid_1g(int16_t ax, int16_t ay, int16_t az)
+{
+    float norm_sq = (float)ax * (float)ax + (float)ay * (float)ay + (float)az * (float)az;
+    float one_g = (float)ICM42688_ACC_1G_LSB;
+    float min_sq = one_g * one_g * ICM42688_ACC_NORM_MIN_RATIO * ICM42688_ACC_NORM_MIN_RATIO;
+    float max_sq = one_g * one_g * ICM42688_ACC_NORM_MAX_RATIO * ICM42688_ACC_NORM_MAX_RATIO;
+
+    return (norm_sq >= min_sq && norm_sq <= max_sq) ? 1U : 0U;
+}
+
+#if ICM42688_GYRO_BIAS_ENABLE
+static void icm42688_calibrate_gyro_bias(void)
+{
+    uint32_t valid = 0U;
+    uint32_t attempt = 0U;
+    int32_t sum_x = 0;
+    int32_t sum_y = 0;
+    int32_t sum_z = 0;
+    const uint32_t max_attempt = ICM42688_GYRO_BIAS_CAL_SAMPLES * 3U;
+
+    s_gyro_bias_lsb[0] = 0.0f;
+    s_gyro_bias_lsb[1] = 0.0f;
+    s_gyro_bias_lsb[2] = 0.0f;
+    s_gyro_bias_ready = 0U;
+
+    while ((valid < ICM42688_GYRO_BIAS_CAL_SAMPLES) && (attempt < max_attempt))
+    {
+        int16_t gx;
+        int16_t gy;
+        int16_t gz;
+        int16_t ax;
+        int16_t ay;
+        int16_t az;
+
+        attempt++;
+        IIC_Timeout_Cnt = 0U;
+
+        gx = GetData_Gyro(ICM42688_GYRO_XOUT);
+        gy = GetData_Gyro(ICM42688_GYRO_YOUT);
+        gz = GetData_Gyro(ICM42688_GYRO_ZOUT);
+        ax = GetData_Acc(ICM42688_ACCEL_XOUT);
+        ay = GetData_Acc(ICM42688_ACCEL_YOUT);
+        az = GetData_Acc(ICM42688_ACCEL_ZOUT);
+
+        if (IIC_Timeout_Cnt != 0U)
+        {
+            continue;
+        }
+
+        if ((icm42688_abs_i16(gx) > ICM42688_GYRO_BIAS_MAX_ABS_LSB) ||
+            (icm42688_abs_i16(gy) > ICM42688_GYRO_BIAS_MAX_ABS_LSB) ||
+            (icm42688_abs_i16(gz) > ICM42688_GYRO_BIAS_MAX_ABS_LSB))
+        {
+            continue;
+        }
+
+        if (icm42688_acc_norm_is_valid_1g(ax, ay, az) == 0U)
+        {
+            continue;
+        }
+
+        sum_x += gx;
+        sum_y += gy;
+        sum_z += gz;
+        valid++;
+    }
+
+    if (valid > 0U)
+    {
+        s_gyro_bias_lsb[0] = (float)sum_x / (float)valid;
+        s_gyro_bias_lsb[1] = (float)sum_y / (float)valid;
+        s_gyro_bias_lsb[2] = (float)sum_z / (float)valid;
+        s_gyro_bias_ready = 1U;
+    }
+}
+#endif
 
 static uint8_t icm42688_normalize_address(uint8_t dev_address)
 {
@@ -158,6 +246,36 @@ void ImuSensor_ReadReg_BuffAll(void)
         MPU_Data.AccZ = imu_sensor_buff[5];
         MPU_Data.Temp = (int16_t)(((uint16_t)ICM42688_ReadReg(s_device_address, ICM42688_TEMP_DATA1) << 8) |
                                   ICM42688_ReadReg(s_device_address, (uint8_t)(ICM42688_TEMP_DATA1 + 1U)));
+
+#if ICM42688_GYRO_BIAS_ENABLE
+        if (s_gyro_bias_ready != 0U)
+        {
+            MPU_Data.GyroX = icm42688_sub_bias_lsb(MPU_Data.GyroX, s_gyro_bias_lsb[0]);
+            MPU_Data.GyroY = icm42688_sub_bias_lsb(MPU_Data.GyroY, s_gyro_bias_lsb[1]);
+            MPU_Data.GyroZ = icm42688_sub_bias_lsb(MPU_Data.GyroZ, s_gyro_bias_lsb[2]);
+        }
+
+#if ICM42688_GYRO_BIAS_TRACK_ENABLE
+        if ((icm42688_abs_i16(MPU_Data.GyroX) < ICM42688_GYRO_STILL_THRESH_LSB) &&
+            (icm42688_abs_i16(MPU_Data.GyroY) < ICM42688_GYRO_STILL_THRESH_LSB) &&
+            (icm42688_abs_i16(MPU_Data.GyroZ) < ICM42688_GYRO_STILL_THRESH_LSB) &&
+            (icm42688_acc_norm_is_valid_1g(MPU_Data.AccX, MPU_Data.AccY, MPU_Data.AccZ) != 0U))
+        {
+            s_gyro_bias_lsb[0] += ICM42688_GYRO_BIAS_TRACK_ALPHA * ((float)imu_sensor_buff[0] - s_gyro_bias_lsb[0]);
+            s_gyro_bias_lsb[1] += ICM42688_GYRO_BIAS_TRACK_ALPHA * ((float)imu_sensor_buff[1] - s_gyro_bias_lsb[1]);
+            s_gyro_bias_lsb[2] += ICM42688_GYRO_BIAS_TRACK_ALPHA * ((float)imu_sensor_buff[2] - s_gyro_bias_lsb[2]);
+        }
+#endif
+#endif
+
+#if ICM42688_SOFT_FILTER_ENABLE
+        MPU_Data.GyroX = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.GyroX, &s_gyro_lpf_state[0], &s_gyro_lpf_coeff);
+        MPU_Data.GyroY = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.GyroY, &s_gyro_lpf_state[1], &s_gyro_lpf_coeff);
+        MPU_Data.GyroZ = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.GyroZ, &s_gyro_lpf_state[2], &s_gyro_lpf_coeff);
+        MPU_Data.AccX = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.AccX, &s_acc_lpf_state[0], &s_acc_lpf_coeff);
+        MPU_Data.AccY = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.AccY, &s_acc_lpf_state[1], &s_acc_lpf_coeff);
+        MPU_Data.AccZ = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.AccZ, &s_acc_lpf_state[2], &s_acc_lpf_coeff);
+#endif
     }
 }
 
@@ -212,88 +330,24 @@ void ImuSensor_Init(void)
     {
     }
 
-#if ICM42688_ENABLE_FULL_PIPELINE
-    for (u8 i = 0; i < 3; i++)
-    {
-        lpf2pInit(&gyroLpf[i], 200, GYRO_LPF_CUTOFF_FREQ);
-        lpf2pInit(&accLpf[i], 200, ACCEL_LPF_CUTOFF_FREQ);
-    }
+#if ICM42688_GYRO_BIAS_ENABLE
+    icm42688_calibrate_gyro_bias();
+#endif
 
-    Set_Cutoff_Frequency(Sampling_Freq, 10, &Ins_Accel_Parameter);
-    Set_Cutoff_Frequency(Sampling_Freq, 1, &Butter_1HZ_Parameter_Acce);
-    Set_Cutoff_Frequency(Sampling_Freq, 10, &Accel_Parameter);
-    Set_Cutoff_Frequency(Sampling_Freq, 10, &Gyro_Parameter_QU);
-    Set_Cutoff_Frequency(Sampling_Freq, 8, &Gyro_Parameter);
+#if ICM42688_SOFT_FILTER_ENABLE
+    IMU_FilterPortable_DesignLP2(ICM42688_SOFT_FILTER_SAMPLE_HZ, ICM42688_SOFT_FILTER_CUTOFF_HZ, &s_acc_lpf_coeff);
+    IMU_FilterPortable_DesignLP2(ICM42688_SOFT_FILTER_SAMPLE_HZ, ICM42688_SOFT_FILTER_CUTOFF_HZ, &s_gyro_lpf_coeff);
+
+    IMU_FilterPortable_Init(&s_acc_lpf_state[0], ICM42688_SOFT_FILTER_WARMUP_COUNT);
+    IMU_FilterPortable_Init(&s_acc_lpf_state[1], ICM42688_SOFT_FILTER_WARMUP_COUNT);
+    IMU_FilterPortable_Init(&s_acc_lpf_state[2], ICM42688_SOFT_FILTER_WARMUP_COUNT);
+    IMU_FilterPortable_Init(&s_gyro_lpf_state[0], ICM42688_SOFT_FILTER_WARMUP_COUNT);
+    IMU_FilterPortable_Init(&s_gyro_lpf_state[1], ICM42688_SOFT_FILTER_WARMUP_COUNT);
+    IMU_FilterPortable_Init(&s_gyro_lpf_state[2], ICM42688_SOFT_FILTER_WARMUP_COUNT);
 #endif
 }
 
 void GET_MPU_DATA(void)
 {
     ImuSensor_ReadReg_BuffAll();
-
-#if ICM42688_ENABLE_FULL_PIPELINE
-
-    int16_t ay = MPU_Data.AccX;
-    int16_t ax = MPU_Data.AccY;
-    int16_t az = MPU_Data.AccZ;
-
-    int16_t gy = MPU_Data.GyroX;
-    int16_t gx = MPU_Data.GyroY;
-    int16_t gz = MPU_Data.GyroZ;
-
-    sensors.gyro.x = -(gx - X_w_off) * SENSORS_DEG_PER_LSB_CFG;
-    sensors.gyro.y = (gy - Y_w_off) * SENSORS_DEG_PER_LSB_CFG;
-    sensors.gyro.z = (gz - Z_w_off) * SENSORS_DEG_PER_LSB_CFG;
-
-    sensors.acc.x = -(ax) * SENSORS_G_PER_LSB_CFG;
-    sensors.acc.y = (ay) * SENSORS_G_PER_LSB_CFG;
-    sensors.acc.z = (az) * SENSORS_G_PER_LSB_CFG;
-
-    applyAxis3fLpf(gyroLpf, &sensors.gyro);
-    applyAxis3fLpf(accLpf, &sensors.acc);
-
-    sensors1.gyro.x = sensors.gyro.x;
-    sensors1.gyro.y = sensors.gyro.y;
-    sensors1.gyro.z = sensors.gyro.z;
-
-    sensors1.acc.x = sensors.acc.x;
-    sensors1.acc.y = sensors.acc.y;
-    sensors1.acc.z = sensors.acc.z;
-
-    MPitch_Gyro = sensors.gyro.x;
-    MRoll_Gyro = sensors.gyro.y;
-    MYaw_Gyro = sensors.gyro.z;
-
-    Accel.y = MPU_Data.AccX;
-    Accel.x = -MPU_Data.AccY;
-    Accel.z = MPU_Data.AccZ;
-
-    Gyro.y = MPU_Data.GyroX - X_w_off;
-    Gyro.x = -(MPU_Data.GyroY - Y_w_off);
-    Gyro.z = MPU_Data.GyroZ - Z_w_off;
-
-    Acce_Correct[0] = (int16_t)(LPButterworth(Accel.x, &Butter_Buffer_Correct[0], &Butter_1HZ_Parameter_Acce));
-    Acce_Correct[1] = (int16_t)(LPButterworth(Accel.y, &Butter_Buffer_Correct[1], &Butter_1HZ_Parameter_Acce));
-    Acce_Correct[2] = (int16_t)(LPButterworth(Accel.z, &Butter_Buffer_Correct[2], &Butter_1HZ_Parameter_Acce));
-
-    X_Origion = IMU_K[0] * Accel.x - IMU_B[0] * One_G_TO_Accel;
-    Y_Origion = IMU_K[1] * Accel.y - IMU_B[1] * One_G_TO_Accel;
-    Z_Origion = IMU_K[2] * Accel.z - IMU_B[2] * One_G_TO_Accel;
-
-    accel_filter.x = LPButterworth(X_Origion, &accel_filter_buf[0], &Accel_Parameter);
-    accel_filter.y = LPButterworth(Y_Origion, &accel_filter_buf[1], &Accel_Parameter);
-    accel_filter.z = LPButterworth(Z_Origion, &accel_filter_buf[2], &Accel_Parameter);
-
-    Body_Frame.x = LPButterworth(X_Origion, &Butter_Buffer_SINS[0], &Ins_Accel_Parameter);
-    Body_Frame.y = LPButterworth(Y_Origion, &Butter_Buffer_SINS[1], &Ins_Accel_Parameter);
-    Body_Frame.z = LPButterworth(Z_Origion, &Butter_Buffer_SINS[2], &Ins_Accel_Parameter);
-
-    MBody_Frame.x = sensors.acc.x / SENSORS_G_PER_LSB_CFG;
-    MBody_Frame.y = sensors.acc.y / SENSORS_G_PER_LSB_CFG;
-    MBody_Frame.z = sensors.acc.z / SENSORS_G_PER_LSB_CFG;
-
-    gyro_nofilter.x = Gyro.x * GYRO_CALIBRATION_COFF;
-    gyro_nofilter.y = Gyro.y * GYRO_CALIBRATION_COFF;
-    gyro_nofilter.z = Gyro.z * GYRO_CALIBRATION_COFF;
-#endif
 }

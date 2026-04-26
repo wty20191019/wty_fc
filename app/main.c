@@ -16,22 +16,39 @@
 #include "tim2_scheduler.h"
 #include "pa0_LED_toggle.h"
 
-#define IMU_TASK_PERIOD_MS           (100U)                                 //IMU数据读取和OLED显示更新的周期，单位毫秒    
+#define IMU_TASK_PERIOD_MS           (5U)                                  //IMU数据读取和OLED显示更新的周期，单位毫秒    
 #define ATT6_DT_SEC                  ((float)IMU_TASK_PERIOD_MS / 1000.0f)  //姿态算法更新周期，单位秒
 #define ICM42688_ACC_G_PER_LSB       (1.0f / 8192.0f)                       //ICM42688加速度计每LSB对应的重力加速度值，单位g
 #define ICM42688_GYRO_DPS_PER_LSB    (1.0f / 16.4f)                         //ICM42688陀螺仪每LSB对应的角速度值，单位度每秒
+#define ATT_ZERO_CALIB_SAMPLES       (200U)                                 //启动后静止采样次数(200*5ms=1s)
 
 static Attitude6AxisState g_attitude; //全局姿态算法状态变量
 
+float pitchDeg;
+float rollDeg;
+float yawDeg;
+
+static float g_pitch_zero = 0.0f;
+static float g_roll_zero = 0.0f;
+static float g_yaw_zero = 0.0f;
+static float g_pitch_sum = 0.0f;
+static float g_roll_sum = 0.0f;
+static float g_yaw_sum = 0.0f;
+static uint16_t g_zero_count = 0U;
+static uint8_t g_zero_ready = 0U;
+
+
 
 //==========================================================================
-////IMU数据读取和OLED显示更新任务
+////IMU数据读取
 //==========================================================================
 static void Task_ImuOledUpdate(void)  
 {
-    float pitchDeg;
-    float rollDeg;
-    float yawDeg;
+
+    float pitch_raw;
+    float roll_raw;
+    float yaw_raw;
+
 
 
     ImuSensor_ReadReg_BuffAll();//读取ICM42688的所有相关寄存器数据到全局变量MPU_Data中
@@ -48,9 +65,31 @@ static void Task_ImuOledUpdate(void)
         ICM42688_GYRO_DPS_PER_LSB,
         ATT6_DT_SEC);
 
-    Attitude6Axis_GetEulerDeg(&g_attitude, &pitchDeg, &rollDeg, &yawDeg);//获取欧拉角度
+    Attitude6Axis_GetEulerDeg(&g_attitude, &pitch_raw, &roll_raw, &yaw_raw);//获取欧拉角度
 
+    if (g_zero_ready == 0U)
+    {
+        g_pitch_sum += pitch_raw;
+        g_roll_sum += roll_raw;
+        g_yaw_sum += yaw_raw;
+        g_zero_count++;
 
+        if (g_zero_count >= ATT_ZERO_CALIB_SAMPLES)
+        {
+            g_pitch_zero = g_pitch_sum / (float)g_zero_count;
+            g_roll_zero = g_roll_sum / (float)g_zero_count;
+            g_yaw_zero = g_yaw_sum / (float)g_zero_count;
+            g_zero_ready = 1U;
+        }
+    }
+
+    pitchDeg = pitch_raw - g_pitch_zero;
+    rollDeg = roll_raw - g_roll_zero;
+    yawDeg = yaw_raw - g_yaw_zero;
+}
+
+void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
+{
 
     OLED_Clear();//清屏====================================================
 
@@ -68,8 +107,16 @@ static void Task_ImuOledUpdate(void)
     //Serial1_Printf("ax=%d ay=%d az=%d\r\n", MPU_Data.AccX, MPU_Data.AccY, MPU_Data.AccZ);
     Serial1_Printf("[plot,%2.2f,%2.2f,%2.2f]\r\n", pitchDeg, rollDeg, yawDeg);
 
+
 }
 
+
+
+
+
+//==========================================================================
+//主函数
+//==========================================================================
 int main(void)
 {
     board_init();//初始化系统时钟和SysTick
@@ -78,7 +125,7 @@ int main(void)
 
     PA0_LED_Toggle_Init();// 初始化PA0引脚用于LED闪烁
 
-    DMA_USART1_Init(9600U);//初始化USART1用于串口调试输出，波特率9600
+    DMA_USART1_Init(115200);//初始化USART1用于串口调试输出，波特率115200
 
     
     systick_delay_ms(2000);//等待IMU稳定
@@ -94,8 +141,9 @@ int main(void)
 
     SCH_Init();
 	//调度器==========================================================================
-    SCH_AddTask(PA0_LED_Toggle			, 50U		                , 14U			);
-    SCH_AddTask(Task_ImuOledUpdate	    , IMU_TASK_PERIOD_MS		, 1U			);
+    SCH_AddTask(PA0_LED_Toggle          , 50U                       , 14U           );
+    SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS		, 1U            );
+    SCH_AddTask(Task_OledUpdate         , 50U                       , 2U            );
     //================================================================================
     while (1)
     {
