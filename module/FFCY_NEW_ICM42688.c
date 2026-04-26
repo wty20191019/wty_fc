@@ -193,7 +193,7 @@ ICM42688_Status ICM42688_Init(void)
         return ICM42688_TIMEOUT;
     }
 
-    if (icm42688_write_reg_current(ICM42688_GYRO_ACCEL_CONFIG0, 0x44) != ICM42688_OK)
+    if (icm42688_write_reg_current(ICM42688_GYRO_ACCEL_CONFIG0, ICM42688_HW_FILTER_CFG) != ICM42688_OK)//设置陀螺仪和加速度计的数字低通滤波器
     {
         return ICM42688_TIMEOUT;
     }

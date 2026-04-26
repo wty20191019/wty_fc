@@ -72,17 +72,20 @@ static void Task_ImuOledUpdate(void)
 
 int main(void)
 {
-    board_init();   //初始化系统时钟和SysTick
+    board_init();//初始化系统时钟和SysTick
 
-    PWM_Init();     //初始化TIM3的PWM输出
+    PWM_Init();//初始化TIM3的PWM输出
 
-    PA0_LED_Toggle_Init(); // 初始化PA0引脚用于LED闪烁
+    PA0_LED_Toggle_Init();// 初始化PA0引脚用于LED闪烁
 
-    DMA_USART1_Init(9600U);
+    DMA_USART1_Init(9600U);//初始化USART1用于串口调试输出，波特率9600
 
-
+    
+    systick_delay_ms(2000);//等待IMU稳定
     ImuSensor_Init();  //初始化ICM42688
     Attitude6Axis_Init(&g_attitude, 2.0f, 0.02f);
+    
+
 
     OLED_Init();     //初始化OLED显示屏
     OLED_Clear();
@@ -90,13 +93,13 @@ int main(void)
     
 
     SCH_Init();
-	//调度器====================================================================
-    SCH_AddTask(PA0_LED_Toggle			, 10U		                , 14U			);
+	//调度器==========================================================================
+    SCH_AddTask(PA0_LED_Toggle			, 50U		                , 14U			);
     SCH_AddTask(Task_ImuOledUpdate	    , IMU_TASK_PERIOD_MS		, 1U			);
-    //==========================================================================
+    //================================================================================
     while (1)
     {
-        SCH_Dispatch();
+        SCH_Dispatch();//调度器分发任务
     }
 
 

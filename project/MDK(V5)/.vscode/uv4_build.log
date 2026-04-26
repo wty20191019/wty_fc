@@ -1,87 +1,9 @@
 *** Using Compiler 'V5.06 update 5 (build 528)', folder: 'G:\stm32_study\Keil_v5\ARM\ARMCC\Bin'
 Build target 'Project'
-compiling bsp_uart.c...
-..\..\bsp\uart\bsp_uart.c(11): error:  #20: identifier "uint8_t" is undefined
-  static uint8_t s_uart1_dma_rx_buf[UART1_RX_DMA_BUFFER_SIZE];
-..\..\bsp\uart\bsp_uart.c(11): error:  #20: identifier "UART1_RX_DMA_BUFFER_SIZE" is undefined
-  static uint8_t s_uart1_dma_rx_buf[UART1_RX_DMA_BUFFER_SIZE];
-..\..\bsp\uart\bsp_uart.c(12): error:  #20: identifier "uint8_t" is undefined
-  static uint8_t s_uart1_rx_ring_buf[UART1_RX_RING_BUFFER_SIZE];
-..\..\bsp\uart\bsp_uart.c(12): error:  #20: identifier "UART1_RX_RING_BUFFER_SIZE" is undefined
-  static uint8_t s_uart1_rx_ring_buf[UART1_RX_RING_BUFFER_SIZE];
-..\..\bsp\uart\bsp_uart.c(13): error:  #20: identifier "uint8_t" is undefined
-  static uint8_t s_uart1_tx_ring_buf[UART1_TX_RING_BUFFER_SIZE];
-..\..\bsp\uart\bsp_uart.c(13): error:  #20: identifier "UART1_TX_RING_BUFFER_SIZE" is undefined
-  static uint8_t s_uart1_tx_ring_buf[UART1_TX_RING_BUFFER_SIZE];
-..\..\bsp\uart\bsp_uart.c(15): error:  #20: identifier "uint16_t" is undefined
-  static volatile uint16_t s_uart1_dma_last_pos = 0U;
-KB: Unexpected type: 0
-error type>(16): error:  #20: identifier "uint16_t" is undefined
-  static volatile uint16_t s_uart1_rx_read_idx = 0U;
-KB: Unexpected type: 0
-error type>(17): error:  #20: identifier "uint16_t" is undefined
-  static volatile uint16_t s_uart1_rx_write_idx = 0U;
-KB: Unexpected type: 0
-error type>(18): error:  #20: identifier "uint16_t" is undefined
-  static volatile uint16_t s_uart1_rx_count = 0U;
-KB: Unexpected type: 0
-error type>(19): error:  #20: identifier "uint8_t" is undefined
-  static volatile uint8_t s_uart1_rx_task_flag = 0U;
-KB: Unexpected type: 0
-error type>(21): error:  #20: identifier "UART1_RX_FRAME_BUFFER_SIZE" is undefined
-  static char s_uart1_frame_buf[UART1_RX_FRAME_BUFFER_SIZE];
-..\..\bsp\uart\bsp_uart.c(22): error:  #20: identifier "uint16_t" is undefined
-  static uint16_t s_uart1_frame_idx = 0U;
-..\..\bsp\uart\bsp_uart.c(23): error:  #20: identifier "uint8_t" is undefined
-  static uint8_t s_uart1_frame_in_sync = 0U;
-..\..\bsp\uart\bsp_uart.c(25): error:  #20: identifier "uint16_t" is undefined
-  static volatile uint16_t s_uart1_tx_read_idx = 0U;
-KB: Unexpected type: 0
-error type>(26): error:  #20: identifier "uint16_t" is undefined
-  static volatile uint16_t s_uart1_tx_write_idx = 0U;
-KB: Unexpected type: 0
-error type>(27): error:  #20: identifier "uint16_t" is undefined
-  static volatile uint16_t s_uart1_tx_count = 0U;
-KB: Unexpected type: 0
-error type>(28): error:  #20: identifier "uint16_t" is undefined
-  static volatile uint16_t s_uart1_tx_dma_len = 0U;
-KB: Unexpected type: 0
-error type>(29): error:  #20: identifier "uint8_t" is undefined
-  static volatile uint8_t s_uart1_tx_dma_busy = 0U;
-KB: Unexpected type: 0
-error type>(32): error:  #20: identifier "uint8_t" is undefined
-  static void uart1_rx_parse_byte_in_irq(uint8_t byte);
-..\..\bsp\uart\bsp_uart.c(33): error:  #20: identifier "uint8_t" is undefined
-  static uint8_t uart1_split_csv(char *text, char **fields, uint8_t maxFields);
-..\..\bsp\uart\bsp_uart.c(33): error:  #20: identifier "uint8_t" is undefined
-  static uint8_t uart1_split_csv(char *text, char **fields, uint8_t maxFields);
-..\..\bsp\uart\bsp_uart.c(35): error:  #20: identifier "uint8_t" is undefined
-  static void uart1_rx_push_byte(uint8_t byte)
-..\..\bsp\uart\bsp_uart.c(63): error:  #20: identifier "uint16_t" is undefined
-  	uint16_t dma_pos = (uint16_t)(UART1_RX_DMA_BUFFER_SIZE - DMA_GetCurrDataCounter(DMA2_Stream2));
-..\..\bsp\uart\bsp_uart.c(63): error:  #20: identifier "uint16_t" is undefined
-  	uint16_t dma_pos = (uint16_t)(UART1_RX_DMA_BUFFER_SIZE - DMA_GetCurrDataCounter(DMA2_Stream2));
-..\..\bsp\uart\bsp_uart.c(63): warning:  #223-D: function "DMA_GetCurrDataCounter" declared implicitly
-  	uint16_t dma_pos = (uint16_t)(UART1_RX_DMA_BUFFER_SIZE - DMA_GetCurrDataCounter(DMA2_Stream2));
-..\..\bsp\uart\bsp_uart.c(63): error:  #20: identifier "DMA2_Stream2" is undefined
-  	uint16_t dma_pos = (uint16_t)(UART1_RX_DMA_BUFFER_SIZE - DMA_GetCurrDataCounter(DMA2_Stream2));
-..\..\bsp\uart\bsp_uart.c(72): error:  #65: expected a ";"
-  		for (uint16_t i = s_uart1_dma_last_pos; i < dma_pos; i++)
-..\..\bsp\uart\bsp_uart.c(72): error:  #20: identifier "i" is undefined
-  		for (uint16_t i = s_uart1_dma_last_pos; i < dma_pos; i++)
-..\..\bsp\uart\bsp_uart.c(74): error:  #20: identifier "uint8_t" is undefined
-  			uint8_t byte = s_uart1_dma_rx_buf[i];
-..\..\bsp\uart\bsp_uart.c(81): error:  #65: expected a ";"
-  		for (uint16_t i = s_uart1_dma_last_pos; i < UART1_RX_DMA_BUFFER_SIZE; i++)
-..\..\bsp\uart\bsp_uart.c: 1 warning, 30 errors
-compiling DMA_UART2.c...
+compiling FFCY_NEW_ICM42688.c...
 compiling main.c...
-..\..\app\main.c(89): warning:  #223-D: function "uart1_init" declared implicitly
-      uart1_init(115200U);
-..\..\app\main.c: 1 warning, 0 errors
-compiling DMA_UART3.c...
-compiling DMA_UART6.c...
-compiling DMA_UART4.c...
-".\Objects\Project.axf" - 30 Error(s), 2 Warning(s).
-Target not created.
+linking...
+Program Size: Code=15600 RO-data=8120 RW-data=68 ZI-data=2756  
+FromELF: creating hex file...
+".\Objects\Project.axf" - 0 Error(s), 0 Warning(s).
 Build Time Elapsed:  00:00:01
