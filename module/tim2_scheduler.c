@@ -82,26 +82,8 @@ void SCH_AddTask(TaskFunc func, uint32_t period, uint8_t priority)
     }
 }
 
-void SCH_Tick(void)
+static void SCH_RunReadyTasks(uint32_t current_tick)
 {
-    tim2_tick++;
-}
-
-uint32_t SCH_GetTick(void)
-{
-    return tim2_tick;
-}
-
-void SCH_Dispatch(void)
-{
-    static uint32_t last_check = 0U;
-    uint32_t current_tick = tim2_tick;
-
-    if (current_tick == last_check) {
-        return;
-    }
-    last_check = current_tick;
-
     for (uint32_t prio = PRIORITY_HIGH; prio <= PRIORITY_MAX; prio++) {
         for (uint32_t i = 0; i < task_count; i++) {
             if ((tasks[i].priority == prio) && (tasks[i].func != 0)) {
@@ -117,6 +99,22 @@ void SCH_Dispatch(void)
             }
         }
     }
+}
+
+void SCH_Tick(void)
+{
+    tim2_tick++;
+    SCH_RunReadyTasks(tim2_tick);
+}
+
+uint32_t SCH_GetTick(void)
+{
+    return tim2_tick;
+}
+
+void SCH_Dispatch(void)
+{
+    /* 调度在TIM2中断中完成，保留接口用于兼容旧调用。 */
 }
 
 void SCH_Delay(uint32_t ms)

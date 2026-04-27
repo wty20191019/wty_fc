@@ -20,7 +20,8 @@
 #define ATT6_DT_SEC                  ((float)IMU_TASK_PERIOD_MS / 1000.0f)  //姿态算法更新周期，单位秒
 #define ICM42688_ACC_G_PER_LSB       (1.0f / 8192.0f)                       //ICM42688加速度计每LSB对应的重力加速度值，单位g
 #define ICM42688_GYRO_DPS_PER_LSB    (1.0f / 16.4f)                         //ICM42688陀螺仪每LSB对应的角速度值，单位度每秒
-#define ATT_ZERO_CALIB_SAMPLES       (200U)                                 //启动后静止采样次数(200*5ms=1s)
+#define ATT_ZERO_CALIB_SAMPLES       (1000U)                                //启动后静止采样次数(1000*5ms=5s)
+#define UART1_ECHO_BUF_SIZE          (64U)                                  //串口1回显缓冲区大小
 
 static Attitude6AxisState g_attitude; //全局姿态算法状态变量
 
@@ -36,6 +37,7 @@ static float g_roll_sum = 0.0f;
 static float g_yaw_sum = 0.0f;
 static uint16_t g_zero_count = 0U;
 static uint8_t g_zero_ready = 0U;
+static uint8_t g_uart1EchoBuf[UART1_ECHO_BUF_SIZE];   //串口1回显缓冲区
 
 
 
@@ -83,9 +85,21 @@ static void Task_ImuOledUpdate(void)
         }
     }
 
-    pitchDeg = pitch_raw - g_pitch_zero;
-    rollDeg = roll_raw - g_roll_zero;
-    yawDeg = yaw_raw - g_yaw_zero;
+    pitchDeg = pitch_raw - g_pitch_zero;//减去零偏得到最终的姿态角度值
+    rollDeg = roll_raw - g_roll_zero;//减去零偏得到最终的姿态角度值
+    yawDeg = yaw_raw - g_yaw_zero;//减去零偏得到最终的姿态角度值
+}
+//==========================================================================
+//串口1收到的数据原样回发
+//==========================================================================
+static void Task_Uart1Echo(void)
+{
+    uint16_t rxLen = DMA_USART1_Read(g_uart1EchoBuf, UART1_ECHO_BUF_SIZE);
+
+    if (rxLen > 0U)
+    {
+        DMA_USART1_Send(g_uart1EchoBuf, rxLen);
+    }
 }
 
 void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
@@ -141,13 +155,13 @@ int main(void)
 
     SCH_Init();
 	//调度器==========================================================================
-    SCH_AddTask(PA0_LED_Toggle          , 50U                       , 14U           );
-    SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS		, 1U            );
-    SCH_AddTask(Task_OledUpdate         , 50U                       , 2U            );
+    SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS		, 7            );
+    SCH_AddTask(PA0_LED_Toggle          , 50U                       ,14            );
     //================================================================================
     while (1)
     {
-        SCH_Dispatch();//调度器分发任务
+        Task_Uart1Echo(); //处理串口1回显任务
+        Task_OledUpdate();//处理OLED显示更新任务
     }
 
 
