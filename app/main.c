@@ -13,10 +13,13 @@
 #include <stdio.h>
 #include "oled.h"
 #include "pwm_tim3.h"
+#include "esc_calibration.h"
 #include "tim2_scheduler.h"
 #include "pa0_LED_toggle.h"
 
-#define IMU_TASK_PERIOD_MS           (5U)                                  //IMU数据读取和OLED显示更新的周期，单位毫秒    
+#define ESC_AUTO_CALIBRATION         (1U)                                   //首次使用或更换电调时建议打开，按文章流程自动完成解锁/行程校准
+
+#define IMU_TASK_PERIOD_MS           (5U)                                   //IMU数据读取和OLED显示更新的周期，单位毫秒    
 #define ATT6_DT_SEC                  ((float)IMU_TASK_PERIOD_MS / 1000.0f)  //姿态算法更新周期，单位秒
 #define ICM42688_ACC_G_PER_LSB       (1.0f / 8192.0f)                       //ICM42688加速度计每LSB对应的重力加速度值，单位g
 #define ICM42688_GYRO_DPS_PER_LSB    (1.0f / 16.4f)                         //ICM42688陀螺仪每LSB对应的角速度值，单位度每秒
@@ -125,6 +128,36 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
 }
 
 
+void Task_ESC_Control(void)  //电调控制任务
+{
+    static uint8_t  first_run = 1U;
+    static uint16_t cunt = 0U;
+
+    if(first_run==1U)
+    {
+        cunt = 0U;
+        first_run=0U;
+        
+    }
+    else
+    {
+        cunt++;
+
+        ESC_SetChannelsUs(1500+500*0.1f,1500+500*0.1f,1500+500*0.1f,1500+500*0.1f);
+        
+        if (cunt >= 50U)//20*50ms 
+        {
+            ESC_SetChannelsUs(1500,1500,1500,1500);
+        }
+        
+
+
+
+    }
+}
+
+
+
 
 
 
@@ -137,9 +170,18 @@ int main(void)
 
     PWM_Init();//初始化TIM3的PWM输出
 
+    if (ESC_AUTO_CALIBRATION != 0U)
+    {
+        ESC_CalibrateSequence(5000U, 3000U);//自动完成电调解锁和行程校准，最大脉宽保持5秒，最小脉宽保持3秒
+    }
+    else
+    {
+        ESC_Init();
+    }
+
     PA0_LED_Toggle_Init();// 初始化PA0引脚用于LED闪烁
 
-    DMA_USART1_Init(115200);//初始化USART1用于串口调试输出，波特率115200
+    DMA_USART1_Init(38400);//初始化USART1用于串口调试输出，波特率115200
 
     
     systick_delay_ms(2000);//等待IMU稳定
@@ -151,12 +193,14 @@ int main(void)
     OLED_Init();     //初始化OLED显示屏
     OLED_Clear();
 
-    
+    ESC_SetChannelsUs(900,1100,1100,1100);
 
     SCH_Init();
 	//调度器==========================================================================
     SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS		, 7            );
     SCH_AddTask(PA0_LED_Toggle          , 50U                       ,14            );
+    //SCH_AddTask(Task_ESC_Control        , 20U                       ,15            );
+
     //================================================================================
     while (1)
     {
