@@ -692,6 +692,11 @@
               <FilePath>..\..\module\pwm_tim3.c</FilePath>
             </File>
             <File>
+              <FileName>esc_calibration.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\module\esc_calibration.c</FilePath>
+            </File>
+            <File>
               <FileName>i2c1.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\module\i2c1.c</FilePath>

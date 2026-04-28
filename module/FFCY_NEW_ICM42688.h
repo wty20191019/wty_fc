@@ -53,8 +53,8 @@
 
 /* Gyro bias calibration/tracking config (for yaw drift suppression) */
 #define ICM42688_GYRO_BIAS_ENABLE          1U       //是否启用陀螺仪偏置校准和跟踪功能
-#define ICM42688_GYRO_BIAS_CAL_SAMPLES     400U     //陀螺仪偏置校准时的采样数量，校准期间需要保持IMU静止，建议设置为200-500
-#define ICM42688_GYRO_BIAS_MAX_ABS_LSB     500      //陀螺仪偏置校准时的最大绝对值阈值，单位LSB，超过此值的样本将被丢弃，建议设置为200-500LSB（约12-30dps）以适应不同的IMU安装环境
+#define ICM42688_GYRO_BIAS_CAL_SAMPLES     500U     //陀螺仪偏置校准时的采样数量，校准期间需要保持IMU静止，建议设置为200-500
+#define ICM42688_GYRO_BIAS_MAX_ABS_LSB     200      //陀螺仪偏置校准时的最大绝对值阈值，单位LSB，超过此值的样本将被丢弃，建议设置为200-500LSB（约12-30dps）以适应不同的IMU安装环境
 #define ICM42688_GYRO_BIAS_TRACK_ENABLE    1U       //是否启用陀螺仪偏置跟踪功能，启用后在正常运行过程中会持续跟踪陀螺仪偏置的变化并进行补偿，以进一步抑制陀螺仪漂移，特别是对于航向（偏航）的漂移抑制非常有效
 #define ICM42688_GYRO_BIAS_TRACK_ALPHA     0.001f   //陀螺仪偏置跟踪的指数移动平均滤波系数，范围0.0-1.0，值越小跟踪越慢但更稳定，值越大跟踪越快但可能引入噪声，建议设置为0.001-0.01
 #define ICM42688_GYRO_STILL_THRESH_LSB     20       //陀螺仪静止状态检测的阈值，单位LSB，当陀螺仪输出的绝对值都低于此阈值时认为IMU处于静止状态，建议设置为20-50LSB（约1-3dps）以适应不同的IMU安装环境

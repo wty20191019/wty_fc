@@ -31,11 +31,10 @@ void PWM_Init(void)
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
 	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
 
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2;
+	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
 	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
 	TIM_OCInitStructure.TIM_Pulse = 0;
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
-
+	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
 	TIM_OC1Init(TIM3, &TIM_OCInitStructure);
 	TIM_OC2Init(TIM3, &TIM_OCInitStructure);
 	TIM_OC3Init(TIM3, &TIM_OCInitStructure);
@@ -55,7 +54,7 @@ void PWM_Init(void)
 说明：PWM输出设置
 入口：四个通道的值
 出口：无
-备注：满占空为2.5ms（20ms）
+备注：PWM周期为20ms，电调常用有效脉宽为1ms~2ms
 ************************************************************************************/
 void PWM_Set(const uint16_t pwm1, const uint16_t pwm2,const uint16_t pwm3, const uint16_t pwm4)
 {
