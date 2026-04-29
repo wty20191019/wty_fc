@@ -17,6 +17,8 @@
 #include "tim2_scheduler.h"
 #include "pa0_LED_toggle.h"
 
+#include <string.h>
+
 #define ESC_AUTO_CALIBRATION         (1U)                                   //首次使用或更换电调时建议打开，按文章流程自动完成解锁/行程校准
 
 #define IMU_TASK_PERIOD_MS           (5U)                                   //IMU数据读取和OLED显示更新的周期，单位毫秒    
@@ -25,6 +27,7 @@
 #define ICM42688_GYRO_DPS_PER_LSB    (1.0f / 16.4f)                         //ICM42688陀螺仪每LSB对应的角速度值，单位度每秒
 #define ATT_ZERO_CALIB_SAMPLES       (1000U)                                //启动后静止采样次数(1000*5ms=5s)
 #define UART1_ECHO_BUF_SIZE          (64U)                                  //串口1回显缓冲区大小
+#define UART1_PACKET_BUF_SIZE        (64U)                                  //串口1解析包缓冲区大小
 
 static Attitude6AxisState g_attitude; //全局姿态算法状态变量
 
@@ -41,6 +44,10 @@ static float g_yaw_sum = 0.0f;
 static uint16_t g_zero_count = 0U;
 static uint8_t g_zero_ready = 0U;
 static uint8_t g_uart1EchoBuf[UART1_ECHO_BUF_SIZE];   //串口1回显缓冲区
+
+static char g_uart1PacketBuf[UART1_PACKET_BUF_SIZE];
+static uint16_t g_uart1PacketLen = 0U;
+static uint8_t g_uart1PacketActive = 0U;
 
 
 
@@ -102,7 +109,71 @@ static void Task_Uart1Echo(void)
     if (rxLen > 0U)
     {
         DMA_USART1_Send(g_uart1EchoBuf, rxLen);
+
+        for (uint16_t i = 0U; i < rxLen; ++i)
+        {
+            uint8_t ch = g_uart1EchoBuf[i];
+
+            if (ch == (uint8_t)'[')
+            {
+                g_uart1PacketActive = 1U;
+                g_uart1PacketLen = 0U;
+                continue;
+            }
+
+            if (g_uart1PacketActive == 0U)
+            {
+                continue;
+            }
+
+            if (ch == (uint8_t)']')
+            {
+                char packetCopy[UART1_PACKET_BUF_SIZE];
+                unsigned int sliderId;
+                unsigned int sliderValue;
+
+                g_uart1PacketActive = 0U;
+
+                if (g_uart1PacketLen >= UART1_PACKET_BUF_SIZE)
+                {
+                    g_uart1PacketLen = UART1_PACKET_BUF_SIZE - 1U;
+                }
+
+                memcpy(packetCopy, g_uart1PacketBuf, g_uart1PacketLen);
+                packetCopy[g_uart1PacketLen] = '\0';
+
+                if (sscanf(packetCopy, "slider,%u,%u", &sliderId, &sliderValue) == 2)//尝试解析滑动条数据包，格式为[slider,ID,VALUE]
+                {
+                    Serial1_Printf("[uart1] slider=%u value=%u\r\n", sliderId, sliderValue);
+
+                    if (sliderId == 1)
+                    {
+                        ESC_SetChannelsUs(sliderValue, sliderValue, sliderValue, sliderValue);
+                    }
+                    
+                }
+                else
+                {
+                    Serial1_Printf("[uart1] packet=%s\r\n", packetCopy);
+                }
+
+                g_uart1PacketLen = 0U;
+                continue;
+            }
+
+            if (g_uart1PacketLen < (UART1_PACKET_BUF_SIZE - 1U))
+            {
+                g_uart1PacketBuf[g_uart1PacketLen] = (char)ch;
+                g_uart1PacketLen++;
+            }
+            else
+            {
+                g_uart1PacketActive = 0U;
+                g_uart1PacketLen = 0U;
+            }
+        }
     }
+    
 }
 
 void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
@@ -147,7 +218,7 @@ void Task_ESC_Control(void)  //电调控制任务
         
         if (cunt >= 50U)//20*50ms 
         {
-            ESC_SetChannelsUs(1500,1500,1500,1500);
+            ESC_SetChannelsUs(1500U,1500U,1500U,1500U);
         }
         
 
@@ -172,16 +243,19 @@ int main(void)
 
     if (ESC_AUTO_CALIBRATION != 0U)
     {
-        ESC_CalibrateSequence(5000U, 3000U);//自动完成电调解锁和行程校准，最大脉宽保持5秒，最小脉宽保持3秒
+        ESC_CalibrateSequence(5000U, 3000U);//自动完成电调解锁和行程校准
     }
     else
     {
         ESC_Init();
     }
 
+
+
+
     PA0_LED_Toggle_Init();// 初始化PA0引脚用于LED闪烁
 
-    DMA_USART1_Init(38400);//初始化USART1用于串口调试输出，波特率115200
+    DMA_USART1_Init(115200);//初始化USART1用于串口调试输出，波特率115200
 
     
     systick_delay_ms(2000);//等待IMU稳定
@@ -193,7 +267,9 @@ int main(void)
     OLED_Init();     //初始化OLED显示屏
     OLED_Clear();
 
-    ESC_SetChannelsUs(900,1100,1100,1100);
+    ESC_SetChannelsUs(1050U,1050U,1050U,1050U);
+
+
 
     SCH_Init();
 	//调度器==========================================================================

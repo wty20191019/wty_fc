@@ -26,7 +26,7 @@
     <ToolsetNumber>0x4</ToolsetNumber>
     <ToolsetName>ARM-ADS</ToolsetName>
     <TargetOption>
-      <CLKADS>12000000</CLKADS>
+      <CLKADS>8000000</CLKADS>
       <OPTTT>
         <gFlags>1</gFlags>
         <BeepAtEnd>1</BeepAtEnd>
@@ -162,18 +162,18 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>656</LineNumber>
+          <LineNumber>250</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134227040</Address>
+          <Address>134238480</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\..\libraries\CMSIS\Device\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c</Filename>
+          <Filename>..\..\app\main.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Project\../../libraries/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c\656</Expression>
+          <Expression>\\Project\../../app/main.c\250</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
