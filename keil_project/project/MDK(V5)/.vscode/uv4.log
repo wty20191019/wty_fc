@@ -1,3 +1,3 @@
-Load "d:\\Desktop\\STM32F405RGT6\\project\\MDK(V5)\\Objects\\Project.axf" 
+Load "d:\\Desktop\\STM32F405RGT6\\keil_project\\project\\MDK(V5)\\Objects\\Project.axf" 
 Erase Done.Programming Done.Verify OK.Application running ...
-Flash Load finished at 21:05:04
+Flash Load finished at 21:34:37
