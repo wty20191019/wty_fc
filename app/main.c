@@ -161,11 +161,18 @@ void Task_ESC_Control(void)  //电调控制任务
 
 
 
+
 //==========================================================================
 //主函数
 //==========================================================================
 int main(void)
 {
+
+    // 设置NVIC优先级分组----------------------------
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);//
+    
+	
+
     board_init();//初始化系统时钟和SysTick
 
     PWM_Init();//初始化TIM3的PWM输出
@@ -195,10 +202,12 @@ int main(void)
 
     ESC_SetChannelsUs(900,1100,1100,1100);
 
+
+
     SCH_Init();
 	//调度器==========================================================================
     SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS		, 7            );
-    SCH_AddTask(PA0_LED_Toggle          , 50U                       ,14            );
+    SCH_AddTask(PA0_LED_Toggle          , 100U                       ,14            );
     //SCH_AddTask(Task_ESC_Control        , 20U                       ,15            );
 
     //================================================================================

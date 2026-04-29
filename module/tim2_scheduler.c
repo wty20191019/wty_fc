@@ -59,7 +59,7 @@ void SCH_Init(void)
     TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
 
     nvic.NVIC_IRQChannel = TIM2_IRQn;
-    nvic.NVIC_IRQChannelPreemptionPriority = 1U;
+    nvic.NVIC_IRQChannelPreemptionPriority = 1U;//优先级1，低于SysTick
     nvic.NVIC_IRQChannelSubPriority = 0U;
     nvic.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&nvic);
