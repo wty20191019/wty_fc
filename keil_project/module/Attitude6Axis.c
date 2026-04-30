@@ -2,10 +2,10 @@
 
 #include <math.h>
 
-#define ATT6_DEG2RAD (0.01745329251994329577f)
-#define ATT6_RAD2DEG (57.295779513082320876f)
+#define ATT6_DEG2RAD (0.01745329251994329577f)  // PI / 180.0f
+#define ATT6_RAD2DEG (57.295779513082320876f)   // 180.0f / PI
 
-static float att6InvSqrt(float x)
+static float att6InvSqrt(float x)  
 {
 	if (x <= 0.0f)
 	{
@@ -14,7 +14,7 @@ static float att6InvSqrt(float x)
 	return 1.0f / sqrtf(x);
 }
 
-static float att6Clamp(float value, float minValue, float maxValue)
+static float att6Clamp(float value, float minValue, float maxValue) 
 {
 	if (value < minValue)
 	{

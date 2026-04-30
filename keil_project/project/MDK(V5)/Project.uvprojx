@@ -711,11 +711,6 @@
               <FileType>1</FileType>
               <FilePath>..\..\module\Attitude6Axis.c</FilePath>
             </File>
-            <File>
-              <FileName>Attitude6Axis.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\..\module\Attitude6Axis.h</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>

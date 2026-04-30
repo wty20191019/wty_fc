@@ -1,6 +1,6 @@
 #include "FFCY_NEW_ICM42688.h"
 #include "i2c1.h"
-#include "IMU_FilterPortable.h"
+#include "IMU_FilterPortable.h"  //包含IMU滤波器的头文件
 
 #define ICM42688_ACCEL_XOUT    0x1F//加速度计X轴数据寄存器地址
 #define ICM42688_ACCEL_YOUT    0x21//加速度计Y轴数据寄存器地址

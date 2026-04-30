@@ -243,7 +243,7 @@ int main(void)
 
     if (ESC_AUTO_CALIBRATION != 0U)
     {
-        ESC_CalibrateSequence(5000U, 3000U);//自动完成电调解锁和行程校准
+        ESC_CalibrateSequence(3000U, 2000U);//自动完成电调解锁和行程校准
     }
     else
     {
