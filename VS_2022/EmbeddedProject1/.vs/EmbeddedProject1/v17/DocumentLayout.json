@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\Desktop\\STM32F405RGT6\\VS_2022\\EmbeddedProject1\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{2C37FDE3-A45A-EFA6-EEDB-ED018F4BBBEC}|EmbeddedProject1.vcxproj|D:\\Desktop\\STM32F405RGT6\\VS_2022\\EmbeddedProject1\\EmbeddedProject1\\app\\main.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{2C37FDE3-A45A-EFA6-EEDB-ED018F4BBBEC}|EmbeddedProject1.vcxproj|solutionrelative:EmbeddedProject1\\app\\main.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "main.c",
+              "DocumentMoniker": "D:\\Desktop\\STM32F405RGT6\\VS_2022\\EmbeddedProject1\\EmbeddedProject1\\app\\main.c",
+              "RelativeDocumentMoniker": "EmbeddedProject1\\app\\main.c",
+              "ToolTip": "D:\\Desktop\\STM32F405RGT6\\VS_2022\\EmbeddedProject1\\EmbeddedProject1\\app\\main.c",
+              "RelativeToolTip": "EmbeddedProject1\\app\\main.c",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2026-04-30T14:00:18.173Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
