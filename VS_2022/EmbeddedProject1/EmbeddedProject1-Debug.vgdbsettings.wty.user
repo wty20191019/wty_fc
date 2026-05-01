@@ -11,7 +11,44 @@
     </CatchpointConfiguration>
     <MaskInterruptsWhileStepping>false</MaskInterruptsWhileStepping>
     <MemoryWindowPreferences />
-    <e />
+    <e>
+      <e32>
+        <c>pitchDeg</c>
+        <b>com.sysprogs.types.builtin.Float32</b>
+        <f>true</f>
+        <e>
+          <ComparisonMode>Equals</ComparisonMode>
+          <Enabled>false</Enabled>
+        </e>
+        <h>true</h>
+        <g>false</g>
+        <a>false</a>
+      </e32>
+      <e32>
+        <c>rollDeg</c>
+        <b>com.sysprogs.types.builtin.Float32</b>
+        <f>true</f>
+        <e>
+          <ComparisonMode>Equals</ComparisonMode>
+          <Enabled>false</Enabled>
+        </e>
+        <h>true</h>
+        <g>false</g>
+        <a>false</a>
+      </e32>
+      <e32>
+        <c>yawDeg</c>
+        <b>com.sysprogs.types.builtin.Float32</b>
+        <f>true</f>
+        <e>
+          <ComparisonMode>Equals</ComparisonMode>
+          <Enabled>false</Enabled>
+        </e>
+        <h>true</h>
+        <g>false</g>
+        <a>false</a>
+      </e32>
+    </e>
     <b>
       <a>
         <a>com.sysprogs.AllGlobals</a>

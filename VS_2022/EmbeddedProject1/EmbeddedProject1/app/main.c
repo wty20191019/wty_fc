@@ -182,14 +182,16 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
 
     OLED_Clear();//清屏====================================================
 
-    OLED_Printf(0, 0, 8, 1, "ATTITUDE 6AX");
-    OLED_Printf(0, 8, 8, 1,  "P:%+3.2f", pitchDeg);
-    OLED_Printf(0, 16, 8, 1, "R:%+3.2f", rollDeg);
-    OLED_Printf(0, 24, 8, 1, "Y:%+3.2f", yawDeg);
+    OLED_Printf(0, 0,  8, 1, "ATTITUDE 6AX");
+	OLED_Printf(0, 8,  8, 1, "P:%+3.2f", pitchDeg);
+	OLED_Printf(0, 16, 8, 1, "R:%+3.2f", rollDeg);
+	OLED_Printf(0, 24, 8, 1, "Y:%+3.2f", yawDeg);
     OLED_Printf(0, 32, 8, 1, "AX:%+6d", MPU_Data.AccX);
     OLED_Printf(0, 40, 8, 1, "AY:%+6d", MPU_Data.AccY);
     OLED_Printf(0, 48, 8, 1, "AZ:%+6d", MPU_Data.AccZ);
     OLED_Printf(0, 56, 8, 1, "T :%+6d", MPU_Data.Temp);
+	
+	
 
     OLED_Refresh();//更新显示=============================================
 
