@@ -1,4 +1,4 @@
-# Keil MDK 缂栬瘧鐢熸垚鏂囦欢
+# Keil MDK 编译生成文件
 *.bak
 *.ddk
 *.edk
@@ -22,5 +22,32 @@
 *.htm
 *.sct
 *.map
+
+# IDE and editor state
+.vs/
+.visualgdb/
+*.user
+*.suo
+*.VC.db
+*.VC.VC.opendb
+
+# Build outputs
+Debug/
+Release/
+build/
+out/
+*.dep
+*.ihex
+*.hex
+*.bin
+*.elf
+*.map
+
+# Backup and temporary files
+*.old
+*.bak
+*.tmp
+*.log
+
 
 
