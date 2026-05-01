@@ -6,7 +6,7 @@ BINARYDIR := Debug
 
 #Additional flags
 PREPROCESSOR_MACROS := DEBUG=1
-INCLUDE_DIRS := 
+INCLUDE_DIRS := EmbeddedProject1/board EmbeddedProject1/module EmbeddedProject1/OLED EmbeddedProject1/uart
 LIBRARY_DIRS := 
 LIBRARY_NAMES := 
 ADDITIONAL_LINKER_INPUTS := 

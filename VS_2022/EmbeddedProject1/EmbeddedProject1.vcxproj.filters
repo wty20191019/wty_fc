@@ -34,6 +34,18 @@
     <Filter Include="Source files\app">
       <UniqueIdentifier>{80d6bc6a-1e9a-44f1-9d4a-45523aa66d63}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source files\board">
+      <UniqueIdentifier>{14512411-99e9-4595-9e07-58701ff74841}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\OLED">
+      <UniqueIdentifier>{c1d962c1-9934-4062-afdf-af7a304e6d37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\uart">
+      <UniqueIdentifier>{526c1497-ff53-4964-83c7-272f40f3deb2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\module">
+      <UniqueIdentifier>{01521914-e55d-4a19-ae54-207cc0c9a359}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="system_stm32f4xx.c">
@@ -351,8 +363,118 @@
     <ClCompile Include="EmbeddedProject1\app\main.c">
       <Filter>Source files\app</Filter>
     </ClCompile>
+    <ClCompile Include="EmbeddedProject1\board\board.c">
+      <Filter>Source files\board</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\OLED\oled.c">
+      <Filter>Source files\OLED</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\uart\DMA_UART1.c">
+      <Filter>Source files\uart</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\uart\DMA_UART2.c">
+      <Filter>Source files\uart</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\uart\DMA_UART3.c">
+      <Filter>Source files\uart</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\uart\DMA_UART4.c">
+      <Filter>Source files\uart</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\uart\DMA_UART5.c">
+      <Filter>Source files\uart</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\uart\DMA_UART6.c">
+      <Filter>Source files\uart</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\Attitude6Axis.c">
+      <Filter>Source files\module</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\esc_calibration.c">
+      <Filter>Source files\module</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\FFCY_NEW_ICM42688.c">
+      <Filter>Source files\module</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\i2c1.c">
+      <Filter>Source files\module</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\pa0_LED_toggle.c">
+      <Filter>Source files\module</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\pwm_tim3.c">
+      <Filter>Source files\module</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\stm32f4xx_it.c">
+      <Filter>Source files\module</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\tim2_scheduler.c">
+      <Filter>Source files\module</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="EmbeddedProject1\board\board.h">
+      <Filter>Source files\board</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\OLED\bmp.h">
+      <Filter>Source files\OLED</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\OLED\oled.h">
+      <Filter>Source files\OLED</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\OLED\oledfont.h">
+      <Filter>Source files\OLED</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\uart\DMA_UART1.h">
+      <Filter>Source files\uart</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\uart\DMA_UART2.h">
+      <Filter>Source files\uart</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\uart\DMA_UART3.h">
+      <Filter>Source files\uart</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\uart\DMA_UART4.h">
+      <Filter>Source files\uart</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\uart\DMA_UART5.h">
+      <Filter>Source files\uart</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\uart\DMA_UART6.h">
+      <Filter>Source files\uart</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\module\Attitude6Axis.h">
+      <Filter>Source files\module</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\module\esc_calibration.h">
+      <Filter>Source files\module</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\module\FFCY_NEW_ICM42688.h">
+      <Filter>Source files\module</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\module\i2c1.h">
+      <Filter>Source files\module</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\module\IMU_FilterPortable.h">
+      <Filter>Source files\module</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\module\pa0_LED_toggle.h">
+      <Filter>Source files\module</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\module\pwm_tim3.h">
+      <Filter>Source files\module</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\module\stm32f4xx_conf.h">
+      <Filter>Source files\module</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\module\stm32f4xx_it.h">
+      <Filter>Source files\module</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\module\tim2_scheduler.h">
+      <Filter>Source files\module</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

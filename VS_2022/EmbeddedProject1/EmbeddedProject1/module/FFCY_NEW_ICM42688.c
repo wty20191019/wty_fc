@@ -1,0 +1,353 @@
+#include "FFCY_NEW_ICM42688.h"
+#include "i2c1.h"
+#include "IMU_FilterPortable.h"  //包含IMU滤波器的头文件
+
+#define ICM42688_ACCEL_XOUT    0x1F//加速度计X轴数据寄存器地址
+#define ICM42688_ACCEL_YOUT    0x21//加速度计Y轴数据寄存器地址
+#define ICM42688_ACCEL_ZOUT    0x23//加速度计Z轴数据寄存器地址
+#define ICM42688_GYRO_XOUT     0x25//陀螺仪X轴数据寄存器地址
+#define ICM42688_GYRO_YOUT     0x27//陀螺仪Y轴数据寄存器地址
+#define ICM42688_GYRO_ZOUT     0x29//陀螺仪Z轴数据寄存器地址
+
+MPU6050_Data MPU_Data;
+
+u32 IIC_Timeout_Cnt = 0;
+u32 IIC_Timeout_Cnt_noTimesClear = 0;
+
+#if ICM42688_GYRO_BIAS_ENABLE
+static float s_gyro_bias_lsb[3] = {0.0f, 0.0f, 0.0f};
+static uint8_t s_gyro_bias_ready = 0U;
+#endif
+
+#if ICM42688_SOFT_FILTER_ENABLE
+static IMU_FilterPortableBiquadCoeff s_acc_lpf_coeff;
+static IMU_FilterPortableBiquadCoeff s_gyro_lpf_coeff;
+static IMU_FilterPortableBiquadState s_acc_lpf_state[3];
+static IMU_FilterPortableBiquadState s_gyro_lpf_state[3];
+#endif
+
+static uint8_t s_device_address = ICM42688_ADDRESS_DEFAULT;
+
+static int16_t icm42688_abs_i16(int16_t v)
+{
+    return (v >= 0) ? v : (int16_t)(-v);
+}
+
+static int16_t icm42688_sub_bias_lsb(int16_t raw, float bias)
+{
+    int32_t bias_i = (bias >= 0.0f) ? (int32_t)(bias + 0.5f) : (int32_t)(bias - 0.5f);
+    int32_t corrected = (int32_t)raw - bias_i;
+
+    if (corrected > 32767)
+    {
+        corrected = 32767;
+    }
+    else if (corrected < -32768)
+    {
+        corrected = -32768;
+    }
+
+    return (int16_t)corrected;
+}
+
+static uint8_t icm42688_acc_norm_is_valid_1g(int16_t ax, int16_t ay, int16_t az)
+{
+    float norm_sq = (float)ax * (float)ax + (float)ay * (float)ay + (float)az * (float)az;
+    float one_g = (float)ICM42688_ACC_1G_LSB;
+    float min_sq = one_g * one_g * ICM42688_ACC_NORM_MIN_RATIO * ICM42688_ACC_NORM_MIN_RATIO;
+    float max_sq = one_g * one_g * ICM42688_ACC_NORM_MAX_RATIO * ICM42688_ACC_NORM_MAX_RATIO;
+
+    return (norm_sq >= min_sq && norm_sq <= max_sq) ? 1U : 0U;
+}
+
+#if ICM42688_GYRO_BIAS_ENABLE
+static void icm42688_calibrate_gyro_bias(void)
+{
+    uint32_t valid = 0U;
+    uint32_t attempt = 0U;
+    int32_t sum_x = 0;
+    int32_t sum_y = 0;
+    int32_t sum_z = 0;
+    const uint32_t max_attempt = ICM42688_GYRO_BIAS_CAL_SAMPLES * 3U;
+
+    s_gyro_bias_lsb[0] = 0.0f;
+    s_gyro_bias_lsb[1] = 0.0f;
+    s_gyro_bias_lsb[2] = 0.0f;
+    s_gyro_bias_ready = 0U;
+
+    while ((valid < ICM42688_GYRO_BIAS_CAL_SAMPLES) && (attempt < max_attempt))
+    {
+        int16_t gx;
+        int16_t gy;
+        int16_t gz;
+        int16_t ax;
+        int16_t ay;
+        int16_t az;
+
+        attempt++;
+        IIC_Timeout_Cnt = 0U;
+
+        gx = GetData_Gyro(ICM42688_GYRO_XOUT);
+        gy = GetData_Gyro(ICM42688_GYRO_YOUT);
+        gz = GetData_Gyro(ICM42688_GYRO_ZOUT);
+        ax = GetData_Acc(ICM42688_ACCEL_XOUT);
+        ay = GetData_Acc(ICM42688_ACCEL_YOUT);
+        az = GetData_Acc(ICM42688_ACCEL_ZOUT);
+
+        if (IIC_Timeout_Cnt != 0U)
+        {
+            continue;
+        }
+
+        if ((icm42688_abs_i16(gx) > ICM42688_GYRO_BIAS_MAX_ABS_LSB) ||
+            (icm42688_abs_i16(gy) > ICM42688_GYRO_BIAS_MAX_ABS_LSB) ||
+            (icm42688_abs_i16(gz) > ICM42688_GYRO_BIAS_MAX_ABS_LSB))
+        {
+            continue;
+        }
+
+        if (icm42688_acc_norm_is_valid_1g(ax, ay, az) == 0U)
+        {
+            continue;
+        }
+
+        sum_x += gx;
+        sum_y += gy;
+        sum_z += gz;
+        valid++;
+    }
+
+    if (valid > 0U)
+    {
+        s_gyro_bias_lsb[0] = (float)sum_x / (float)valid;
+        s_gyro_bias_lsb[1] = (float)sum_y / (float)valid;
+        s_gyro_bias_lsb[2] = (float)sum_z / (float)valid;
+        s_gyro_bias_ready = 1U;
+    }
+}
+#endif
+
+static uint8_t icm42688_normalize_address(uint8_t dev_address)
+{
+    if (dev_address > 0x7FU)
+    {
+        return (uint8_t)(dev_address >> 1);
+    }
+
+    return dev_address;
+}
+
+static ICM42688_Status icm42688_probe_address(uint8_t addr)
+{
+    uint8_t who_am_i = 0;
+
+    s_device_address = addr;
+    if (ICM42688_ReadWhoAmI(&who_am_i) != ICM42688_OK)
+    {
+        return ICM42688_TIMEOUT;
+    }
+
+    return (who_am_i == ICM42688_WHOAMI_VALUE) ? ICM42688_OK : ICM42688_ERROR;
+}
+
+static ICM42688_Status icm42688_write_reg_current(uint8_t reg_addr, uint8_t data)
+{
+    I2C1_Status status = i2c1_mem_write(s_device_address, reg_addr, &data, 1U, 20000U);
+
+    if (status == I2C1_TIMEOUT)
+    {
+        IIC_Timeout_Cnt++;
+        IIC_Timeout_Cnt_noTimesClear++;
+    }
+
+    return (status == I2C1_OK) ? ICM42688_OK : ((status == I2C1_TIMEOUT) ? ICM42688_TIMEOUT : ICM42688_ERROR);
+}
+
+static ICM42688_Status icm42688_read_reg_current(uint8_t reg_addr, uint8_t *data)
+{
+    I2C1_Status status = i2c1_mem_read(s_device_address, reg_addr, data, 1U, 20000U);
+
+    if (status == I2C1_TIMEOUT)
+    {
+        IIC_Timeout_Cnt++;
+        IIC_Timeout_Cnt_noTimesClear++;
+    }
+
+    return (status == I2C1_OK) ? ICM42688_OK : ((status == I2C1_TIMEOUT) ? ICM42688_TIMEOUT : ICM42688_ERROR);
+}
+
+ICM42688_Status ICM42688_ReadWhoAmI(uint8_t *who_am_i)
+{
+    if (who_am_i == 0)
+    {
+        return ICM42688_ERROR;
+    }
+
+    return icm42688_read_reg_current(ICM42688_WHO_AM_I, who_am_i);
+}
+
+void ICM42688_WriteReg(uint8_t DevAddress, uint8_t RegAddress, uint8_t Data)
+{
+    I2C1_Status status = i2c1_mem_write(icm42688_normalize_address(DevAddress), RegAddress, &Data, 1U, 20000U);
+    if (status == I2C1_TIMEOUT)
+    {
+        IIC_Timeout_Cnt++;
+        IIC_Timeout_Cnt_noTimesClear++;
+    }
+}
+
+uint8_t ICM42688_ReadReg(uint8_t DevAddress, uint8_t RegAddress)
+{
+    uint8_t data = 0;
+    I2C1_Status status = i2c1_mem_read(icm42688_normalize_address(DevAddress), RegAddress, &data, 1U, 20000U);
+    if (status == I2C1_TIMEOUT)
+    {
+        IIC_Timeout_Cnt++;
+        IIC_Timeout_Cnt_noTimesClear++;
+    }
+
+    return data;
+}
+
+int16_t GetData_Gyro(uint8_t REG_Address)
+{
+    uint8_t hd = ICM42688_ReadReg(s_device_address, REG_Address);
+    uint8_t ld = ICM42688_ReadReg(s_device_address, (uint8_t)(REG_Address + 1U));
+    return (int16_t)(((uint16_t)hd << 8) | ld);
+}
+
+int16_t GetData_Acc(uint8_t REG_Address)
+{
+    uint8_t hd = ICM42688_ReadReg(s_device_address, REG_Address);
+    uint8_t ld = ICM42688_ReadReg(s_device_address, (uint8_t)(REG_Address + 1U));
+    return (int16_t)(((uint16_t)hd << 8) | ld);
+}
+
+void ImuSensor_ReadReg_BuffAll(void)
+{
+    int16_t imu_sensor_buff[6];
+
+    IIC_Timeout_Cnt = 0;
+
+    imu_sensor_buff[0] = GetData_Gyro(ICM42688_GYRO_XOUT);
+    imu_sensor_buff[1] = GetData_Gyro(ICM42688_GYRO_YOUT);
+    imu_sensor_buff[2] = GetData_Gyro(ICM42688_GYRO_ZOUT);
+    imu_sensor_buff[3] = GetData_Acc(ICM42688_ACCEL_XOUT);
+    imu_sensor_buff[4] = GetData_Acc(ICM42688_ACCEL_YOUT);
+    imu_sensor_buff[5] = GetData_Acc(ICM42688_ACCEL_ZOUT);
+
+    if (IIC_Timeout_Cnt == 0)
+    {
+        MPU_Data.GyroX = imu_sensor_buff[0];
+        MPU_Data.GyroY = imu_sensor_buff[1];
+        MPU_Data.GyroZ = imu_sensor_buff[2];
+        MPU_Data.AccX = imu_sensor_buff[3];
+        MPU_Data.AccY = imu_sensor_buff[4];
+        MPU_Data.AccZ = imu_sensor_buff[5];
+        MPU_Data.Temp = (int16_t)(((uint16_t)ICM42688_ReadReg(s_device_address, ICM42688_TEMP_DATA1) << 8) |
+                                  ICM42688_ReadReg(s_device_address, (uint8_t)(ICM42688_TEMP_DATA1 + 1U)));
+
+#if ICM42688_GYRO_BIAS_ENABLE
+        if (s_gyro_bias_ready != 0U)
+        {
+            MPU_Data.GyroX = icm42688_sub_bias_lsb(MPU_Data.GyroX, s_gyro_bias_lsb[0]);
+            MPU_Data.GyroY = icm42688_sub_bias_lsb(MPU_Data.GyroY, s_gyro_bias_lsb[1]);
+            MPU_Data.GyroZ = icm42688_sub_bias_lsb(MPU_Data.GyroZ, s_gyro_bias_lsb[2]);
+        }
+
+#if ICM42688_GYRO_BIAS_TRACK_ENABLE
+        if ((icm42688_abs_i16(MPU_Data.GyroX) < ICM42688_GYRO_STILL_THRESH_LSB) &&
+            (icm42688_abs_i16(MPU_Data.GyroY) < ICM42688_GYRO_STILL_THRESH_LSB) &&
+            (icm42688_abs_i16(MPU_Data.GyroZ) < ICM42688_GYRO_STILL_THRESH_LSB) &&
+            (icm42688_acc_norm_is_valid_1g(MPU_Data.AccX, MPU_Data.AccY, MPU_Data.AccZ) != 0U))
+        {
+            s_gyro_bias_lsb[0] += ICM42688_GYRO_BIAS_TRACK_ALPHA * ((float)imu_sensor_buff[0] - s_gyro_bias_lsb[0]);
+            s_gyro_bias_lsb[1] += ICM42688_GYRO_BIAS_TRACK_ALPHA * ((float)imu_sensor_buff[1] - s_gyro_bias_lsb[1]);
+            s_gyro_bias_lsb[2] += ICM42688_GYRO_BIAS_TRACK_ALPHA * ((float)imu_sensor_buff[2] - s_gyro_bias_lsb[2]);
+        }
+#endif
+#endif
+
+#if ICM42688_SOFT_FILTER_ENABLE
+        MPU_Data.GyroX = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.GyroX, &s_gyro_lpf_state[0], &s_gyro_lpf_coeff);
+        MPU_Data.GyroY = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.GyroY, &s_gyro_lpf_state[1], &s_gyro_lpf_coeff);
+        MPU_Data.GyroZ = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.GyroZ, &s_gyro_lpf_state[2], &s_gyro_lpf_coeff);
+        MPU_Data.AccX = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.AccX, &s_acc_lpf_state[0], &s_acc_lpf_coeff);
+        MPU_Data.AccY = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.AccY, &s_acc_lpf_state[1], &s_acc_lpf_coeff);
+        MPU_Data.AccZ = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.AccZ, &s_acc_lpf_state[2], &s_acc_lpf_coeff);
+#endif
+    }
+}
+
+ICM42688_Status ICM42688_Init(void)
+{
+    i2c1_init(400000U);
+
+    if (icm42688_probe_address(ICM42688_ADDRESS_DEFAULT) != ICM42688_OK)
+    {
+        if (icm42688_probe_address(ICM42688_ADDRESS_ALT) != ICM42688_OK)
+        {
+            return ICM42688_TIMEOUT;
+        }
+    }
+
+    if (icm42688_write_reg_current(ICM42688_REG_BANK_SEL, 0x00) != ICM42688_OK)
+    {
+        return ICM42688_TIMEOUT;
+    }
+
+    if (icm42688_write_reg_current(ICM42688_PWR_MGMT0, 0x0F) != ICM42688_OK)
+    {
+        return ICM42688_TIMEOUT;
+    }
+
+    if (icm42688_write_reg_current(ICM42688_ACCEL_CONFIG0, (uint8_t)((ICM42688_ACC_RNG << 5) | ICM42688_ACC_ODR)) != ICM42688_OK)
+    {
+        return ICM42688_TIMEOUT;
+    }
+
+    if (icm42688_write_reg_current(ICM42688_GYRO_CONFIG0, (uint8_t)((ICM42688_GYRO_RNG << 5) | ICM42688_GYRO_ODR)) != ICM42688_OK)
+    {
+        return ICM42688_TIMEOUT;
+    }
+
+    if (icm42688_write_reg_current(ICM42688_GYRO_ACCEL_CONFIG0, ICM42688_HW_FILTER_CFG) != ICM42688_OK)//设置陀螺仪和加速度计的数字低通滤波器
+    {
+        return ICM42688_TIMEOUT;
+    }
+
+    if (icm42688_write_reg_current(ICM42688_INT_CONFIG, 0x1B) != ICM42688_OK)
+    {
+        return ICM42688_TIMEOUT;
+    }
+
+    return ICM42688_OK;
+}
+
+void ImuSensor_Init(void)
+{
+    while (ICM42688_Init() != ICM42688_OK)
+    {
+    }
+
+#if ICM42688_GYRO_BIAS_ENABLE
+    icm42688_calibrate_gyro_bias();
+#endif
+
+#if ICM42688_SOFT_FILTER_ENABLE
+    IMU_FilterPortable_DesignLP2(ICM42688_SOFT_FILTER_SAMPLE_HZ, ICM42688_SOFT_FILTER_CUTOFF_HZ, &s_acc_lpf_coeff);
+    IMU_FilterPortable_DesignLP2(ICM42688_SOFT_FILTER_SAMPLE_HZ, ICM42688_SOFT_FILTER_CUTOFF_HZ, &s_gyro_lpf_coeff);
+
+    IMU_FilterPortable_Init(&s_acc_lpf_state[0], ICM42688_SOFT_FILTER_WARMUP_COUNT);
+    IMU_FilterPortable_Init(&s_acc_lpf_state[1], ICM42688_SOFT_FILTER_WARMUP_COUNT);
+    IMU_FilterPortable_Init(&s_acc_lpf_state[2], ICM42688_SOFT_FILTER_WARMUP_COUNT);
+    IMU_FilterPortable_Init(&s_gyro_lpf_state[0], ICM42688_SOFT_FILTER_WARMUP_COUNT);
+    IMU_FilterPortable_Init(&s_gyro_lpf_state[1], ICM42688_SOFT_FILTER_WARMUP_COUNT);
+    IMU_FilterPortable_Init(&s_gyro_lpf_state[2], ICM42688_SOFT_FILTER_WARMUP_COUNT);
+#endif
+}
+
+void GET_MPU_DATA(void)
+{
+    ImuSensor_ReadReg_BuffAll();
+}

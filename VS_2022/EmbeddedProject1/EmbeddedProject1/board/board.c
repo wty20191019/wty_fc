@@ -20,18 +20,18 @@ void board_init(void)
 #endif
 
 	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK);
-		SysTick->LOAD=0xFFFF; // Çå¿Õ¼ÆÊıÆ÷
-	SysTick->CTRL|=SysTick_CTRL_ENABLE_Msk; // ¿ªÊ¼¼ÆÊı
+		SysTick->LOAD=0xFFFF; // æ¸…ç©ºè®¡æ•°å™¨
+	SysTick->CTRL|=SysTick_CTRL_ENABLE_Msk; // å¼€å§‹è®¡æ•°
 	
 //	RCC_ClocksTypeDef rcc;
-//	RCC_GetClocksFreq(&rcc);//¶ÁÈ¡ÏµÍ³Ê±ÖÓÆµÂÊ
+//	RCC_GetClocksFreq(&rcc);//è¯»å–ç³»ç»Ÿæ—¶é’Ÿé¢‘ç‡
 
 }
 
 /**
- -  @brief  ÓÃÄÚºËµÄ systick ÊµÏÖµÄÎ¢ÃîÑÓÊ±
+ -  @brief  ç”¨å†…æ ¸çš„ systick å®ç°çš„å¾®å¦™å»¶æ—¶
  -  @note   None
- -  @param  _us:ÒªÑÓÊ±µÄusÊı
+ -  @param  _us:è¦å»¶æ—¶çš„usæ•°
  -  @retval None
 */
 void systick_delay_us(uint32_t _us)
@@ -39,15 +39,15 @@ void systick_delay_us(uint32_t _us)
     uint32_t ticks;
     uint32_t told, tnow, tcnt = 0;
 
-    // ¼ÆËãĞèÒªµÄÊ±ÖÓÊı = ÑÓ³ÙÎ¢ÃëÊı * Ã¿Î¢ÃëµÄÊ±ÖÓÊı
+    // è®¡ç®—éœ€è¦çš„æ—¶é’Ÿæ•° = å»¶è¿Ÿå¾®ç§’æ•° * æ¯å¾®ç§’çš„æ—¶é’Ÿæ•°
     ticks = _us * (SystemCoreClock / 1000000);
 
-    // »ñÈ¡µ±Ç°µÄSysTickÖµ
+    // è·å–å½“å‰çš„SysTickå€¼
     told = SysTick->VAL;
 
     while (1)
     {
-        // ÖØ¸´Ë¢ĞÂ»ñÈ¡µ±Ç°µÄSysTickÖµ
+        // é‡å¤åˆ·æ–°è·å–å½“å‰çš„SysTickå€¼
         tnow = SysTick->VAL;
 
         if (tnow != told)
@@ -59,7 +59,7 @@ void systick_delay_us(uint32_t _us)
 
             told = tnow;
 
-            // Èç¹û´ïµ½ÁËĞèÒªµÄÊ±ÖÓÊı£¬¾ÍÍË³öÑ­»·
+            // å¦‚æœè¾¾åˆ°äº†éœ€è¦çš„æ—¶é’Ÿæ•°ï¼Œå°±é€€å‡ºå¾ªç¯
             if (tcnt >= ticks)
                 break;
         }
@@ -67,9 +67,9 @@ void systick_delay_us(uint32_t _us)
 }
 
 /**
- -  @brief  µ÷ÓÃÓÃÄÚºËµÄ systick ÊµÏÖµÄºÁÃëÑÓÊ±
+ -  @brief  è°ƒç”¨ç”¨å†…æ ¸çš„ systick å®ç°çš„æ¯«ç§’å»¶æ—¶
  -  @note   None
- -  @param  _ms:ÒªÑÓÊ±µÄmsÊı
+ -  @param  _ms:è¦å»¶æ—¶çš„msæ•°
  -  @retval None
 */
 void systick_delay_ms(uint32_t _ms) 

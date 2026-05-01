@@ -37,7 +37,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <NMakeIncludeSearchPath>.;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0\arm-eabi\thumb\cortex_m4;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0\backward;$(TOOLCHAIN_ROOT)\lib\gcc\arm-eabi\7.2.0\include;$(TOOLCHAIN_ROOT)\lib\gcc\arm-eabi\7.2.0\include-fixed;$(TOOLCHAIN_ROOT)\arm-eabi\sys-include;$(TOOLCHAIN_ROOT)\arm-eabi\include;$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_StdPeriph_Driver\inc;$(BSP_ROOT)\STM32F4xxxx\CMSIS_StdPeriph\Device\ST\STM32F4xx\Include;$(BSP_ROOT)\STM32F4xxxx\CMSIS_StdPeriph\Include;$(BSP_ROOT)\STM32F4xxxx\CMSIS_StdPeriph\RTOS\Template;EmbeddedProject1\EmbeddedProject1\app;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>.;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0\arm-eabi\thumb\cortex_m4;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0\backward;$(TOOLCHAIN_ROOT)\lib\gcc\arm-eabi\7.2.0\include;$(TOOLCHAIN_ROOT)\lib\gcc\arm-eabi\7.2.0\include-fixed;$(TOOLCHAIN_ROOT)\arm-eabi\sys-include;$(TOOLCHAIN_ROOT)\arm-eabi\include;$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_StdPeriph_Driver\inc;$(BSP_ROOT)\STM32F4xxxx\CMSIS_StdPeriph\Device\ST\STM32F4xx\Include;$(BSP_ROOT)\STM32F4xxxx\CMSIS_StdPeriph\Include;$(BSP_ROOT)\STM32F4xxxx\CMSIS_StdPeriph\RTOS\Template;EmbeddedProject1\EmbeddedProject1\app;EmbeddedProject1\EmbeddedProject1\board;EmbeddedProject1\EmbeddedProject1\OLED;EmbeddedProject1\EmbeddedProject1\uart;EmbeddedProject1\EmbeddedProject1\module;EmbeddedProject1\board;EmbeddedProject1\module;EmbeddedProject1\OLED;EmbeddedProject1\uart;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
     <NMakeForcedIncludes>$(ProjectDir)\gcc_Debug.h;$(VISUALGDB_DIR)\gcc_compat.h;$(BSP_ROOT)\stm32_compat.h;$(NMakeForcedIncludes)</NMakeForcedIncludes>
     <NMakeBuildCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /build "$(ProjectPath)" "/solution:$(SolutionPath)"  "/config:$(Configuration)" "/platform:$(Platform)"</NMakeBuildCommandLine>
     <NMakeCleanCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /clean "$(ProjectPath)" "/solution:$(SolutionPath)"  "/config:$(Configuration)" "/platform:$(Platform)"</NMakeCleanCommandLine>
@@ -70,7 +70,43 @@
   <ItemGroup />
   <ItemGroup>
     <ClCompile Include="EmbeddedProject1\app\main.c" />
+    <ClCompile Include="EmbeddedProject1\board\board.c" />
+    <ClCompile Include="EmbeddedProject1\module\Attitude6Axis.c" />
+    <ClCompile Include="EmbeddedProject1\module\esc_calibration.c" />
+    <ClCompile Include="EmbeddedProject1\module\FFCY_NEW_ICM42688.c" />
+    <ClCompile Include="EmbeddedProject1\module\i2c1.c" />
+    <ClCompile Include="EmbeddedProject1\module\pa0_LED_toggle.c" />
+    <ClCompile Include="EmbeddedProject1\module\pwm_tim3.c" />
+    <ClCompile Include="EmbeddedProject1\module\stm32f4xx_it.c" />
+    <ClCompile Include="EmbeddedProject1\module\tim2_scheduler.c" />
+    <ClCompile Include="EmbeddedProject1\OLED\oled.c" />
+    <ClCompile Include="EmbeddedProject1\uart\DMA_UART1.c" />
+    <ClCompile Include="EmbeddedProject1\uart\DMA_UART2.c" />
+    <ClCompile Include="EmbeddedProject1\uart\DMA_UART3.c" />
+    <ClCompile Include="EmbeddedProject1\uart\DMA_UART4.c" />
+    <ClCompile Include="EmbeddedProject1\uart\DMA_UART5.c" />
+    <ClCompile Include="EmbeddedProject1\uart\DMA_UART6.c" />
     <ClCompile Include="system_stm32f4xx.c" />
+    <ClInclude Include="EmbeddedProject1\board\board.h" />
+    <ClInclude Include="EmbeddedProject1\module\Attitude6Axis.h" />
+    <ClInclude Include="EmbeddedProject1\module\esc_calibration.h" />
+    <ClInclude Include="EmbeddedProject1\module\FFCY_NEW_ICM42688.h" />
+    <ClInclude Include="EmbeddedProject1\module\i2c1.h" />
+    <ClInclude Include="EmbeddedProject1\module\IMU_FilterPortable.h" />
+    <ClInclude Include="EmbeddedProject1\module\pa0_LED_toggle.h" />
+    <ClInclude Include="EmbeddedProject1\module\pwm_tim3.h" />
+    <ClInclude Include="EmbeddedProject1\module\stm32f4xx_conf.h" />
+    <ClInclude Include="EmbeddedProject1\module\stm32f4xx_it.h" />
+    <ClInclude Include="EmbeddedProject1\module\tim2_scheduler.h" />
+    <ClInclude Include="EmbeddedProject1\OLED\bmp.h" />
+    <ClInclude Include="EmbeddedProject1\OLED\oled.h" />
+    <ClInclude Include="EmbeddedProject1\OLED\oledfont.h" />
+    <ClInclude Include="EmbeddedProject1\uart\DMA_UART1.h" />
+    <ClInclude Include="EmbeddedProject1\uart\DMA_UART2.h" />
+    <ClInclude Include="EmbeddedProject1\uart\DMA_UART3.h" />
+    <ClInclude Include="EmbeddedProject1\uart\DMA_UART4.h" />
+    <ClInclude Include="EmbeddedProject1\uart\DMA_UART5.h" />
+    <ClInclude Include="EmbeddedProject1\uart\DMA_UART6.h" />
     <None Include="stm32.mak" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\StartupFiles\startup_stm32f405xx.c" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_StdPeriph_Driver\src\misc.c" />

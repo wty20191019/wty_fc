@@ -1,3 +1,4 @@
+
 #include "board.h"
 
 #include "DMA_UART1.h"
@@ -220,10 +221,6 @@ void Task_ESC_Control(void)  //电调控制任务
         {
             ESC_SetChannelsUs(1500U,1500U,1500U,1500U);
         }
-        
-
-
-
     }
 }
 
