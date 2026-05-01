@@ -50,11 +50,11 @@ void PWM_Init(void)
 }
 
 /***********************************************************************************
-º¯ÊıÃû£ºvoid PWM_Set(const u16 pwm1, const u16 pwm2, const u16 pwm3, const u16 pwm4 ,const uint16_t pwm5, const uint16_t pwm6)
-ËµÃ÷£ºPWMÊä³öÉèÖÃ
-Èë¿Ú£ºËÄ¸öÍ¨µÀµÄÖµ
-³ö¿Ú£ºÎŞ
-±¸×¢£ºPWMÖÜÆÚÎª20ms£¬µçµ÷³£ÓÃÓĞĞ§Âö¿íÎª1ms~2ms
+å‡½æ•°åï¼švoid PWM_Set(const u16 pwm1, const u16 pwm2, const u16 pwm3, const u16 pwm4 ,const uint16_t pwm5, const uint16_t pwm6)
+è¯´æ˜ï¼šPWMè¾“å‡ºè®¾ç½®
+å…¥å£ï¼šå››ä¸ªé€šé“çš„å€¼
+å‡ºå£ï¼šæ— 
+å¤‡æ³¨ï¼šPWMå‘¨æœŸä¸º20msï¼Œç”µè°ƒå¸¸ç”¨æœ‰æ•ˆè„‰å®½ä¸º1ms~2ms
 ************************************************************************************/
 void PWM_Set(const uint16_t pwm1, const uint16_t pwm2,const uint16_t pwm3, const uint16_t pwm4)
 {

@@ -3,10 +3,10 @@
 #include "board.h"
 #include "pwm_tim3.h"
 
-#define ESC_PULSE_MIN_US            (1000U)     //1000U¶ÔÓ¦1ms£¬µçµ÷³£ÓÃµÄ×îĞ¡ÓĞĞ§Âö¿íÖµ£¬µ¥Î»Î¢Ãë
-#define ESC_PULSE_MAX_US            (2000U)     //2000U¶ÔÓ¦2ms£¬µçµ÷³£ÓÃµÄ×î´óÓĞĞ§Âö¿íÖµ£¬µ¥Î»Î¢Ãë
+#define ESC_PULSE_MIN_US            (1000U)     //1000Uå¯¹åº”1msï¼Œç”µè°ƒå¸¸ç”¨çš„æœ€å°æœ‰æ•ˆè„‰å®½å€¼ï¼Œå•ä½å¾®ç§’
+#define ESC_PULSE_MAX_US            (2000U)     //2000Uå¯¹åº”2msï¼Œç”µè°ƒå¸¸ç”¨çš„æœ€å¤§æœ‰æ•ˆè„‰å®½å€¼ï¼Œå•ä½å¾®ç§’
 
-static uint16_t ESC_ClampPulse(uint16_t pulse_us)  //½«ÊäÈëµÄÂö¿íÖµÏŞÖÆÔÚESCÖ§³ÖµÄ·¶Î§ÄÚ£¬²¢ÇÒ²»³¬¹ıPWM¶¨Ê±Æ÷µÄARRÖµ
+static uint16_t ESC_ClampPulse(uint16_t pulse_us)  //å°†è¾“å…¥çš„è„‰å®½å€¼é™åˆ¶åœ¨ESCæ”¯æŒçš„èŒƒå›´å†…ï¼Œå¹¶ä¸”ä¸è¶…è¿‡PWMå®šæ—¶å™¨çš„ARRå€¼
 {
     if (pulse_us < ESC_PULSE_MIN_US)
     {
@@ -37,7 +37,7 @@ void ESC_SetChannelsUs(uint16_t channel1_us,
             ESC_ClampPulse(channel4_us));
 }
 
-void ESC_SetAllUs(uint16_t pulse_us)//½«ËùÓĞÍ¨µÀÉèÖÃÎªÏàÍ¬µÄÂö¿íÖµ£¬ÊÊÓÃÓÚ½âËøºÍĞ£×¼µÈ³¡¾°
+void ESC_SetAllUs(uint16_t pulse_us)//å°†æ‰€æœ‰é€šé“è®¾ç½®ä¸ºç›¸åŒçš„è„‰å®½å€¼ï¼Œé€‚ç”¨äºè§£é”å’Œæ ¡å‡†ç­‰åœºæ™¯
 {
     pulse_us = ESC_ClampPulse(pulse_us);
     PWM_Set(pulse_us, pulse_us, pulse_us, pulse_us);

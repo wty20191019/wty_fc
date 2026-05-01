@@ -1,13 +1,13 @@
 #include "FFCY_NEW_ICM42688.h"
 #include "i2c1.h"
-#include "IMU_FilterPortable.h"  //����IMU�˲�����ͷ�ļ�
+#include "IMU_FilterPortable.h"  //包含IMU滤波器的头文件
 
-#define ICM42688_ACCEL_XOUT    0x1F//���ٶȼ�X�����ݼĴ�����ַ
-#define ICM42688_ACCEL_YOUT    0x21//���ٶȼ�Y�����ݼĴ�����ַ
-#define ICM42688_ACCEL_ZOUT    0x23//���ٶȼ�Z�����ݼĴ�����ַ
-#define ICM42688_GYRO_XOUT     0x25//������X�����ݼĴ�����ַ
-#define ICM42688_GYRO_YOUT     0x27//������Y�����ݼĴ�����ַ
-#define ICM42688_GYRO_ZOUT     0x29//������Z�����ݼĴ�����ַ
+#define ICM42688_ACCEL_XOUT    0x1F//加速度计X轴数据寄存器地址
+#define ICM42688_ACCEL_YOUT    0x21//加速度计Y轴数据寄存器地址
+#define ICM42688_ACCEL_ZOUT    0x23//加速度计Z轴数据寄存器地址
+#define ICM42688_GYRO_XOUT     0x25//陀螺仪X轴数据寄存器地址
+#define ICM42688_GYRO_YOUT     0x27//陀螺仪Y轴数据寄存器地址
+#define ICM42688_GYRO_ZOUT     0x29//陀螺仪Z轴数据寄存器地址
 
 MPU6050_Data MPU_Data;
 
@@ -311,7 +311,7 @@ ICM42688_Status ICM42688_Init(void)
         return ICM42688_TIMEOUT;
     }
 
-    if (icm42688_write_reg_current(ICM42688_GYRO_ACCEL_CONFIG0, ICM42688_HW_FILTER_CFG) != ICM42688_OK)//���������Ǻͼ��ٶȼƵ����ֵ�ͨ�˲���
+    if (icm42688_write_reg_current(ICM42688_GYRO_ACCEL_CONFIG0, ICM42688_HW_FILTER_CFG) != ICM42688_OK)//设置陀螺仪和加速度计的数字低通滤波器
     {
         return ICM42688_TIMEOUT;
     }

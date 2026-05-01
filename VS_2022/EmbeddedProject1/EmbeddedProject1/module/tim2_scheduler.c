@@ -114,7 +114,7 @@ uint32_t SCH_GetTick(void)
 
 void SCH_Dispatch(void)
 {
-    /* ������TIM2�ж�����ɣ������ӿ����ڼ��ݾɵ��á� */
+    /* 调度在TIM2中断中完成，保留接口用于兼容旧调用。 */
 }
 
 void SCH_Delay(uint32_t ms)

@@ -1,4 +1,3 @@
-
 #include "board.h"
 
 #include "DMA_UART1.h"
@@ -127,11 +126,11 @@ static void Task_Uart1Echo(void)
                 continue;
             }
 
-            if (ch == (uint8_t)']')
-            {
-                char packetCopy[UART1_PACKET_BUF_SIZE];
-                unsigned int sliderId;
-                unsigned int sliderValue;
+			if (ch == (uint8_t)']')
+			{
+				char packetCopy[UART1_PACKET_BUF_SIZE];
+				unsigned int sliderId;
+				unsigned int sliderValue;
 
                 g_uart1PacketActive = 0U;
 
@@ -183,15 +182,15 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
     OLED_Clear();//清屏====================================================
 
     OLED_Printf(0, 0,  8, 1, "ATTITUDE 6AX");
-	OLED_Printf(0, 8,  8, 1, "P:%+3.2f", pitchDeg);
-	OLED_Printf(0, 16, 8, 1, "R:%+3.2f", rollDeg);
-	OLED_Printf(0, 24, 8, 1, "Y:%+3.2f", yawDeg);
+    OLED_Printf(0, 8,  8, 1, "P:");             OLED_ShowFloatNum(12, 8, pitchDeg, 3, 2, 8, 1);
+    OLED_Printf(0, 16, 8, 1, "R:");             OLED_ShowFloatNum(12, 16, rollDeg, 3, 2, 8, 1);  
+	OLED_Printf(0, 24, 8, 1, "Y:");             OLED_ShowFloatNum(12, 24, yawDeg, 3, 2, 8, 1);
     OLED_Printf(0, 32, 8, 1, "AX:%+6d", MPU_Data.AccX);
     OLED_Printf(0, 40, 8, 1, "AY:%+6d", MPU_Data.AccY);
     OLED_Printf(0, 48, 8, 1, "AZ:%+6d", MPU_Data.AccZ);
     OLED_Printf(0, 56, 8, 1, "T :%+6d", MPU_Data.Temp);
-	
-	
+    
+    
 
     OLED_Refresh();//更新显示=============================================
 
@@ -271,7 +270,7 @@ int main(void)
 
 
     SCH_Init();
-	//调度器==========================================================================
+    //调度器==========================================================================
     SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS		, 7            );
     SCH_AddTask(PA0_LED_Toggle          , 50U                       ,14            );
     //SCH_AddTask(Task_ESC_Control        , 20U                       ,15            );
@@ -285,6 +284,4 @@ int main(void)
 
 
 }
-
-
 

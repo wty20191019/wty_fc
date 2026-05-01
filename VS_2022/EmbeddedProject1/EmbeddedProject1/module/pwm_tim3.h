@@ -4,7 +4,7 @@
 #include "stm32f4xx.h"
 
 #define PWM_TIM3_PSC           (84U - 1U)
-#define PWM_TIM3_ARR           (20000U - 1U)//ARR值设置为19999对应20ms
+#define PWM_TIM3_ARR           (20000U - 1U)//ARR鍊艰缃负19999瀵瑰簲20ms
 void PWM_Init(void);
 
 void PWM_Set(   const uint16_t pwm1, 

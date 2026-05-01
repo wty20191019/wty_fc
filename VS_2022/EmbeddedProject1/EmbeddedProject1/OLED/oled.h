@@ -16,7 +16,7 @@
 #define u32 uint32_t
 #endif
 
-//-----------------OLED¶Ë¿Ú¶¨Òå---------------- 
+//-----------------OLEDç«¯å£å®šä¹‰---------------- 
 
 #define OLED_SCL_Clr() GPIO_ResetBits(GPIOC,GPIO_Pin_0)//SCL
 #define OLED_SCL_Set() GPIO_SetBits(GPIOC,GPIO_Pin_0)
@@ -28,8 +28,8 @@
 //#define OLED_RES_Set() GPIO_SetBits(GPIOD,GPIO_Pin_4)
 
 
-#define OLED_CMD  0	//Ğ´ÃüÁî
-#define OLED_DATA 1	//Ğ´Êı¾İ
+#define OLED_CMD  0	//å†™å‘½ä»¤
+#define OLED_DATA 1	//å†™æ•°æ®
 
 void OLED_ClearPoint(u8 x,u8 y);
 void OLED_ColorTurn(u8 i);
@@ -42,21 +42,25 @@ void OLED_WR_Byte(u8 dat,u8 mode);
 void OLED_DisPlay_On(void);
 void OLED_DisPlay_Off(void);
 
-void OLED_Refresh(void);//¸üĞÂÏÔ´æµ½OLED
+void OLED_Refresh(void);//æ›´æ–°æ˜¾å­˜åˆ°OLED
 
-void OLED_Clear(void);//ÇåÆÁº¯Êı
+void OLED_Clear(void);//æ¸…å±å‡½æ•°
 
-void OLED_DrawPoint(u8 x,u8 y,u8 t);//»­µã
-void OLED_DrawLine(u8 x1,u8 y1,u8 x2,u8 y2,u8 mode);//»­Ïß
-void OLED_DrawCircle(u8 x,u8 y,u8 r);//»­Ô²
-void OLED_ShowChar(u8 x,u8 y,u8 chr,u8 size1,u8 mode);//ÏÔÊ¾Ò»¸ö×Ö·û
-void OLED_ShowChar6x8(u8 x,u8 y,u8 chr,u8 mode);//ÏÔÊ¾6x8×ÖÌå
-void OLED_ShowString(u8 x,u8 y,u8 *chr,u8 size1,u8 mode);//ÏÔÊ¾×Ö·û´®
-void OLED_Printf(u8 x,u8 y,u8 size1,u8 mode,const char *fmt,...);//¸ñÊ½»¯ÏÔÊ¾×Ö·û´®
-void OLED_ShowNum(u8 x,u8 y,u32 num,u8 len,u8 size1,u8 mode);//ÏÔÊ¾Êı×Ö
-void OLED_ShowChinese(u8 x,u8 y,u8 num,u8 size1,u8 mode);//ÏÔÊ¾ºº×Ö
-void OLED_ScrollDisplay(u8 num,u8 space,u8 mode);//¹ö¶¯ÏÔÊ¾
-void OLED_ShowPicture(u8 x,u8 y,u8 sizex,u8 sizey,u8 BMP[],u8 mode);//ÏÔÊ¾Í¼Æ¬
+void OLED_DrawPoint(u8 x,u8 y,u8 t);//ç”»ç‚¹
+void OLED_DrawLine(u8 x1,u8 y1,u8 x2,u8 y2,u8 mode);//ç”»çº¿
+void OLED_DrawCircle(u8 x,u8 y,u8 r);//ç”»åœ†
+void OLED_ShowChar(u8 x,u8 y,u8 chr,u8 size1,u8 mode);//æ˜¾ç¤ºä¸€ä¸ªå­—ç¬¦
+void OLED_ShowChar6x8(u8 x,u8 y,u8 chr,u8 mode);//æ˜¾ç¤º6x8å­—ä½“
+void OLED_ShowString(u8 x,u8 y,u8 *chr,u8 size1,u8 mode);//æ˜¾ç¤ºå­—ç¬¦ä¸²
+void OLED_Printf(u8 x,u8 y,u8 size1,u8 mode,const char *fmt,...);//æ ¼å¼åŒ–æ˜¾ç¤ºå­—ç¬¦ä¸²
+void OLED_ShowNum(u8 x,u8 y,u32 num,u8 len,u8 size1,u8 mode);//æ˜¾ç¤ºæ•°å­—
+void OLED_ShowSignedNum(u8 x,u8 y,int32_t num,u8 len,u8 size1,u8 mode);//æ˜¾ç¤ºå¸¦ç¬¦å·æ•°å­—
+void OLED_ShowHexNum(u8 x,u8 y,u32 num,u8 len,u8 size1,u8 mode);//æ˜¾ç¤ºåå…­è¿›åˆ¶æ•°å­—
+void OLED_ShowBinNum(u8 x,u8 y,u32 num,u8 len,u8 size1,u8 mode);//æ˜¾ç¤ºäºŒè¿›åˆ¶æ•°å­—
+void OLED_ShowFloatNum(u8 x,u8 y,double num,u8 intLen,u8 fraLen,u8 size1,u8 mode);//æ˜¾ç¤ºæµ®ç‚¹æ•°
+void OLED_ShowChinese(u8 x,u8 y,u8 num,u8 size1,u8 mode);//æ˜¾ç¤ºæ±‰å­—
+void OLED_ScrollDisplay(u8 num,u8 space,u8 mode);//æ»šåŠ¨æ˜¾ç¤º
+void OLED_ShowPicture(u8 x,u8 y,u8 sizex,u8 sizey,u8 BMP[],u8 mode);//æ˜¾ç¤ºå›¾ç‰‡
 void OLED_Init(void);
 
 #endif

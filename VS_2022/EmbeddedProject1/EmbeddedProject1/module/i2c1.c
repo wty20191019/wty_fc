@@ -6,7 +6,7 @@
 #define I2C1_SDA_PIN           GPIO_Pin_7
 
 #define I2C1_PERIPH_CLK        RCC_APB1Periph_I2C1
-#define I2C1_TIMEOUT_DEFAULT   20000U//д╛хоI2Cм╗пеЁ╛й╠й╠╪Дё╛╣╔н╩╨ацК
+#define I2C1_TIMEOUT_DEFAULT   20000U//И╩≤Х╝╓I2CИ─ Д©║Х╤┘Ф≈╤Ф≈╤И≈╢О╪▄Е█∙Д╫█Ф╞╚Г╖▓
 
 static uint32_t i2c1_timeout_value(uint32_t timeout)
 {

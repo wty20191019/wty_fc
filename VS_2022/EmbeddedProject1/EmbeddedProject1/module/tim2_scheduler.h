@@ -5,17 +5,17 @@
 
 typedef void (*TaskFunc)(void);
 
-#define MAX_TASKS       (16U) // ×î´óÈÎÎñÊý
+#define MAX_TASKS       (16U) // æœ€å¤§ä»»åŠ¡æ•°
 
-#define PRIORITY_HIGH   (0U)  // ×î¸ßÓÅÏÈ¼¶
-#define PRIORITY_MAX    (14U) // ×îµÍÓÅÏÈ¼¶
+#define PRIORITY_HIGH   (0U)  // æœ€é«˜ä¼˜å…ˆçº§
+#define PRIORITY_MAX    (14U) // æœ€ä½Žä¼˜å…ˆçº§
 
 void SCH_Init(void);
-void SCH_AddTask(TaskFunc func, uint32_t period, uint8_t priority);// Ìí¼ÓÈÎÎñµ½µ÷¶ÈÆ÷
+void SCH_AddTask(TaskFunc func, uint32_t period, uint8_t priority);// æ·»åŠ ä»»åŠ¡åˆ°è°ƒåº¦å™¨
 void SCH_Tick(void);
 uint32_t SCH_GetTick(void);
 void SCH_Dispatch(void);
-void SCH_Delay(uint32_t ms); // »ùÓÚµ÷¶ÈÆ÷µÄÑÓÊ±º¯Êý
+void SCH_Delay(uint32_t ms); // åŸºäºŽè°ƒåº¦å™¨çš„å»¶æ—¶å‡½æ•°
 
 #endif
 
