@@ -19,15 +19,14 @@
 
 #include <string.h>
 
-#define ESC_AUTO_CALIBRATION         (1U)                                   //首次使用或更换电调时建议打开，按文章流程自动完成解锁/行程校准
-
-#define IMU_TASK_PERIOD_MS           (5U)                                   //IMU数据读取和OLED显示更新的周期，单位毫秒    
+#define ESC_AUTO_CALIBRATION         (0)                                    //首次使用或更换电调时建议打开，按文章流程自动完成解锁/行程校准
+#define IMU_TASK_PERIOD_MS           (5)                                    //IMU数据读取和OLED显示更新的周期，单位毫秒    
 #define ATT6_DT_SEC                  ((float)IMU_TASK_PERIOD_MS / 1000.0f)  //姿态算法更新周期，单位秒
 #define ICM42688_ACC_G_PER_LSB       (1.0f / 8192.0f)                       //ICM42688加速度计每LSB对应的重力加速度值，单位g
 #define ICM42688_GYRO_DPS_PER_LSB    (1.0f / 16.4f)                         //ICM42688陀螺仪每LSB对应的角速度值，单位度每秒
 #define ATT_ZERO_CALIB_SAMPLES       (1000U)                                //启动后静止采样次数(1000*5ms=5s)
-#define UART1_ECHO_BUF_SIZE          (64U)                                  //串口1回显缓冲区大小
-#define UART1_PACKET_BUF_SIZE        (64U)                                  //串口1解析包缓冲区大小
+#define UART1_ECHO_BUF_SIZE          (64)                                   //串口1回显缓冲区大小
+#define UART1_PACKET_BUF_SIZE        (64)                                   //串口1解析包缓冲区大小
 
 static Attitude6AxisState g_attitude; //全局姿态算法状态变量
 
@@ -56,27 +55,26 @@ static uint8_t g_uart1PacketActive = 0U;
 //==========================================================================
 static void Task_ImuOledUpdate(void)  
 {
-
+    
     float pitch_raw;
     float roll_raw;
     float yaw_raw;
-
-
-
-    ImuSensor_ReadReg_BuffAll();//读取ICM42688的所有相关寄存器数据到全局变量MPU_Data中
-
+    
+    ImuSensor_ReadReg_BuffAll();//读取ICM42688的原始数据
+	ImuSensor_ProcessData(); //处理原始数据得到滤波后的加速度计和陀螺仪数据，并存储在MPU_FilteredData中
+    
     Attitude6Axis_UpdateRaw(    //更新姿态算法状态
         &g_attitude,
-        -MPU_Data.AccY,
-        MPU_Data.AccX,
-        MPU_Data.AccZ,
-        -MPU_Data.GyroY,
-        MPU_Data.GyroX,
-        MPU_Data.GyroZ,
+        -MPU_FilteredData.AccY,
+        MPU_FilteredData.AccX,
+        MPU_FilteredData.AccZ,
+        -MPU_FilteredData.GyroY,
+        MPU_FilteredData.GyroX,
+        MPU_FilteredData.GyroZ,
         ICM42688_ACC_G_PER_LSB,
         ICM42688_GYRO_DPS_PER_LSB,
         ATT6_DT_SEC);
-
+    
     Attitude6Axis_GetEulerDeg(&g_attitude, &pitch_raw, &roll_raw, &yaw_raw);//获取欧拉角度
 
     if (g_zero_ready == 0U)
@@ -86,7 +84,7 @@ static void Task_ImuOledUpdate(void)
         g_yaw_sum += yaw_raw;
         g_zero_count++;
 
-        if (g_zero_count >= ATT_ZERO_CALIB_SAMPLES)
+        if (g_zero_count >= ATT_ZERO_CALIB_SAMPLES)//当累计的样本数量达到预设的校准样本数量时，计算零偏并标记零偏准备就绪
         {
             g_pitch_zero = g_pitch_sum / (float)g_zero_count;
             g_roll_zero = g_roll_sum / (float)g_zero_count;
@@ -126,11 +124,11 @@ static void Task_Uart1Echo(void)
                 continue;
             }
 
-			if (ch == (uint8_t)']')
-			{
-				char packetCopy[UART1_PACKET_BUF_SIZE];
-				unsigned int sliderId;
-				unsigned int sliderValue;
+            if (ch == (uint8_t)']')
+            {
+                char packetCopy[UART1_PACKET_BUF_SIZE];
+                unsigned int sliderId;
+                unsigned int sliderValue;
 
                 g_uart1PacketActive = 0U;
 
@@ -176,32 +174,55 @@ static void Task_Uart1Echo(void)
     
 }
 
+//==========================================================================
+//OLED显示更新任务
+//==========================================================================
 void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
 {
 
     OLED_Clear();//清屏====================================================
 
     OLED_Printf(0, 0,  8, 1, "ATTITUDE 6AX");
-    OLED_Printf(0, 8,  8, 1, "P:");             OLED_ShowFloatNum(12, 8, pitchDeg, 3, 2, 8, 1);
-    OLED_Printf(0, 16, 8, 1, "R:");             OLED_ShowFloatNum(12, 16, rollDeg, 3, 2, 8, 1);  
-	OLED_Printf(0, 24, 8, 1, "Y:");             OLED_ShowFloatNum(12, 24, yawDeg, 3, 2, 8, 1);
-    OLED_Printf(0, 32, 8, 1, "AX:%+6d", MPU_Data.AccX);
-    OLED_Printf(0, 40, 8, 1, "AY:%+6d", MPU_Data.AccY);
-    OLED_Printf(0, 48, 8, 1, "AZ:%+6d", MPU_Data.AccZ);
-    OLED_Printf(0, 56, 8, 1, "T :%+6d", MPU_Data.Temp);
+    OLED_Printf(0, 8,  8, 1, "P:");             OLED_ShowFloatNum(12, 8 , pitchDeg, 2, 2, 8, 1);
+    OLED_Printf(0, 16, 8, 1, "R:");             OLED_ShowFloatNum(12, 16, rollDeg,  2, 2, 8, 1);
+    OLED_Printf(0, 24, 8, 1, "Y:");             OLED_ShowFloatNum(12, 24, yawDeg,   2, 2, 8, 1);
+    OLED_Printf(0, 32, 8, 1, "AX:%+6d", MPU_FilteredData.AccX);
+    OLED_Printf(0, 40, 8, 1, "AY:%+6d", MPU_FilteredData.AccY);
+    OLED_Printf(0, 48, 8, 1, "AZ:%+6d", MPU_FilteredData.AccZ);
+    OLED_Printf(0, 56, 8, 1, "T :%+6d", MPU_FilteredData.Temp);
     
     
-
+    
     OLED_Refresh();//更新显示=============================================
 
-    //Serial1_Printf("ax=%d ay=%d az=%d\r\n", MPU_Data.AccX, MPU_Data.AccY, MPU_Data.AccZ);
-    Serial1_Printf("[plot,%2.2f,%2.2f,%2.2f]\r\n", pitchDeg, rollDeg, yawDeg);
+
+    {
+        int pitchScaled = (int)(pitchDeg * 100.0f);
+        int rollScaled = (int)(rollDeg * 100.0f);
+        int yawScaled = (int)(yawDeg * 100.0f);
+
+        int pitchInt = pitchScaled / 100;
+        int rollInt = rollScaled / 100;
+        int yawInt = yawScaled / 100;
+
+        int pitchFrac = pitchScaled % 100;
+        int rollFrac = rollScaled % 100;
+        int yawFrac = yawScaled % 100;
+
+        if (pitchFrac < 0) { pitchFrac = -pitchFrac; }
+        if (rollFrac < 0)  { rollFrac = -rollFrac; }
+        if (yawFrac < 0)   { yawFrac = -yawFrac; }
+
+        Serial1_Printf("[plot,%d.%02d,%d.%02d,%d.%02d]\r\n", pitchInt, pitchFrac, rollInt, rollFrac, yawInt, yawFrac);
+    }
 
 
 }
 
-
-void Task_ESC_Control(void)  //电调控制任务
+//==========================================================================
+//电调控制任务
+//==========================================================================
+void Task_ESC_Control(void)
 {
     static uint8_t  first_run = 1U;
     static uint16_t cunt = 0U;
@@ -229,7 +250,6 @@ void Task_ESC_Control(void)  //电调控制任务
 
 
 
-
 //==========================================================================
 //主函数
 //==========================================================================
@@ -248,9 +268,6 @@ int main(void)
         ESC_Init();
     }
 
-
-
-
     PA0_LED_Toggle_Init();// 初始化PA0引脚用于LED闪烁
 
     DMA_USART1_Init(115200);//初始化USART1用于串口调试输出，波特率115200
@@ -260,12 +277,10 @@ int main(void)
     ImuSensor_Init();  //初始化ICM42688
     Attitude6Axis_Init(&g_attitude, 2.0f, 0.02f);
     
-
-
     OLED_Init();     //初始化OLED显示屏
     OLED_Clear();
 
-    ESC_SetChannelsUs(1050U,1050U,1050U,1050U);
+    //ESC_SetChannelsUs(1050U,1050U,1050U,1050U);
 
 
 

@@ -411,6 +411,9 @@
     <ClCompile Include="EmbeddedProject1\module\tim2_scheduler.c">
       <Filter>Source files\module</Filter>
     </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\KalmanFilter.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
@@ -475,6 +478,9 @@
     </ClInclude>
     <ClInclude Include="EmbeddedProject1\module\tim2_scheduler.h">
       <Filter>Source files\module</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\module\KalmanFilter.h">
+      <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

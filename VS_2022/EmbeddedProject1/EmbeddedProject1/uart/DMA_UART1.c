@@ -33,7 +33,7 @@ static uint8_t g_uart1TxSingleByte;
 static uint8_t g_uart1RxDmaBuf[UART1_RX_DMA_BUF_SIZE];
 static uint16_t g_uart1RxReadIndex;
 
-static void DMA_USART1_GPIO_Init(void)//³õÊ¼»¯USART1µÄGPIOÒı½Å
+static void DMA_USART1_GPIO_Init(void)//åˆå§‹åŒ–USART1çš„GPIOå¼•è„š
 {
     GPIO_InitTypeDef gpioInit;
 
@@ -50,7 +50,7 @@ static void DMA_USART1_GPIO_Init(void)//³õÊ¼»¯USART1µÄGPIOÒı½Å
     GPIO_Init(GPIOA, &gpioInit);
 }
 
-static void DMA_USART1_Core_Init(uint32_t baudrate)//³õÊ¼»¯USART1µÄºËĞÄ¹¦ÄÜ£¨²¨ÌØÂÊ¡¢DMAÊ¹ÄÜµÈ£©
+static void DMA_USART1_Core_Init(uint32_t baudrate)//åˆå§‹åŒ–USART1çš„æ ¸å¿ƒåŠŸèƒ½ï¼ˆæ³¢ç‰¹ç‡ã€DMAä½¿èƒ½ç­‰ï¼‰
 {
     USART_InitTypeDef usartInit;
 
@@ -69,7 +69,7 @@ static void DMA_USART1_Core_Init(uint32_t baudrate)//³õÊ¼»¯USART1µÄºËĞÄ¹¦ÄÜ£¨²¨Ì
     USART_Cmd(USART1, ENABLE);
 }
 
-static void DMA_USART1_RX_Init(void)//³õÊ¼»¯USART1µÄDMA½ÓÊÕ¹¦ÄÜ
+static void DMA_USART1_RX_Init(void)//åˆå§‹åŒ–USART1çš„DMAæ¥æ”¶åŠŸèƒ½
 {
     DMA_InitTypeDef dmaInit;
 
@@ -99,7 +99,7 @@ static void DMA_USART1_RX_Init(void)//³õÊ¼»¯USART1µÄDMA½ÓÊÕ¹¦ÄÜ
     DMA_Cmd(UART1_RX_STREAM, ENABLE);
 }
 
-static void DMA_USART1_TX_Init(void)//³õÊ¼»¯USART1µÄDMA·¢ËÍ¹¦ÄÜ
+static void DMA_USART1_TX_Init(void)//åˆå§‹åŒ–USART1çš„DMAå‘é€åŠŸèƒ½
 {
     DMA_InitTypeDef dmaInit;
 
@@ -127,7 +127,7 @@ static void DMA_USART1_TX_Init(void)//³õÊ¼»¯USART1µÄDMA·¢ËÍ¹¦ÄÜ
     DMA_Init(UART1_TX_STREAM, &dmaInit);
 }
 
-void DMA_USART1_Init(uint32_t baudrate)//³õÊ¼»¯USART1µÄDMA¹¦ÄÜ
+void DMA_USART1_Init(uint32_t baudrate)//åˆå§‹åŒ–USART1çš„DMAåŠŸèƒ½
 {
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
 
@@ -139,7 +139,7 @@ void DMA_USART1_Init(uint32_t baudrate)//³õÊ¼»¯USART1µÄDMA¹¦ÄÜ
     g_uart1RxReadIndex = 0U;
 }
 
-void DMA_USART1_Send(const uint8_t *data, uint16_t len)//Í¨¹ıDMA·¢ËÍÊı¾İ
+void DMA_USART1_Send(const uint8_t *data, uint16_t len)//é€šè¿‡DMAå‘é€æ•°æ®
 {
     if ((data == NULL) || (len == 0U))
     {
@@ -164,7 +164,7 @@ void DMA_USART1_Send(const uint8_t *data, uint16_t len)//Í¨¹ıDMA·¢ËÍÊı¾İ
     DMA_ClearFlag(UART1_TX_STREAM, UART1_TX_TC_FLAG | UART1_TX_FE_FLAG | UART1_TX_DME_FLAG | UART1_TX_TE_FLAG | UART1_TX_HT_FLAG);
 }
 
-void DMA_USART1_SendString(const char *str)//Í¨¹ıDMA·¢ËÍ×Ö·û´®
+void DMA_USART1_SendString(const char *str)//é€šè¿‡DMAå‘é€å­—ç¬¦ä¸²
 {
     if (str == NULL)
     {
@@ -174,7 +174,7 @@ void DMA_USART1_SendString(const char *str)//Í¨¹ıDMA·¢ËÍ×Ö·û´®
     DMA_USART1_Send((const uint8_t *)str, (uint16_t)strlen(str));
 }
 
-void Serial1_Printf(char *format, ...)//´®¿Ú1¸ñÊ½»¯Êä³ö
+void Serial1_Printf(char *format, ...) //ä¸²å£1æ ¼å¼åŒ–è¾“å‡º
 {
     char printBuf[UART1_PRINTF_BUF_SIZE];
     int len;
@@ -202,7 +202,7 @@ void Serial1_Printf(char *format, ...)//´®¿Ú1¸ñÊ½»¯Êä³ö
     DMA_USART1_Send((const uint8_t *)printBuf, (uint16_t)len);
 }
 
-uint16_t DMA_USART1_Read(uint8_t *out, uint16_t maxLen)//´ÓDMA½ÓÊÕ»º³åÇø¶ÁÈ¡Êı¾İ
+uint16_t DMA_USART1_Read(uint8_t *out, uint16_t maxLen)//ä»DMAæ¥æ”¶ç¼“å†²åŒºè¯»å–æ•°æ®
 {
     uint16_t writeIndex;
     uint16_t available;
@@ -238,7 +238,7 @@ uint16_t DMA_USART1_Read(uint8_t *out, uint16_t maxLen)//´ÓDMA½ÓÊÕ»º³åÇø¶ÁÈ¡Êı¾İ
     return toCopy;
 }
 
-int fputc(int ch, FILE *f)//ÖØ¶¨Ïòprintfµ½USART1
+int fputc(int ch, FILE *f)//é‡å®šå‘printfåˆ°USART1
 {
     (void)f;
 

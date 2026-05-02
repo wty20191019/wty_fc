@@ -1,6 +1,7 @@
 #include "FFCY_NEW_ICM42688.h"
 #include "i2c1.h"
 #include "IMU_FilterPortable.h"  //包含IMU滤波器的头文件
+#include "KalmanFilter.h"//包含卡尔曼滤波器的头文件
 
 #define ICM42688_ACCEL_XOUT    0x1F//加速度计X轴数据寄存器地址
 #define ICM42688_ACCEL_YOUT    0x21//加速度计Y轴数据寄存器地址
@@ -10,6 +11,7 @@
 #define ICM42688_GYRO_ZOUT     0x29//陀螺仪Z轴数据寄存器地址
 
 MPU6050_Data MPU_Data;
+MPU6050_Data MPU_FilteredData;
 
 u32 IIC_Timeout_Cnt = 0;
 u32 IIC_Timeout_Cnt_noTimesClear = 0;
@@ -24,6 +26,11 @@ static IMU_FilterPortableBiquadCoeff s_acc_lpf_coeff;
 static IMU_FilterPortableBiquadCoeff s_gyro_lpf_coeff;
 static IMU_FilterPortableBiquadState s_acc_lpf_state[3];
 static IMU_FilterPortableBiquadState s_gyro_lpf_state[3];
+#endif
+
+#if ICM42688_KALMAN_ENABLE
+static KalmanFilterState s_gyro_kalman[3];
+static KalmanFilterState s_acc_kalman[3];
 #endif
 
 static uint8_t s_device_address = ICM42688_ADDRESS_DEFAULT;
@@ -223,7 +230,7 @@ int16_t GetData_Acc(uint8_t REG_Address)
     return (int16_t)(((uint16_t)hd << 8) | ld);
 }
 
-void ImuSensor_ReadReg_BuffAll(void)
+void ImuSensor_ReadReg_BuffAll(void)//读取ICM42688的所有相关寄存器数据到全局变量MPU_Data中
 {
     int16_t imu_sensor_buff[6];
 
@@ -246,37 +253,55 @@ void ImuSensor_ReadReg_BuffAll(void)
         MPU_Data.AccZ = imu_sensor_buff[5];
         MPU_Data.Temp = (int16_t)(((uint16_t)ICM42688_ReadReg(s_device_address, ICM42688_TEMP_DATA1) << 8) |
                                   ICM42688_ReadReg(s_device_address, (uint8_t)(ICM42688_TEMP_DATA1 + 1U)));
-
-#if ICM42688_GYRO_BIAS_ENABLE
-        if (s_gyro_bias_ready != 0U)
-        {
-            MPU_Data.GyroX = icm42688_sub_bias_lsb(MPU_Data.GyroX, s_gyro_bias_lsb[0]);
-            MPU_Data.GyroY = icm42688_sub_bias_lsb(MPU_Data.GyroY, s_gyro_bias_lsb[1]);
-            MPU_Data.GyroZ = icm42688_sub_bias_lsb(MPU_Data.GyroZ, s_gyro_bias_lsb[2]);
-        }
-
-#if ICM42688_GYRO_BIAS_TRACK_ENABLE
-        if ((icm42688_abs_i16(MPU_Data.GyroX) < ICM42688_GYRO_STILL_THRESH_LSB) &&
-            (icm42688_abs_i16(MPU_Data.GyroY) < ICM42688_GYRO_STILL_THRESH_LSB) &&
-            (icm42688_abs_i16(MPU_Data.GyroZ) < ICM42688_GYRO_STILL_THRESH_LSB) &&
-            (icm42688_acc_norm_is_valid_1g(MPU_Data.AccX, MPU_Data.AccY, MPU_Data.AccZ) != 0U))
-        {
-            s_gyro_bias_lsb[0] += ICM42688_GYRO_BIAS_TRACK_ALPHA * ((float)imu_sensor_buff[0] - s_gyro_bias_lsb[0]);
-            s_gyro_bias_lsb[1] += ICM42688_GYRO_BIAS_TRACK_ALPHA * ((float)imu_sensor_buff[1] - s_gyro_bias_lsb[1]);
-            s_gyro_bias_lsb[2] += ICM42688_GYRO_BIAS_TRACK_ALPHA * ((float)imu_sensor_buff[2] - s_gyro_bias_lsb[2]);
-        }
-#endif
-#endif
-
-#if ICM42688_SOFT_FILTER_ENABLE
-        MPU_Data.GyroX = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.GyroX, &s_gyro_lpf_state[0], &s_gyro_lpf_coeff);
-        MPU_Data.GyroY = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.GyroY, &s_gyro_lpf_state[1], &s_gyro_lpf_coeff);
-        MPU_Data.GyroZ = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.GyroZ, &s_gyro_lpf_state[2], &s_gyro_lpf_coeff);
-        MPU_Data.AccX = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.AccX, &s_acc_lpf_state[0], &s_acc_lpf_coeff);
-        MPU_Data.AccY = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.AccY, &s_acc_lpf_state[1], &s_acc_lpf_coeff);
-        MPU_Data.AccZ = (int16_t)IMU_FilterPortable_Process((float)MPU_Data.AccZ, &s_acc_lpf_state[2], &s_acc_lpf_coeff);
-#endif
     }
+}
+
+void ImuSensor_ProcessData(void)
+{
+    ICM42688_RawData raw_data;
+
+    raw_data = MPU_Data;
+    MPU_FilteredData = raw_data;
+
+#if ICM42688_GYRO_BIAS_ENABLE //陀螺仪偏置校准和跟踪
+    if (s_gyro_bias_ready != 0U)
+    {
+        MPU_FilteredData.GyroX = icm42688_sub_bias_lsb(MPU_FilteredData.GyroX, s_gyro_bias_lsb[0]);
+        MPU_FilteredData.GyroY = icm42688_sub_bias_lsb(MPU_FilteredData.GyroY, s_gyro_bias_lsb[1]);
+        MPU_FilteredData.GyroZ = icm42688_sub_bias_lsb(MPU_FilteredData.GyroZ, s_gyro_bias_lsb[2]);
+    }
+
+#if ICM42688_GYRO_BIAS_TRACK_ENABLE//陀螺仪偏置跟踪
+    if ((icm42688_abs_i16(MPU_FilteredData.GyroX) < ICM42688_GYRO_STILL_THRESH_LSB) &&
+        (icm42688_abs_i16(MPU_FilteredData.GyroY) < ICM42688_GYRO_STILL_THRESH_LSB) &&
+        (icm42688_abs_i16(MPU_FilteredData.GyroZ) < ICM42688_GYRO_STILL_THRESH_LSB) &&
+        (icm42688_acc_norm_is_valid_1g(raw_data.AccX, raw_data.AccY, raw_data.AccZ) != 0U))
+    {
+        s_gyro_bias_lsb[0] += ICM42688_GYRO_BIAS_TRACK_ALPHA * ((float)raw_data.GyroX - s_gyro_bias_lsb[0]);
+        s_gyro_bias_lsb[1] += ICM42688_GYRO_BIAS_TRACK_ALPHA * ((float)raw_data.GyroY - s_gyro_bias_lsb[1]);
+        s_gyro_bias_lsb[2] += ICM42688_GYRO_BIAS_TRACK_ALPHA * ((float)raw_data.GyroZ - s_gyro_bias_lsb[2]);
+    }
+#endif
+#endif
+
+#if ICM42688_SOFT_FILTER_ENABLE//软件低通滤波
+    MPU_FilteredData.GyroX = (int16_t)IMU_FilterPortable_Process((float)MPU_FilteredData.GyroX, &s_gyro_lpf_state[0], &s_gyro_lpf_coeff);
+    MPU_FilteredData.GyroY = (int16_t)IMU_FilterPortable_Process((float)MPU_FilteredData.GyroY, &s_gyro_lpf_state[1], &s_gyro_lpf_coeff);
+    MPU_FilteredData.GyroZ = (int16_t)IMU_FilterPortable_Process((float)MPU_FilteredData.GyroZ, &s_gyro_lpf_state[2], &s_gyro_lpf_coeff);
+    MPU_FilteredData.AccX = (int16_t)IMU_FilterPortable_Process((float)MPU_FilteredData.AccX, &s_acc_lpf_state[0], &s_acc_lpf_coeff);
+    MPU_FilteredData.AccY = (int16_t)IMU_FilterPortable_Process((float)MPU_FilteredData.AccY, &s_acc_lpf_state[1], &s_acc_lpf_coeff);
+    MPU_FilteredData.AccZ = (int16_t)IMU_FilterPortable_Process((float)MPU_FilteredData.AccZ, &s_acc_lpf_state[2], &s_acc_lpf_coeff);
+#endif
+
+#if ICM42688_KALMAN_ENABLE//卡尔曼滤波
+    
+    MPU_FilteredData.GyroX = (int16_t)KalmanFilter_Update(&s_gyro_kalman[0], (float)MPU_FilteredData.GyroX);
+    MPU_FilteredData.GyroY = (int16_t)KalmanFilter_Update(&s_gyro_kalman[1], (float)MPU_FilteredData.GyroY);
+    MPU_FilteredData.GyroZ = (int16_t)KalmanFilter_Update(&s_gyro_kalman[2], (float)MPU_FilteredData.GyroZ);
+    MPU_FilteredData.AccX = (int16_t)KalmanFilter_Update(&s_acc_kalman[0], (float)MPU_FilteredData.AccX);
+    MPU_FilteredData.AccY = (int16_t)KalmanFilter_Update(&s_acc_kalman[1], (float)MPU_FilteredData.AccY);
+    MPU_FilteredData.AccZ = (int16_t)KalmanFilter_Update(&s_acc_kalman[2], (float)MPU_FilteredData.AccZ);
+#endif
 }
 
 ICM42688_Status ICM42688_Init(void)
@@ -311,7 +336,7 @@ ICM42688_Status ICM42688_Init(void)
         return ICM42688_TIMEOUT;
     }
 
-    if (icm42688_write_reg_current(ICM42688_GYRO_ACCEL_CONFIG0, ICM42688_HW_FILTER_CFG) != ICM42688_OK)//设置陀螺仪和加速度计的数字低通滤波器
+    if (icm42688_write_reg_current(ICM42688_GYRO_ACCEL_CONFIG0, ICM42688_HW_FILTER_CFG) != ICM42688_OK) //设置陀螺仪和加速度计的数字低通滤波器
     {
         return ICM42688_TIMEOUT;
     }
@@ -334,7 +359,7 @@ void ImuSensor_Init(void)
     icm42688_calibrate_gyro_bias();
 #endif
 
-#if ICM42688_SOFT_FILTER_ENABLE
+#if ICM42688_SOFT_FILTER_ENABLE   
     IMU_FilterPortable_DesignLP2(ICM42688_SOFT_FILTER_SAMPLE_HZ, ICM42688_SOFT_FILTER_CUTOFF_HZ, &s_acc_lpf_coeff);
     IMU_FilterPortable_DesignLP2(ICM42688_SOFT_FILTER_SAMPLE_HZ, ICM42688_SOFT_FILTER_CUTOFF_HZ, &s_gyro_lpf_coeff);
 
@@ -345,9 +370,20 @@ void ImuSensor_Init(void)
     IMU_FilterPortable_Init(&s_gyro_lpf_state[1], ICM42688_SOFT_FILTER_WARMUP_COUNT);
     IMU_FilterPortable_Init(&s_gyro_lpf_state[2], ICM42688_SOFT_FILTER_WARMUP_COUNT);
 #endif
+
+#if ICM42688_KALMAN_ENABLE
+    /* 初始化卡尔曼滤波器，参数可根据需要调整 */
+    for (int i = 0; i < 3; ++i)
+    {
+        KalmanFilter_Init(&s_gyro_kalman[i] , 0.01f     , 0.05f      , 0.9f      , 0.0f);
+        KalmanFilter_Init(&s_acc_kalman[i]  , 0.01f     , 0.05f      , 0.9f      , 0.0f);
+    }
+#endif
 }
+
 
 void GET_MPU_DATA(void)
 {
     ImuSensor_ReadReg_BuffAll();
+    ImuSensor_ProcessData();
 }

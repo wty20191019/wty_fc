@@ -75,6 +75,7 @@
     <ClCompile Include="EmbeddedProject1\module\esc_calibration.c" />
     <ClCompile Include="EmbeddedProject1\module\FFCY_NEW_ICM42688.c" />
     <ClCompile Include="EmbeddedProject1\module\i2c1.c" />
+    <ClCompile Include="EmbeddedProject1\module\KalmanFilter.c" />
     <ClCompile Include="EmbeddedProject1\module\pa0_LED_toggle.c" />
     <ClCompile Include="EmbeddedProject1\module\pwm_tim3.c" />
     <ClCompile Include="EmbeddedProject1\module\stm32f4xx_it.c" />
@@ -93,6 +94,7 @@
     <ClInclude Include="EmbeddedProject1\module\FFCY_NEW_ICM42688.h" />
     <ClInclude Include="EmbeddedProject1\module\i2c1.h" />
     <ClInclude Include="EmbeddedProject1\module\IMU_FilterPortable.h" />
+    <ClInclude Include="EmbeddedProject1\module\KalmanFilter.h" />
     <ClInclude Include="EmbeddedProject1\module\pa0_LED_toggle.h" />
     <ClInclude Include="EmbeddedProject1\module\pwm_tim3.h" />
     <ClInclude Include="EmbeddedProject1\module\stm32f4xx_conf.h" />

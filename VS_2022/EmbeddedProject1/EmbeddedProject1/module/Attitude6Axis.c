@@ -1,4 +1,4 @@
-#include "Attitude6Axis.h"
+#include "Attitude6Axis.h"  //姿态算法实现，基于Madgwick滤波器，融合了加速度计和陀螺仪数据来估计设备的姿态（俯仰角、滚转角和偏航角）
 
 #include <math.h>
 

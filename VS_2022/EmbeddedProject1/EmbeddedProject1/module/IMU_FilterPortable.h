@@ -1,18 +1,12 @@
-#ifndef IMU_FILTER_PORTABLE_H
+#ifndef IMU_FILTER_PORTABLE_H //IMU滤波器的头文件，包含了二阶低通滤波器的设计和处理函数
 #define IMU_FILTER_PORTABLE_H
 
 #include <stdint.h>
 #include <math.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifndef IMU_FILTER_PORTABLE_PI
 #define IMU_FILTER_PORTABLE_PI 3.14159265358979323846f
-#endif
 
-typedef struct
+	typedef struct //二阶低通滤波器的系数结构体，包含了滤波器的五个系数：b0、b1、b2、a1和a2
 {
     float b0;
     float b1;
@@ -74,7 +68,7 @@ static inline void IMU_FilterPortable_Init(IMU_FilterPortableBiquadState *state,
     IMU_FilterPortable_Reset(state);
     state->warmupLimit = warmupLimit;
 }
-
+	//二阶低通滤波器的处理函数，输入当前采样值、滤波器状态和滤波器系数，输出滤波后的值
 static inline float IMU_FilterPortable_Process(float input,
                                                IMU_FilterPortableBiquadState *state,
                                                const IMU_FilterPortableBiquadCoeff *coeff)
@@ -103,8 +97,6 @@ static inline float IMU_FilterPortable_Process(float input,
     return y;
 }
 
-#ifdef __cplusplus
-}
-#endif
+
 
 #endif

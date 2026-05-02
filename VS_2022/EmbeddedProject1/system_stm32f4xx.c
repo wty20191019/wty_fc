@@ -314,6 +314,10 @@
   * @{
   */
 
+#/**** External crystal frequency set to 8 MHz ****/
+#ifndef HSE_VALUE
+#define HSE_VALUE 8000000U
+#endif
 #include "stm32f4xx.h"
 
 /**
