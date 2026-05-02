@@ -46,7 +46,7 @@ void SCH_Init(void)
     TIM_DeInit(TIM2);
 
     tim_clk_hz = TIM2_GetClockHz();
-    prescaler = (uint16_t)((tim_clk_hz / 1000000U) - 1U);
+	prescaler = (uint16_t)((tim_clk_hz / 1000000U) - 1U); // 1MHz计数频率，1ms溢出
 
     tim_base.TIM_Prescaler = prescaler;
     tim_base.TIM_CounterMode = TIM_CounterMode_Up;
@@ -122,6 +122,6 @@ void SCH_Delay(uint32_t ms)
     uint32_t start_tick = tim2_tick;
 
     while ((tim2_tick - start_tick) < ms) {
-        __WFI();
+        //__WFI();
     }
 }

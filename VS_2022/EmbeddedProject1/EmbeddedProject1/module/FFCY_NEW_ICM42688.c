@@ -375,8 +375,8 @@ void ImuSensor_Init(void)
     /* 初始化卡尔曼滤波器，参数可根据需要调整 */
     for (int i = 0; i < 3; ++i)
     {
-        KalmanFilter_Init(&s_gyro_kalman[i] , 0.01f     , 0.05f      , 0.9f      , 0.0f);
-        KalmanFilter_Init(&s_acc_kalman[i]  , 0.01f     , 0.05f      , 0.9f      , 0.0f);
+        KalmanFilter_Init(&s_gyro_kalman[i] , 0.05f     , 0.05f      , 0.9f      , 0.0f);
+        KalmanFilter_Init(&s_acc_kalman[i]  , 0.05f     , 0.05f      , 0.9f      , 0.0f);
     }
 #endif
 }

@@ -16,6 +16,8 @@
 #include "esc_calibration.h"
 #include "tim2_scheduler.h"
 #include "pa0_LED_toggle.h"
+#include "ppm.h"
+
 
 #include <string.h>
 
@@ -48,7 +50,7 @@ static char g_uart1PacketBuf[UART1_PACKET_BUF_SIZE];
 static uint16_t g_uart1PacketLen = 0U;
 static uint8_t g_uart1PacketActive = 0U;
 
-
+uint16_t g_ppmChannels[10];
 
 //==========================================================================
 ////IMU数据读取
@@ -174,6 +176,7 @@ static void Task_Uart1Echo(void)
     
 }
 
+
 //==========================================================================
 //OLED显示更新任务
 //==========================================================================
@@ -181,7 +184,6 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
 {
 
     OLED_Clear();//清屏====================================================
-
     OLED_Printf(0, 0,  8, 1, "ATTITUDE 6AX");
     OLED_Printf(0, 8,  8, 1, "P:");             OLED_ShowFloatNum(12, 8 , pitchDeg, 2, 2, 8, 1);
     OLED_Printf(0, 16, 8, 1, "R:");             OLED_ShowFloatNum(12, 16, rollDeg,  2, 2, 8, 1);
@@ -213,9 +215,13 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
         if (rollFrac < 0)  { rollFrac = -rollFrac; }
         if (yawFrac < 0)   { yawFrac = -yawFrac; }
 
-        Serial1_Printf("[plot,%d.%02d,%d.%02d,%d.%02d]\r\n", pitchInt, pitchFrac, rollInt, rollFrac, yawInt, yawFrac);
+	    
+         Serial1_Printf("[plot,%d.%02d,%d.%02d,%d.%02d,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u]\r\n",
+         pitchInt, pitchFrac,        rollInt, rollFrac,         yawInt, yawFrac,
+		    ppm_data.channel[0], ppm_data.channel[1], ppm_data.channel[2], ppm_data.channel[3], ppm_data.channel[4],
+             ppm_data.channel[5], ppm_data.channel[6], ppm_data.channel[7], ppm_data.channel[8], ppm_data.channel[9]
+                                                                                                         );
     }
-
 
 }
 
@@ -255,9 +261,14 @@ void Task_ESC_Control(void)
 //==========================================================================
 int main(void)
 {
+	
     board_init();//初始化系统时钟和SysTick
-
+	
+	TIM4_Init_1us();
+	
     PWM_Init();//初始化TIM3的PWM输出
+
+    PPM_Init();//初始化PPM输入
 
     if (ESC_AUTO_CALIBRATION != 0U)
     {
@@ -285,12 +296,12 @@ int main(void)
 
 
     SCH_Init();
-    //调度器==========================================================================
-    SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS		, 7            );
+    //调度器====(任务在中断里)============================================================
+    SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS        , 7            );
     SCH_AddTask(PA0_LED_Toggle          , 50U                       ,14            );
     //SCH_AddTask(Task_ESC_Control        , 20U                       ,15            );
 
-    //================================================================================
+    //====================================================================================
     while (1)
     {
         Task_Uart1Echo(); //处理串口1回显任务

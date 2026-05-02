@@ -142,6 +142,7 @@ void SysTick_Handler(void)
 }
 
 #include "tim2_scheduler.h"
+#include "ppm.h"
 
 void TIM2_IRQHandler(void)
 {
@@ -151,6 +152,15 @@ void TIM2_IRQHandler(void)
 
     SCH_Tick();
   }
+}
+
+void EXTI9_5_IRQHandler(void)
+{
+	if (EXTI_GetITStatus(EXTI_Line8) != RESET)
+	{
+		EXTI_ClearITPendingBit(EXTI_Line8);
+		PPM_IRQHandler();
+	}
 }
 
 /******************************************************************************/
