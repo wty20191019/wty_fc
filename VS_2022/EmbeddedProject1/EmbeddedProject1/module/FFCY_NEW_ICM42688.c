@@ -2,6 +2,7 @@
 #include "i2c1.h"
 #include "IMU_FilterPortable.h"  //包含IMU滤波器的头文件
 #include "KalmanFilter.h"//包含卡尔曼滤波器的头文件
+#include "board.h"
 
 #define ICM42688_ACCEL_XOUT    0x1F//加速度计X轴数据寄存器地址
 #define ICM42688_ACCEL_YOUT    0x21//加速度计Y轴数据寄存器地址
@@ -354,11 +355,15 @@ void ImuSensor_Init(void)
     while (ICM42688_Init() != ICM42688_OK)
     {
     }
+	
+	systick_delay_ms(1000);
 
 #if ICM42688_GYRO_BIAS_ENABLE
     icm42688_calibrate_gyro_bias();
 #endif
-
+	
+	systick_delay_ms(1000);
+	
 #if ICM42688_SOFT_FILTER_ENABLE   
     IMU_FilterPortable_DesignLP2(ICM42688_SOFT_FILTER_SAMPLE_HZ, ICM42688_SOFT_FILTER_CUTOFF_HZ, &s_acc_lpf_coeff);
     IMU_FilterPortable_DesignLP2(ICM42688_SOFT_FILTER_SAMPLE_HZ, ICM42688_SOFT_FILTER_CUTOFF_HZ, &s_gyro_lpf_coeff);
@@ -371,12 +376,14 @@ void ImuSensor_Init(void)
     IMU_FilterPortable_Init(&s_gyro_lpf_state[2], ICM42688_SOFT_FILTER_WARMUP_COUNT);
 #endif
 
+	systick_delay_ms(1000);
+	
 #if ICM42688_KALMAN_ENABLE
     /* 初始化卡尔曼滤波器，参数可根据需要调整 */
     for (int i = 0; i < 3; ++i)
     {
-        KalmanFilter_Init(&s_gyro_kalman[i] , 0.01f     , 0.05f      , 0.9f      , 0.0f);
-        KalmanFilter_Init(&s_acc_kalman[i]  , 0.01f     , 0.05f      , 0.9f      , 0.0f);
+        KalmanFilter_Init(&s_gyro_kalman[i] , 0.5f     , 0.9f      , 0.9f      , 0.0f);
+        KalmanFilter_Init(&s_acc_kalman[i]  , 0.5f     , 0.9f      , 0.9f      , 0.0f);
     }
 #endif
 }

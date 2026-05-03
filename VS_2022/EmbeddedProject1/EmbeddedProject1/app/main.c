@@ -273,7 +273,7 @@ int main(void)
     DMA_USART1_Init(115200);//初始化USART1用于串口调试输出，波特率115200
 
     
-    systick_delay_ms(2000);//等待IMU稳定
+    
     ImuSensor_Init();  //初始化ICM42688
     Attitude6Axis_Init(&g_attitude, 2.0f, 0.02f);
     

@@ -46,7 +46,7 @@ void SCH_Init(void)
     TIM_DeInit(TIM2);
 
     tim_clk_hz = TIM2_GetClockHz();
-    prescaler = (uint16_t)((tim_clk_hz / 1000000U) - 1U);
+	prescaler = (uint16_t)((tim_clk_hz / 1000000U) - 1U); //将TIM2时钟频率分频到1MHz，即每微秒计数一次
 
     tim_base.TIM_Prescaler = prescaler;
     tim_base.TIM_CounterMode = TIM_CounterMode_Up;
@@ -103,7 +103,7 @@ static void SCH_RunReadyTasks(uint32_t current_tick)
 
 void SCH_Tick(void)
 {
-    tim2_tick++;
+	tim2_tick++; //每次TIM2更新中断时增加tick计数
     SCH_RunReadyTasks(tim2_tick);
 }
 

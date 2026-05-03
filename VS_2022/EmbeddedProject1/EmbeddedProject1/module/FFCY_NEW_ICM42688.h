@@ -46,10 +46,10 @@
 //==========================================================================
 //软件低通滤波器
 //==========================================================================
-#define ICM42688_SOFT_FILTER_ENABLE       0         //是否启用软件低通滤波器
+#define ICM42688_SOFT_FILTER_ENABLE         0        //是否启用软件低通滤波器
 
-#define ICM42688_SOFT_FILTER_SAMPLE_HZ    200.0f    //软件低通滤波器的采样频率，单位Hz，应与实际读取IMU数据的频率相匹配
-#define ICM42688_SOFT_FILTER_CUTOFF_HZ    20.0f     //软件低通滤波器的截止频率，单位Hz//建议设置为采样频率的1/4或更低，以获得更好的滤波效果
+#define ICM42688_SOFT_FILTER_SAMPLE_HZ    200.0f     //软件低通滤波器的采样频率，单位Hz，应与实际读取IMU数据的频率相匹配
+#define ICM42688_SOFT_FILTER_CUTOFF_HZ    100.0f     //软件低通滤波器的截止频率，单位Hz//建议设置为采样频率的1/4或更低，以获得更好的滤波效果
 #define ICM42688_SOFT_FILTER_WARMUP_COUNT 200U       //软件低通滤波器的预热采样次数，滤波器在预热期间不输出有效数据//建议设置为采样频率的1-2秒的采样数量，例如100Hz采样频率可以设置为100-200
 
 
@@ -73,7 +73,7 @@
 #define ICM42688_GYRO_BIAS_TRACK_ENABLE    1       //是否启用陀螺仪偏置跟踪功能，启用后在正常运行过程中会持续跟踪陀螺仪偏置的变化并进行补偿，以进一步抑制陀螺仪漂移，特别是对于航向（偏航）的漂移抑制非常有效
 
 #define ICM42688_GYRO_BIAS_TRACK_ALPHA     0.001f   //陀螺仪偏置跟踪的指数移动平均滤波系数，范围0.0-1.0，值越小跟踪越慢但更稳定，值越大跟踪越快但可能引入噪声，建议设置为0.001-0.01
-#define ICM42688_GYRO_STILL_THRESH_LSB     20       //陀螺仪静止状态检测的阈值，单位LSB，当陀螺仪输出的绝对值都低于此阈值时认为IMU处于静止状态，建议设置为20-50LSB（约1-3dps）以适应不同的IMU安装环境
+#define ICM42688_GYRO_STILL_THRESH_LSB     45       //陀螺仪静止状态检测的阈值，单位LSB，当陀螺仪输出的绝对值都低于此阈值时认为IMU处于静止状态，建议设置为20-50LSB（约1-3dps）以适应不同的IMU安装环境
 #define ICM42688_ACC_1G_LSB                8192     //ICM42688加速度计1g对应的LSB值，基于±4g量程设置
 #define ICM42688_ACC_NORM_MIN_RATIO        0.80f    //加速度计归一化最小比率
 #define ICM42688_ACC_NORM_MAX_RATIO        1.20f    //加速度计归一化最大比率
