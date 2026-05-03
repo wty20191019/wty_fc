@@ -18,8 +18,8 @@
 #include "pa0_LED_toggle.h"
 #include "ppm.h"
 
-
 #include <string.h>
+#include "stm32f4xx_tim.h"
 
 #define ESC_AUTO_CALIBRATION         (0)                                    //首次使用或更换电调时建议打开，按文章流程自动完成解锁/行程校准
 #define IMU_TASK_PERIOD_MS           (5)                                    //IMU数据读取和OLED显示更新的周期，单位毫秒    
@@ -51,9 +51,10 @@ static uint16_t g_uart1PacketLen = 0U;
 static uint8_t g_uart1PacketActive = 0U;
 
 uint16_t g_ppmChannels[10];
+volatile uint32_t g_ppmTimeOverflow = 0U;
 
 //==========================================================================
-////IMU数据读取
+//IMU数据读取
 //==========================================================================
 static void Task_ImuOledUpdate(void)  
 {
@@ -63,7 +64,7 @@ static void Task_ImuOledUpdate(void)
     float yaw_raw;
     
     ImuSensor_ReadReg_BuffAll();//读取ICM42688的原始数据
-	ImuSensor_ProcessData(); //处理原始数据得到滤波后的加速度计和陀螺仪数据，并存储在MPU_FilteredData中
+ImuSensor_ProcessData(); //处理原始数据得到滤波后的加速度计和陀螺仪数据，并存储在MPU_FilteredData中
     
     Attitude6Axis_UpdateRaw(    //更新姿态算法状态
         &g_attitude,
@@ -198,7 +199,7 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
     OLED_Refresh();//更新显示=============================================
 
 
-    {
+    
         int pitchScaled = (int)(pitchDeg * 100.0f);
         int rollScaled = (int)(rollDeg * 100.0f);
         int yawScaled = (int)(yawDeg * 100.0f);
@@ -216,12 +217,12 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
         if (yawFrac < 0)   { yawFrac = -yawFrac; }
 
 	    
-         Serial1_Printf("[plot,%d.%02d,%d.%02d,%d.%02d,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u]\r\n",
-         pitchInt, pitchFrac,        rollInt, rollFrac,         yawInt, yawFrac,
-		    ppm_data.channel[0], ppm_data.channel[1], ppm_data.channel[2], ppm_data.channel[3], ppm_data.channel[4],
-             ppm_data.channel[5], ppm_data.channel[6], ppm_data.channel[7], ppm_data.channel[8], ppm_data.channel[9]
-                                                                                                         );
-    }
+//         Serial1_Printf("[plot,%d.%02d,%d.%02d,%d.%02d,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u]\r\n",
+//         pitchInt, pitchFrac,        rollInt, rollFrac,         yawInt, yawFrac,
+//		    ppm_data.channel[0], ppm_data.channel[1], ppm_data.channel[2], ppm_data.channel[3], ppm_data.channel[4],
+//             ppm_data.channel[5], ppm_data.channel[6], ppm_data.channel[7], ppm_data.channel[8], ppm_data.channel[9]
+//                                                                                                         );
+    
 
 }
 
@@ -264,11 +265,12 @@ int main(void)
 	
     board_init();//初始化系统时钟和SysTick
 	
-	TIM4_Init_1us();
 	
     PWM_Init();//初始化TIM3的PWM输出
 
-    PPM_Init();//初始化PPM输入
+    PPM_TimeBase_Init();
+    ppm_init(PPM_GetTimeUs, PPM_FrameReadyCb);
+
 
     if (ESC_AUTO_CALIBRATION != 0U)
     {

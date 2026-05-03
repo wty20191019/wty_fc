@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -62,8 +62,6 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>
-  <ItemGroup>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
@@ -78,6 +76,7 @@
     <ClCompile Include="EmbeddedProject1\module\KalmanFilter.c" />
     <ClCompile Include="EmbeddedProject1\module\pa0_LED_toggle.c" />
     <ClCompile Include="EmbeddedProject1\module\ppm.c" />
+    <ClCompile Include="EmbeddedProject1\module\PPM_port\ppm_port.c" />
     <ClCompile Include="EmbeddedProject1\module\pwm_tim3.c" />
     <ClCompile Include="EmbeddedProject1\module\stm32f4xx_it.c" />
     <ClCompile Include="EmbeddedProject1\module\tim2_scheduler.c" />
@@ -97,7 +96,7 @@
     <ClInclude Include="EmbeddedProject1\module\IMU_FilterPortable.h" />
     <ClInclude Include="EmbeddedProject1\module\KalmanFilter.h" />
     <ClInclude Include="EmbeddedProject1\module\pa0_LED_toggle.h" />
-    <ClInclude Include="EmbeddedProject1\module\ppm.h" />
+    <ClInclude Include="EmbeddedProject1\module\PPM_port\ppm_port.h" />
     <ClInclude Include="EmbeddedProject1\module\pwm_tim3.h" />
     <ClInclude Include="EmbeddedProject1\module\stm32f4xx_conf.h" />
     <ClInclude Include="EmbeddedProject1\module\stm32f4xx_it.h" />

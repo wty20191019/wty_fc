@@ -22,15 +22,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
+#include "PPM_port/ppm_port.h"
 
-//__weak void SCH_Tick(void)
-//{
-//	
-//}
-
-/** @addtogroup Template_Project
-  * @{
-  */
+extern volatile uint32_t g_ppmTimeOverflow;
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -142,7 +136,6 @@ void SysTick_Handler(void)
 }
 
 #include "tim2_scheduler.h"
-#include "ppm.h"
 
 void TIM2_IRQHandler(void)
 {
@@ -154,12 +147,22 @@ void TIM2_IRQHandler(void)
   }
 }
 
+void TIM4_IRQHandler(void)
+{
+  if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET)
+  {
+    TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
+    g_ppmTimeOverflow++;
+  }
+}
+
 void EXTI9_5_IRQHandler(void)
 {
 	if (EXTI_GetITStatus(EXTI_Line8) != RESET)
 	{
 		EXTI_ClearITPendingBit(EXTI_Line8);
-		PPM_IRQHandler();
+        ppm_port_exti_handler();
+
 	}
 }
 
