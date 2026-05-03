@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include "oled.h"
 #include "pwm_tim3.h"
+#include "ppm_input.h"
 #include "esc_calibration.h"
 #include "tim2_scheduler.h"
 #include "pa0_LED_toggle.h"
@@ -48,6 +49,9 @@ static char g_uart1PacketBuf[UART1_PACKET_BUF_SIZE];
 static uint16_t g_uart1PacketLen = 0U;
 static uint8_t g_uart1PacketActive = 0U;
 
+
+uint16_t channels[PPM_MAX_CHANNELS];
+uint8_t channelCount = 0;
 
 
 //==========================================================================
@@ -213,9 +217,14 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
         if (rollFrac < 0)  { rollFrac = -rollFrac; }
         if (yawFrac < 0)   { yawFrac = -yawFrac; }
 
-        Serial1_Printf("[plot,%d.%02d,%d.%02d,%d.%02d]\r\n", pitchInt, pitchFrac, rollInt, rollFrac, yawInt, yawFrac);
+        //Serial1_Printf("[plot,%d.%02d,%d.%02d,%d.%02d]\r\n", pitchInt, pitchFrac, rollInt, rollFrac, yawInt, yawFrac);
+	    
     }
 
+	if (channelCount >= 4U)
+	{
+		Serial1_Printf("[plot,%u,%u,%u,%u]\r\n", channels[0], channels[1], channels[2], channels[3]);
+	}
 
 }
 
@@ -246,9 +255,16 @@ void Task_ESC_Control(void)
     }
 }
 
-
-
-
+//==========================================================================
+//读取ppm
+//==========================================================================
+void read_PPM(void)
+{
+	if (PPM_ReadFrame(channels, PPM_MAX_CHANNELS, &channelCount) == 0U)
+	{
+		return;
+	}
+}
 
 //==========================================================================
 //主函数
@@ -258,6 +274,8 @@ int main(void)
     board_init();//初始化系统时钟和SysTick
 
     PWM_Init();//初始化TIM3的PWM输出
+	
+	PPM_Init();
 
     if (ESC_AUTO_CALIBRATION != 0U)
     {
@@ -289,8 +307,8 @@ int main(void)
     SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS		, 7             );
     SCH_AddTask(PA0_LED_Toggle          , 50U                       ,14             );
     SCH_AddTask(Task_Uart1Echo          , 100                       , 6             );
-    SCH_AddTask(Task_OledUpdate         , 100U                      , 6             );
-    
+    SCH_AddTask(Task_OledUpdate         , 100U                      , 8             );
+	SCH_AddTask(read_PPM                , 20U                       , 5             );
     
 //    SCH_AddTask(Task_ESC_Control        , 20U                       ,13             );	
     
@@ -299,7 +317,29 @@ int main(void)
     {
         SCH_Dispatch();
     }
-
-
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

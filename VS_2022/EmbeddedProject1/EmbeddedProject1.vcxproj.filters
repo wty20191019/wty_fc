@@ -414,6 +414,9 @@
     <ClCompile Include="EmbeddedProject1\module\KalmanFilter.c">
       <Filter>Source files</Filter>
     </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\ppm_input.c">
+      <Filter>Source files\module</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
@@ -480,6 +483,9 @@
       <Filter>Source files\module</Filter>
     </ClInclude>
     <ClInclude Include="EmbeddedProject1\module\KalmanFilter.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\module\ppm_input.h">
       <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>

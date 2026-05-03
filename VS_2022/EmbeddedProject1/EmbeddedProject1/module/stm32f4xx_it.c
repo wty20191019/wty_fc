@@ -142,6 +142,7 @@ void SysTick_Handler(void)
 }
 
 #include "tim2_scheduler.h"
+#include "ppm_input.h"
 
 void TIM2_IRQHandler(void)
 {
@@ -151,6 +152,11 @@ void TIM2_IRQHandler(void)
 
     SCH_Tick();
   }
+}
+
+void TIM1_CC_IRQHandler(void)
+{
+  PPM_IRQHandler();
 }
 
 /******************************************************************************/

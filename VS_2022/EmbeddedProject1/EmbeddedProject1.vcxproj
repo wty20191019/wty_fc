@@ -77,6 +77,7 @@
     <ClCompile Include="EmbeddedProject1\module\i2c1.c" />
     <ClCompile Include="EmbeddedProject1\module\KalmanFilter.c" />
     <ClCompile Include="EmbeddedProject1\module\pa0_LED_toggle.c" />
+    <ClCompile Include="EmbeddedProject1\module\ppm_input.c" />
     <ClCompile Include="EmbeddedProject1\module\pwm_tim3.c" />
     <ClCompile Include="EmbeddedProject1\module\stm32f4xx_it.c" />
     <ClCompile Include="EmbeddedProject1\module\tim2_scheduler.c" />
@@ -96,6 +97,7 @@
     <ClInclude Include="EmbeddedProject1\module\IMU_FilterPortable.h" />
     <ClInclude Include="EmbeddedProject1\module\KalmanFilter.h" />
     <ClInclude Include="EmbeddedProject1\module\pa0_LED_toggle.h" />
+    <ClInclude Include="EmbeddedProject1\module\ppm_input.h" />
     <ClInclude Include="EmbeddedProject1\module\pwm_tim3.h" />
     <ClInclude Include="EmbeddedProject1\module\stm32f4xx_conf.h" />
     <ClInclude Include="EmbeddedProject1\module\stm32f4xx_it.h" />
