@@ -61,7 +61,7 @@ static void Task_ImuOledUpdate(void)
     float yaw_raw;
     
     ImuSensor_ReadReg_BuffAll();//读取ICM42688的原始数据
-	ImuSensor_ProcessData(); //处理原始数据得到滤波后的加速度计和陀螺仪数据，并存储在MPU_FilteredData中
+    ImuSensor_ProcessData(); //处理原始数据得到滤波后的加速度计和陀螺仪数据，并存储在MPU_FilteredData中
     
     Attitude6Axis_UpdateRaw(    //更新姿态算法状态
         &g_attitude,
@@ -272,7 +272,7 @@ int main(void)
 
     DMA_USART1_Init(115200);//初始化USART1用于串口调试输出，波特率115200
 
-    
+	systick_delay_ms(3000);
     
     ImuSensor_Init();  //初始化ICM42688
     Attitude6Axis_Init(&g_attitude, 2.0f, 0.02f);
@@ -286,15 +286,18 @@ int main(void)
 
     SCH_Init();
     //调度器==========================================================================
-    SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS		, 7            );
-    SCH_AddTask(PA0_LED_Toggle          , 50U                       ,14            );
-    //SCH_AddTask(Task_ESC_Control        , 20U                       ,15            );
-
+    SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS		, 7             );
+    SCH_AddTask(PA0_LED_Toggle          , 50U                       ,14             );
+    SCH_AddTask(Task_Uart1Echo          , 100                       , 6             );
+    SCH_AddTask(Task_OledUpdate         , 100U                      , 6             );
+    
+    
+//    SCH_AddTask(Task_ESC_Control        , 20U                       ,13             );	
+    
     //================================================================================
     while (1)
     {
-        Task_Uart1Echo(); //处理串口1回显任务
-        Task_OledUpdate();//处理OLED显示更新任务
+        SCH_Dispatch();
     }
 
 

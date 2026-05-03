@@ -3,19 +3,19 @@
 
 #include "stm32f4xx.h"
 
-typedef void (*TaskFunc)(void);
+typedef void(*TaskFunc)(void);
 
-#define MAX_TASKS       (16U) // 最大任务数
+#define MAX_TASKS       (16U) //最多任务数量
 
-#define PRIORITY_HIGH   (0U)  // 最高优先级
-#define PRIORITY_MAX    (14U) // 最低优先级
+#define PRIORITY_HIGH   (0U)  
+#define PRIORITY_MAX    (14U) //最大优先级，0为最高优先级，数值越大优先级越低
 
 void SCH_Init(void);
-void SCH_AddTask(TaskFunc func, uint32_t period, uint8_t priority);// 添加任务到调度器
+void SCH_AddTask(TaskFunc func, uint32_t period, uint8_t priority);
 void SCH_Tick(void);
-uint32_t SCH_GetTick(void);
-void SCH_Dispatch(void);
-void SCH_Delay(uint32_t ms); // 基于调度器的延时函数
+uint32_t SCH_GetTick(void); //获取系统运行的总毫秒数
+void SCH_Dispatch(void); //调度器主循环，应该在主函数的无限循环中调用
+void SCH_Delay(uint32_t ms); //阻塞式延时函数，单位毫秒
 
 #endif
 
