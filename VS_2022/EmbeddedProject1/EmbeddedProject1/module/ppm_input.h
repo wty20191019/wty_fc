@@ -11,6 +11,7 @@ extern "C" {
 
 	void PPM_Init(void); //初始化PPM输入模块，配置定时器和GPIO
 	void PPM_IRQHandler(void); //定时器中断处理函数，捕获PPM信号并解析通道数据
+	void PPM_EXTI_IRQHandler(void); // EXTI-based PPM中断处理函数
 
 	uint8_t PPM_HasFrame(void); //检查是否有新的PPM帧可用
 	uint8_t PPM_ReadFrame(uint16_t *channels, uint8_t maxChannels, uint8_t *channelCount); //读取最新的PPM帧数据，返回通道值数组和通道数量

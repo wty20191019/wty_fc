@@ -1,6 +1,9 @@
 #include "ppm_input.h"
 
 #include "misc.h"
+#include "tim2_scheduler.h" /* use SCH_GetTick() for ms base */
+#include "stm32f4xx_exti.h"
+#include "stm32f4xx_syscfg.h"
 
 #define PPM_SYNC_GAP_US         (3000U)
 #define PPM_MIN_VALID_US        (750U)
@@ -67,77 +70,97 @@ void PPM_Init(void)
     g_ppm_frameCount = 0U;
     g_ppm_frameReady = 0U;
 
+    /* Configure PA8 as input with EXTI line
+     * Use TIM2 counter (already running for scheduler) as microsecond time base
+     */
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
-
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource8, GPIO_AF_TIM1);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
 
     gpio.GPIO_Pin = GPIO_Pin_8;
-    gpio.GPIO_Mode = GPIO_Mode_AF;
-    gpio.GPIO_Speed = GPIO_Speed_100MHz;
+    gpio.GPIO_Mode = GPIO_Mode_IN;
+    gpio.GPIO_Speed = GPIO_Speed_50MHz;
     gpio.GPIO_OType = GPIO_OType_PP;
-    gpio.GPIO_PuPd = GPIO_PuPd_UP;
+    gpio.GPIO_PuPd = GPIO_PuPd_NOPULL;
     GPIO_Init(GPIOA, &gpio);
 
-    timClkHz = PPM_GetTim1ClockHz();
-    prescaler = (uint16_t)((timClkHz / 1000000U) - 1U);
+    /* connect EXTI8 line to PA8 */
+    SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOA, EXTI_PinSource8);
 
-    TIM_Cmd(TIM1, DISABLE);
-    TIM_DeInit(TIM1);
+    EXTI_InitTypeDef extiInit;
+    extiInit.EXTI_Line = EXTI_Line8;
+    extiInit.EXTI_Mode = EXTI_Mode_Interrupt;
+    extiInit.EXTI_Trigger = EXTI_Trigger_Rising;
+    extiInit.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&extiInit);
 
-    timBase.TIM_Prescaler = prescaler;
-    timBase.TIM_CounterMode = TIM_CounterMode_Up;
-	timBase.TIM_Period = PPM_CAPTURE_PERIOD_US; //设置自动重装载寄存器的值为PPM_CAPTURE_PERIOD_US，这样计数器每PPM_CAPTURE_PERIOD_US微秒溢出一次
-	timBase.TIM_ClockDivision = TIM_CKD_DIV1; //不分频，直接使用定时器时钟
-    timBase.TIM_RepetitionCounter = 0U;
-    TIM_TimeBaseInit(TIM1, &timBase);
-
-	timIc.TIM_Channel = TIM_Channel_1; //使用定时器1的通道1进行输入捕获
-	timIc.TIM_ICPolarity = TIM_ICPolarity_Rising; //捕获上升沿
-	timIc.TIM_ICSelection = TIM_ICSelection_DirectTI; //直接连接到TI1输入
-	timIc.TIM_ICPrescaler = TIM_ICPSC_DIV1; //捕获每个事件，不进行预分频
-	timIc.TIM_ICFilter = 0U; //不使用输入滤波器
-    TIM_ICInit(TIM1, &timIc);
-
-    TIM_ClearITPendingBit(TIM1, TIM_IT_CC1);
-    TIM_ITConfig(TIM1, TIM_IT_CC1, ENABLE);
-
-    nvic.NVIC_IRQChannel = TIM1_CC_IRQn;
+    nvic.NVIC_IRQChannel = EXTI9_5_IRQn;
     nvic.NVIC_IRQChannelPreemptionPriority = 1U;
     nvic.NVIC_IRQChannelSubPriority = 0U;
     nvic.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&nvic);
 
-    TIM_Cmd(TIM1, ENABLE);
-
-    /* initialize last capture from current CCR1 to avoid huge first delta */
-	
-    g_ppm_captureLast = TIM_GetCapture1(TIM1);
+    /* initialize last capture to current time to avoid large first delta */
+    uint32_t ms;
+    uint16_t cnt;
+    do {
+        ms = SCH_GetTick();
+        cnt = TIM_GetCounter(TIM2);
+    } while (ms != SCH_GetTick());
+    g_ppm_captureLast = (uint16_t)((ms * 1000U + cnt) & 0xFFFFU);
 }
 
+/* Legacy TIM1 handler kept for compatibility */
 void PPM_IRQHandler(void)
 {
-    if (TIM_GetITStatus(TIM1, TIM_IT_CC1) != RESET)
+    /* not used in EXTI-based implementation */
+}
+
+/* EXTI-based PPM capture handler. Reads current time using TIM2 counter + ms tick. */
+void PPM_EXTI_IRQHandler(void)
+{
+    if (EXTI_GetITStatus(EXTI_Line8) != RESET)
     {
-        uint16_t capture;
-        uint16_t delta;
+        uint32_t ms1, ms2;
+        uint16_t cnt;
+        uint32_t now_us32;
+        uint32_t last_us32;
+        uint32_t delta_us32;
 
-        TIM_ClearITPendingBit(TIM1, TIM_IT_CC1);
+        EXTI_ClearITPendingBit(EXTI_Line8);
 
-        capture = TIM_GetCapture1(TIM1);
+        /* read consistent millisecond tick and TIM2 counter */
+        do {
+            ms1 = SCH_GetTick();
+            cnt = TIM_GetCounter(TIM2);
+            ms2 = SCH_GetTick();
+        } while (ms1 != ms2);
 
-        if (capture >= g_ppm_captureLast)
+        now_us32 = ms2 * 1000U + (uint32_t)cnt;
+        last_us32 = (uint32_t)g_ppm_captureLast; /* stored as lower 16 bits */
+
+        /* extend last_us32 to 32-bit by assuming monotonic increasing; if wrap, handle */
+        /* We stored only 16-bit previously; to be safe, keep a 32-bit last time internal */
+        static uint32_t g_last_time_32 = 0U;
+
+        if (g_last_time_32 == 0U)
         {
-            delta = (uint16_t)(capture - g_ppm_captureLast);
+            g_last_time_32 = now_us32;
+        }
+
+        if (now_us32 >= g_last_time_32)
+        {
+            delta_us32 = now_us32 - g_last_time_32;
         }
         else
         {
-            delta = (uint16_t)((PPM_CAPTURE_PERIOD_US - g_ppm_captureLast) + capture + 1U);
+            /* wrap-around handling */
+            delta_us32 = (0xFFFFFFFFU - g_last_time_32) + now_us32 + 1U;
         }
 
-        g_ppm_captureLast = capture;
+        g_last_time_32 = now_us32;
+        g_ppm_captureLast = (uint16_t)(now_us32 & 0xFFFFU);
 
-        if (delta >= PPM_SYNC_GAP_US)
+        if (delta_us32 >= PPM_SYNC_GAP_US)
         {
             if (g_ppm_buildCount > 0U)
             {
@@ -146,11 +169,11 @@ void PPM_IRQHandler(void)
 
             g_ppm_buildCount = 0U;
         }
-        else if ((delta >= PPM_MIN_VALID_US) && (delta <= PPM_MAX_VALID_US))
+        else if ((delta_us32 >= PPM_MIN_VALID_US) && (delta_us32 <= PPM_MAX_VALID_US))
         {
             if (g_ppm_buildCount < PPM_MAX_CHANNELS)
             {
-                g_ppm_buildChannels[g_ppm_buildCount] = delta;
+                g_ppm_buildChannels[g_ppm_buildCount] = (uint16_t)delta_us32;
                 g_ppm_buildCount++;
             }
         }
