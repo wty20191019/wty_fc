@@ -1,25 +1,27 @@
-#ifndef __PPM_INPUT_H__
-#define __PPM_INPUT_H__
+#ifndef _PPM_H
+#define _PPM_H
 
-#ifdef __cplusplus
-extern "C" {
+
+
+
+
+
+#define PPM_GPIO_PORT       GPIOA
+#define PPM_GPIO_CLK        RCC_AHB1Periph_GPIOA
+#define PPM_GPIO_PIN        GPIO_Pin_8
+#define PPM_GPIO_PINSOURCE  GPIO_PinSource8
+#define PPM_EXTI_PORTSOURCE EXTI_PortSourceGPIOA
+#define PPM_EXTI_PINSOURCE  EXTI_PinSource8
+#define PPM_EXTI_LINE       EXTI_Line8
+
+
+
+void PPM_GPIO_Init(void);
+void PPM_Init(void);
+void TIM4_Configuration_Cnt(void);
+extern u32 TIME_ISR_CNT;
+extern uint16 PPM_Isr_Cnt;
+extern uint16 PPM_Databuf[10];
+extern u32 PPM_Time;
 #endif
 
-#include "stm32f4xx.h"
-
-#define PPM_MAX_CHANNELS        (10U) //根据实际需要调整最大通道数量，注意不要超过定时器捕获的能力
-
-	void PPM_Init(void); //初始化PPM输入模块，配置定时器和GPIO
-	void PPM_IRQHandler(void); //定时器中断处理函数，捕获PPM信号并解析通道数据
-	void PPM_EXTI_IRQHandler(void); // EXTI-based PPM中断处理函数
-
-	uint8_t PPM_HasFrame(void); //检查是否有新的PPM帧可用
-	uint8_t PPM_ReadFrame(uint16_t *channels, uint8_t maxChannels, uint8_t *channelCount); //读取最新的PPM帧数据，返回通道值数组和通道数量
-	uint16_t PPM_GetChannelUs(uint8_t channelIndex); //获取指定通道的值，单位为微秒
-	uint8_t PPM_GetChannelCount(void); //获取当前PPM帧的通道数量
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif

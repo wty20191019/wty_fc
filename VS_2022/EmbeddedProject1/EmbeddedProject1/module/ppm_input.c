@@ -1,252 +1,210 @@
+
+#include "stm32f4xx.h"
 #include "ppm_input.h"
+#include <string.h>
 
-#include "misc.h"
-#include "tim2_scheduler.h" /* use SCH_GetTick() for ms base */
-#include "stm32f4xx_exti.h"
-#include "stm32f4xx_syscfg.h"
 
-#define PPM_SYNC_GAP_US         (3000U)
-#define PPM_MIN_VALID_US        (750U)
-#define PPM_MAX_VALID_US        (2250U)
-#define PPM_CAPTURE_PERIOD_US   (0xFFFFU)
+uint16 PPM_Sample_Cnt = 0;
+uint16 PPM_Isr_Cnt = 0;
+u32 Last_PPM_Time = 0;
+u32 PPM_Time = 0;
+u16 PPM_Time_Delta = 0;
+u16 PPM_Time_Max = 0;
+uint16 PPM_Start_Time = 0;
+uint16 PPM_Finished_Time = 0;
+uint16 PPM_Is_Okay = 0;
+uint16 PPM_Databuf[10] = { 0 };
+u32 TIME_ISR_CNT = 0;
 
-static volatile uint16_t g_ppm_captureLast = 0U;
-static volatile uint16_t g_ppm_buildChannels[PPM_MAX_CHANNELS];
-static volatile uint16_t g_ppm_frameChannels[PPM_MAX_CHANNELS];
-static volatile uint8_t g_ppm_buildCount = 0U;
-static volatile uint8_t g_ppm_frameCount = 0U;
-static volatile uint8_t g_ppm_frameReady = 0U;
-
-static uint32_t PPM_GetTim1ClockHz(void)
+/***************************************************
+函数名: void PPM_GPIO_Init(void)
+说明:    PPM输入引脚初始化
+入口:    无
+出口:    无
+备注:    PA8/EXTI8，可按宏定义迁移到其他引脚
+****************************************************/
+void PPM_GPIO_Init(void)
 {
-    RCC_ClocksTypeDef clocks;
+	GPIO_InitTypeDef GPIO_InitStructure;
 
-    RCC_GetClocksFreq(&clocks);
+	RCC_AHB1PeriphClockCmd(PPM_GPIO_CLK, ENABLE);
+	//==================================
+	//PPM输入引脚配置为上拉输入，使用外部中断捕获上升沿
+	//==================================
+	GPIO_InitStructure.GPIO_Pin = PPM_GPIO_PIN;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_Init(PPM_GPIO_PORT, &GPIO_InitStructure);
+}
 
-    if ((RCC->CFGR & RCC_CFGR_PPRE2) == RCC_CFGR_PPRE2_DIV1)
-    {
-        return clocks.PCLK2_Frequency;
-    }
+/***************************************************
+函数名: void TIM4_Configuration_Cnt(void)
+说明:    TIM4时间基准初始化
+入口:    无
+出口:    无
+备注:    供PPM解析和其他时间测量共用
+****************************************************/
+void TIM4_Configuration_Cnt(void)
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+	TIM_OCInitTypeDef  TIM_OCInitStructure;
 
-    return (clocks.PCLK2_Frequency * 2U);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+	TIM_DeInit(TIM4);
+
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource8, GPIO_AF_TIM4);
+	//==================================
+	//TIM4_CH3用于PPM时间测量，其他通道未使用
+	//==================================
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_Init(GPIOB, &GPIO_InitStructure); //TIM4_CH3
+
+	TIM_TimeBaseStructure.TIM_Period = 10000;
+	TIM_TimeBaseStructure.TIM_Prescaler = 84 - 1;
+	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
+
+	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2;
+	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
+	TIM_OC3Init(TIM4, &TIM_OCInitStructure);
+	TIM_OC3PreloadConfig(TIM4, TIM_OCPreload_Enable);
+
+	TIM_ARRPreloadConfig(TIM4, ENABLE);
+	TIM_ClearFlag(TIM4, TIM_FLAG_Update);
+	TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
+	TIM_Cmd(TIM4, ENABLE);
+}
+
+/***************************************************
+函数名: void TIM4_IRQHandler(void)
+说明:    TIM4溢出中断
+入口:    无
+出口:    无
+备注:    提供PPM采样所需的TIME_ISR_CNT
+****************************************************/
+void TIM4_IRQHandler(void)
+{
+	if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET)
+	{
+		TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
+		TIME_ISR_CNT++;
+	}
+}
+
+/***************************************************
+函数名: void PPM_Init(void)
+说明:    PPM接收初始化
+入口:    无
+出口:    无
+备注:    上电初始化，运行一次
+****************************************************/
+void PPM_Init()
+{
+	NVIC_InitTypeDef   NVIC_InitStructure;
+	EXTI_InitTypeDef   EXTI_InitStructure;
+
+	PPM_GPIO_Init();
+	TIM4_Configuration_Cnt();
+
+	PPM_Sample_Cnt = 0;
+	PPM_Isr_Cnt = 0;
+	Last_PPM_Time = 0;
+	PPM_Time = 0;
+	PPM_Time_Delta = 0;
+	PPM_Time_Max = 0;
+	PPM_Start_Time = 0;
+	PPM_Finished_Time = 0;
+	PPM_Is_Okay = 0;
+	TIME_ISR_CNT = 0;
+	memset(PPM_Databuf, 0, sizeof(PPM_Databuf));
+
+	NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x02;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x04;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE); //使能SYSCFG时钟
+	SYSCFG_EXTILineConfig(PPM_EXTI_PORTSOURCE, PPM_EXTI_PINSOURCE); //PA8连接到中断线8
+
+	EXTI_InitStructure.EXTI_Line = PPM_EXTI_LINE;
+	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
+	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStructure);
+
+}
+
+/***************************************************
+函数名: void EXTI9_5_IRQHandler(void)
+说明:    PPM接收中断函数
+入口:    无
+出口:    无
+备注:    程序初始化后、始终运行
+****************************************************/
+static uint16 PPM_buf[10] = { 0 };
+void EXTI9_5_IRQHandler(void)
+{
+	if (EXTI_GetITStatus(PPM_EXTI_LINE) != RESET)
+	{
+		EXTI_ClearITPendingBit(PPM_EXTI_LINE);
+		//系统运行时间获取，单位us
+		Last_PPM_Time = PPM_Time;
+		PPM_Time = 10000*TIME_ISR_CNT + TIM4->CNT;
+		PPM_Time_Delta = PPM_Time - Last_PPM_Time;
+		//PPM中断进入判断
+		if (PPM_Isr_Cnt < 100)  PPM_Isr_Cnt++;
+		//PPM解析开始
+		if (PPM_Is_Okay == 1)
+		{
+			if (PPM_Time_Delta >= 800&&PPM_Time_Delta <= 2200)
+			{
+				PPM_Sample_Cnt++;
+				//对应通道写入缓冲区
+				PPM_buf[PPM_Sample_Cnt - 1] = PPM_Time_Delta;
+				//单次解析结束
+				if (PPM_Sample_Cnt >= 10)
+				{
+					memcpy(PPM_Databuf, PPM_buf, PPM_Sample_Cnt * sizeof(uint16));
+					PPM_Is_Okay = 0;
+				}
+			}
+			else
+			{
+				if (PPM_Time_Delta >= 3000)//帧结束电平至少2ms=2000us，由于部分老版本遥控器、
+				  //接收机输出PPM信号不标准，当出现解析异常时，尝试改小此值，该情况仅出现一例：使用天地飞老版本遥控器
+				{
+					PPM_Is_Okay = 1;
+					PPM_Sample_Cnt = 0;
+				}
+				else  PPM_Is_Okay = 0;
+			}
+		}
+		else if (PPM_Time_Delta >= 2500)//帧结束电平至少2ms=2000us
+		{
+			PPM_Is_Okay = 1;
+			PPM_Sample_Cnt = 0;
+		}
+	}
+ 
 }
 
 
-static void PPM_StoreFrame(void)
-{
-    uint8_t count = g_ppm_buildCount;
 
-    if (count > PPM_MAX_CHANNELS)
-    {
-        count = PPM_MAX_CHANNELS;
-    }
-
-    for (uint8_t i = 0U; i < count; ++i)
-    {
-        g_ppm_frameChannels[i] = g_ppm_buildChannels[i];
-    }
-
-    g_ppm_frameCount = count;
-    g_ppm_frameReady = 1U;
-}
-
-void PPM_Init(void)
-{
-    GPIO_InitTypeDef gpio;
-    TIM_TimeBaseInitTypeDef timBase;
-    TIM_ICInitTypeDef timIc;
-    NVIC_InitTypeDef nvic;
-    uint32_t timClkHz;
-    uint16_t prescaler;
-
-    for (uint8_t i = 0U; i < PPM_MAX_CHANNELS; ++i)
-    {
-        g_ppm_buildChannels[i] = 0U;
-        g_ppm_frameChannels[i] = 0U;
-    }
-
-    g_ppm_captureLast = 0U;
-    g_ppm_buildCount = 0U;
-    g_ppm_frameCount = 0U;
-    g_ppm_frameReady = 0U;
-
-    /* Configure PA8 as input with EXTI line
-     * Use TIM2 counter (already running for scheduler) as microsecond time base
-     */
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
-
-    gpio.GPIO_Pin = GPIO_Pin_8;
-    gpio.GPIO_Mode = GPIO_Mode_IN;
-    gpio.GPIO_Speed = GPIO_Speed_50MHz;
-    gpio.GPIO_OType = GPIO_OType_PP;
-    gpio.GPIO_PuPd = GPIO_PuPd_NOPULL;
-    GPIO_Init(GPIOA, &gpio);
-
-    /* connect EXTI8 line to PA8 */
-    SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOA, EXTI_PinSource8);
-
-    EXTI_InitTypeDef extiInit;
-    extiInit.EXTI_Line = EXTI_Line8;
-    extiInit.EXTI_Mode = EXTI_Mode_Interrupt;
-    extiInit.EXTI_Trigger = EXTI_Trigger_Rising;
-    extiInit.EXTI_LineCmd = ENABLE;
-    EXTI_Init(&extiInit);
-
-    nvic.NVIC_IRQChannel = EXTI9_5_IRQn;
-    nvic.NVIC_IRQChannelPreemptionPriority = 1U;
-    nvic.NVIC_IRQChannelSubPriority = 0U;
-    nvic.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&nvic);
-
-    /* initialize last capture to current time to avoid large first delta */
-    uint32_t ms;
-    uint16_t cnt;
-    do {
-        ms = SCH_GetTick();
-        cnt = TIM_GetCounter(TIM2);
-    } while (ms != SCH_GetTick());
-    g_ppm_captureLast = (uint16_t)((ms * 1000U + cnt) & 0xFFFFU);
-}
-
-/* Legacy TIM1 handler kept for compatibility */
-void PPM_IRQHandler(void)
-{
-    /* not used in EXTI-based implementation */
-}
-
-/* EXTI-based PPM capture handler. Reads current time using TIM2 counter + ms tick. */
-void PPM_EXTI_IRQHandler(void)
-{
-    if (EXTI_GetITStatus(EXTI_Line8) != RESET)
-    {
-        uint32_t ms1, ms2;
-        uint16_t cnt;
-        uint32_t now_us32;
-        uint32_t last_us32;
-        uint32_t delta_us32;
-
-        EXTI_ClearITPendingBit(EXTI_Line8);
-
-        /* read consistent millisecond tick and TIM2 counter */
-        do {
-            ms1 = SCH_GetTick();
-            cnt = TIM_GetCounter(TIM2);
-            ms2 = SCH_GetTick();
-        } while (ms1 != ms2);
-
-        now_us32 = ms2 * 1000U + (uint32_t)cnt;
-        last_us32 = (uint32_t)g_ppm_captureLast; /* stored as lower 16 bits */
-
-        /* extend last_us32 to 32-bit by assuming monotonic increasing; if wrap, handle */
-        /* We stored only 16-bit previously; to be safe, keep a 32-bit last time internal */
-        static uint32_t g_last_time_32 = 0U;
-
-        if (g_last_time_32 == 0U)
-        {
-            g_last_time_32 = now_us32;
-        }
-
-        if (now_us32 >= g_last_time_32)
-        {
-            delta_us32 = now_us32 - g_last_time_32;
-        }
-        else
-        {
-            /* wrap-around handling */
-            delta_us32 = (0xFFFFFFFFU - g_last_time_32) + now_us32 + 1U;
-        }
-
-        g_last_time_32 = now_us32;
-        g_ppm_captureLast = (uint16_t)(now_us32 & 0xFFFFU);
-
-        if (delta_us32 >= PPM_SYNC_GAP_US)
-        {
-            if (g_ppm_buildCount > 0U)
-            {
-                PPM_StoreFrame();
-            }
-
-            g_ppm_buildCount = 0U;
-        }
-        else if ((delta_us32 >= PPM_MIN_VALID_US) && (delta_us32 <= PPM_MAX_VALID_US))
-        {
-            if (g_ppm_buildCount < PPM_MAX_CHANNELS)
-            {
-                g_ppm_buildChannels[g_ppm_buildCount] = (uint16_t)delta_us32;
-                g_ppm_buildCount++;
-            }
-        }
-        else
-        {
-            /* ignore invalid pulse widths */
-        }
-    }
-}
-
-uint8_t PPM_HasFrame(void)
-{
-    return g_ppm_frameReady;
-}
-
-// Returns 1 if a frame was read successfully, 0 otherwise. If successful, the channel values are stored in the provided array and the channel count is updated.
-uint8_t PPM_ReadFrame(uint16_t *channels, uint8_t maxChannels, uint8_t *channelCount)
-{
-    uint8_t count;
-
-    if ((channels == 0) || (maxChannels == 0U))
-    {
-        return 0U;
-    }
-
-    __disable_irq();
-
-    if (g_ppm_frameReady == 0U)
-    {
-        __enable_irq();
-        return 0U;
-    }
-
-    count = g_ppm_frameCount;
-    if (count > maxChannels)
-    {
-        count = maxChannels;
-    }
-
-    for (uint8_t i = 0U; i < count; ++i)
-    {
-        channels[i] = g_ppm_frameChannels[i];
-    }
-
-    g_ppm_frameReady = 0U;
-
-    __enable_irq();
-
-    if (channelCount != 0)
-    {
-        *channelCount = count;
-    }
-
-    return 1U;
-}
-
-uint16_t PPM_GetChannelUs(uint8_t channelIndex)
-{
-    uint16_t value = 0U;
-
-    __disable_irq();
-
-    if ((g_ppm_frameReady != 0U) && (channelIndex < g_ppm_frameCount))
-    {
-        value = g_ppm_frameChannels[channelIndex];
-    }
-
-    __enable_irq();
-
-    return value;
-}
-
-uint8_t PPM_GetChannelCount(void)
-{
-    return g_ppm_frameCount;
-}

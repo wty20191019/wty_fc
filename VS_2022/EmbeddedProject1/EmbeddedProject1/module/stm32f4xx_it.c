@@ -157,14 +157,14 @@ void TIM2_IRQHandler(void)
 void TIM1_CC_IRQHandler(void)
 {
   /* keep for compatibility if TIM1 used elsewhere */
-  PPM_IRQHandler();
+ 
 }
 
-void EXTI9_5_IRQHandler(void)
-{
-  /* handle PA8 (EXTI line 8) */
-  PPM_EXTI_IRQHandler();
-}
+//void EXTI9_5_IRQHandler(void)
+//{
+//  /* handle PA8 (EXTI line 8) */
+//
+//}
 
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */

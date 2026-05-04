@@ -1,4 +1,5 @@
 #include "board.h"
+#include "stm32f4xx.h"
 
 #include "DMA_UART1.h"
 #include "DMA_UART2.h"
@@ -50,7 +51,7 @@ static uint16_t g_uart1PacketLen = 0U;
 static uint8_t g_uart1PacketActive = 0U;
 
 
-uint16_t channels[PPM_MAX_CHANNELS];
+
 uint8_t channelCount = 0;
 
 
@@ -223,47 +224,18 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
 
 	if (channelCount >= 4U)
 	{
-		Serial1_Printf("[plot,%u,%u,%u,%u]\r\n", channels[0], channels[1], channels[2], channels[3]);
+		//Serial1_Printf("[plot,%u,%u,%u,%u]\r\n", channels[0], channels[1], channels[2], channels[3]);
 	}
 
 }
 
-//==========================================================================
-//电调控制任务
-//==========================================================================
-void Task_ESC_Control(void)
-{
-    static uint8_t  first_run = 1U;
-    static uint16_t cunt = 0U;
-
-    if(first_run==1U)
-    {
-        cunt = 0U;
-        first_run=0U;
-        
-    }
-    else
-    {
-        cunt++;
-
-        ESC_SetChannelsUs(1500+500*0.1f,1500+500*0.1f,1500+500*0.1f,1500+500*0.1f);
-        
-        if (cunt >= 50U)//20*50ms 
-        {
-            ESC_SetChannelsUs(1500U,1500U,1500U,1500U);
-        }
-    }
-}
 
 //==========================================================================
 //读取ppm
 //==========================================================================
 void read_PPM(void)
 {
-	if (PPM_ReadFrame(channels, PPM_MAX_CHANNELS, &channelCount) == 0U)
-	{
-		return;
-	}
+
 }
 
 //==========================================================================
@@ -275,7 +247,7 @@ int main(void)
 
     PWM_Init();//初始化TIM3的PWM输出
 	
-	PPM_Init();
+	PPM_Init(); //初始化PPM输入
 
     if (ESC_AUTO_CALIBRATION != 0U)
     {
@@ -308,10 +280,9 @@ int main(void)
     SCH_AddTask(PA0_LED_Toggle          , 50U                       ,14             );
     SCH_AddTask(Task_Uart1Echo          , 100                       , 6             );
     SCH_AddTask(Task_OledUpdate         , 100U                      , 8             );
-	SCH_AddTask(read_PPM                , 20U                       , 5             );
+    SCH_AddTask(read_PPM                , 20U                       , 5             );
     
-//    SCH_AddTask(Task_ESC_Control        , 20U                       ,13             );	
-    
+
     //================================================================================
     while (1)
     {
