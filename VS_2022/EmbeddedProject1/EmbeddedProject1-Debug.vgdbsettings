@@ -113,7 +113,7 @@
         <Entries>
           <KeyValue>
             <Key>com.sysprogs.arm.openocd.interface</Key>
-            <Value>interface/stlink-v2.cfg</Value>
+            <Value>interface/cmsis-dap.cfg</Value>
           </KeyValue>
           <KeyValue>
             <Key>com.sysprogs.arm.openocd.cpu</Key>
@@ -169,11 +169,11 @@
           </KeyValue>
           <KeyValue>
             <Key>com.sysprogs.arm.openocd.transport</Key>
-            <Value />
+            <Value>-c "transport select hla_swd"</Value>
           </KeyValue>
           <KeyValue>
             <Key>com.sysprogs.arm.openocd.quicksetup.interface</Key>
-            <Value>stlink-v2</Value>
+            <Value>cmsis-dap</Value>
           </KeyValue>
         </Entries>
       </Configuration>

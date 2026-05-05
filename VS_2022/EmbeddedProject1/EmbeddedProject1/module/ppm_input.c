@@ -52,21 +52,10 @@ void TIM4_Configuration_Cnt(void)
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 	TIM_OCInitTypeDef  TIM_OCInitStructure;
 
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
 	TIM_DeInit(TIM4);
 
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
-
-	GPIO_PinAFConfig(GPIOB, GPIO_PinSource8, GPIO_AF_TIM4);
-	//==================================
-	//TIM4_CH3用于PPM时间测量，其他通道未使用
-	//==================================
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	GPIO_Init(GPIOB, &GPIO_InitStructure); //TIM4_CH3
 
 	TIM_TimeBaseStructure.TIM_Period = 10000;
 	TIM_TimeBaseStructure.TIM_Prescaler = 84 - 1;
@@ -188,7 +177,7 @@ void EXTI9_5_IRQHandler(void)
 			}
 			else
 			{
-				if (PPM_Time_Delta >= 3000)//帧结束电平至少2ms=2000us，由于部分老版本遥控器、
+				if (PPM_Time_Delta >= 2000)//帧结束电平至少2ms=2000us，由于部分老版本遥控器、
 				  //接收机输出PPM信号不标准，当出现解析异常时，尝试改小此值，该情况仅出现一例：使用天地飞老版本遥控器
 				{
 					PPM_Is_Okay = 1;
