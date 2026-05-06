@@ -1,0 +1,391 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source files">
+      <UniqueIdentifier>{2ad93143-5419-4ef2-be21-3841146ab9f6}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header files">
+      <UniqueIdentifier>{fe658513-b71f-4e3b-8dea-e4300adf1d85}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource files">
+      <UniqueIdentifier>{0b76dee9-2a9a-4cac-9304-55ca9d8035a9}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Make files">
+      <UniqueIdentifier>{f35f987d-3a5d-478a-87f4-fe906371b0f4}</UniqueIdentifier>
+      <Extensions>*.mak</Extensions>
+    </Filter>
+    <Filter Include="VisualGDB settings">
+      <UniqueIdentifier>{d9be8f41-b0d2-4530-ba97-d7850d7ecb7d}</UniqueIdentifier>
+      <Extensions>*.vgdbsettings</Extensions>
+    </Filter>
+    <Filter Include="Source files\Device-specific files">
+      <UniqueIdentifier>{0c0ff869-d039-4d43-ab8e-71e9392a5c36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files">
+      <UniqueIdentifier>{09bb112f-6c2b-4d16-870f-96fcc9374da9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\外设">
+      <UniqueIdentifier>{d34baa88-09ab-47cf-8a04-6c451de77770}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\外设\启用的外设">
+      <UniqueIdentifier>{ac854e13-d00a-4255-afd6-7348b49af740}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\外设\控制器">
+      <UniqueIdentifier>{c269face-3095-4b31-a259-c59aac858638}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\外设\通信">
+      <UniqueIdentifier>{8a972f5d-27e9-4a37-8650-2f03cd0b956a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\外设\启用的外设\OLED">
+      <UniqueIdentifier>{29d5cbf8-899f-4464-8364-73a67e958b0f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\外设\IMU">
+      <UniqueIdentifier>{bb3cdccc-5dda-4b68-aa82-53b772287bc4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\外设\数学">
+      <UniqueIdentifier>{db585f69-a644-4a94-b4c9-1dd758a1b946}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\外设\控制逻辑">
+      <UniqueIdentifier>{1f0bd1f4-14f6-477d-b4c6-ce7c2e557526}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\外设\通信\USB-vcp">
+      <UniqueIdentifier>{48be400e-4131-4b40-88c4-fa156eeaa88d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\主要逻辑">
+      <UniqueIdentifier>{5ae9eafc-55ce-445e-8005-0b3ae8f00d08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\外设\UART">
+      <UniqueIdentifier>{e760ffe6-232f-40f7-88bb-079fb49afbbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\STM32F4xx_StdPeriph_Driver">
+      <UniqueIdentifier>{9e89578d-fb42-47bd-a809-3ae910a7f3a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\外设\IMUSensor">
+      <UniqueIdentifier>{d2d7836e-d7ef-4096-98e9-70d235f8323d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="User\OLED\oled.c">
+      <Filter>Source files\外设\启用的外设\OLED</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\misc.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_adc.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_can.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_cec.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_crc.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_cryp.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_cryp_aes.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_cryp_des.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_cryp_tdes.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_dac.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_dbgmcu.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_dcmi.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_dfsdm.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_dma.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_dma2d.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_dsi.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_exti.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_flash.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_flash_ramfunc.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_fmpi2c.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_fsmc.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_gpio.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_hash.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_hash_md5.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_hash_sha1.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_i2c.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_iwdg.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_lptim.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_ltdc.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_pwr.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_qspi.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_rcc.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_rng.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_rtc.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_sai.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_sdio.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_spdifrx.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_spi.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_syscfg.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_tim.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_usart.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_wwdg.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="User\USB\src\usb_bsp.c">
+      <Filter>Source files\外设\通信\USB-vcp</Filter>
+    </ClCompile>
+    <ClCompile Include="User\USB\src\usb_core.c">
+      <Filter>Source files\外设\通信\USB-vcp</Filter>
+    </ClCompile>
+    <ClCompile Include="User\USB\src\usb_dcd.c">
+      <Filter>Source files\外设\通信\USB-vcp</Filter>
+    </ClCompile>
+    <ClCompile Include="User\USB\src\usb_dcd_int.c">
+      <Filter>Source files\外设\通信\USB-vcp</Filter>
+    </ClCompile>
+    <ClCompile Include="User\USB\src\usbd_cdc_core.c">
+      <Filter>Source files\外设\通信\USB-vcp</Filter>
+    </ClCompile>
+    <ClCompile Include="User\USB\src\usbd_cdc_vcp.c">
+      <Filter>Source files\外设\通信\USB-vcp</Filter>
+    </ClCompile>
+    <ClCompile Include="User\USB\src\usbd_core.c">
+      <Filter>Source files\外设\通信\USB-vcp</Filter>
+    </ClCompile>
+    <ClCompile Include="User\USB\src\usbd_ioreq.c">
+      <Filter>Source files\外设\通信\USB-vcp</Filter>
+    </ClCompile>
+    <ClCompile Include="User\USB\src\usbd_req.c">
+      <Filter>Source files\外设\通信\USB-vcp</Filter>
+    </ClCompile>
+    <ClCompile Include="User\USB\src\usbd_usr.c">
+      <Filter>Source files\外设\通信\USB-vcp</Filter>
+    </ClCompile>
+    <ClCompile Include="User\USB\src\usbd_desc.c">
+      <Filter>Source files\外设\通信\USB-vcp</Filter>
+    </ClCompile>
+    <ClCompile Include="User\T265.c">
+      <Filter>Source files\外设\启用的外设</Filter>
+    </ClCompile>
+    <ClCompile Include="User\FFCY_ANO_Link.c">
+      <Filter>Source files\外设\通信</Filter>
+    </ClCompile>
+    <ClCompile Include="User\FFCY_vl53l0x.c">
+      <Filter>Source files\外设\启用的外设</Filter>
+    </ClCompile>
+    <ClCompile Include="User\FFCY_PMW3901.c">
+      <Filter>Source files\外设\启用的外设</Filter>
+    </ClCompile>
+    <ClCompile Include="User\Calibration.c">
+      <Filter>Source files\外设\IMU</Filter>
+    </ClCompile>
+    <ClCompile Include="User\FFCY_Math.c">
+      <Filter>Source files\外设\数学</Filter>
+    </ClCompile>
+    <ClCompile Include="User\FFCY_OpticalFlow.c">
+      <Filter>Source files\外设\启用的外设</Filter>
+    </ClCompile>
+    <ClCompile Include="User\IMU.c">
+      <Filter>Source files\外设\IMU</Filter>
+    </ClCompile>
+    <ClCompile Include="User\Bling.c">
+      <Filter>Source files\外设\启用的外设</Filter>
+    </ClCompile>
+    <ClCompile Include="User\PPM.c">
+      <Filter>Source files\外设\通信</Filter>
+    </ClCompile>
+    <ClCompile Include="User\PWM.c">
+      <Filter>Source files\外设\通信</Filter>
+    </ClCompile>
+    <ClCompile Include="User\RC.c">
+      <Filter>Source files\外设\通信</Filter>
+    </ClCompile>
+    <ClCompile Include="User\SBUS.c">
+      <Filter>Source files\外设\通信</Filter>
+    </ClCompile>
+    <ClCompile Include="User\delay.c">
+      <Filter>Source files\外设\启用的外设</Filter>
+    </ClCompile>
+    <ClCompile Include="User\Filter.c">
+      <Filter>Source files\外设\数学</Filter>
+    </ClCompile>
+    <ClCompile Include="User\FLASH.c">
+      <Filter>Source files\外设\启用的外设</Filter>
+    </ClCompile>
+    <ClCompile Include="User\KEY.c">
+      <Filter>Source files\外设\启用的外设</Filter>
+    </ClCompile>
+    <ClCompile Include="User\ringbuf.c">
+      <Filter>Source files\外设\数学</Filter>
+    </ClCompile>
+    <ClCompile Include="User\SINS.c">
+      <Filter>Source files\外设\IMU</Filter>
+    </ClCompile>
+    <ClCompile Include="User\glcdfont.c">
+      <Filter>Source files\外设\启用的外设\OLED</Filter>
+    </ClCompile>
+    <ClCompile Include="system_stm32f4xx.c">
+      <Filter>Source files\STM32F4xx_StdPeriph_Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="User\TIM_Base.c">
+      <Filter>Source files\外设\启用的外设</Filter>
+    </ClCompile>
+    <ClCompile Include="User\Time_Cnt.c">
+      <Filter>Source files\外设\启用的外设</Filter>
+    </ClCompile>
+    <ClCompile Include="User\Flight_Parameter_Table.c">
+      <Filter>Source files\外设\启用的外设</Filter>
+    </ClCompile>
+    <ClCompile Include="User\FFCY_Menu.c">
+      <Filter>Source files\外设\启用的外设\OLED</Filter>
+    </ClCompile>
+    <ClCompile Include="User\SYSTEM.c">
+      <Filter>Source files\主要逻辑</Filter>
+    </ClCompile>
+    <ClCompile Include="TanlorVX.c">
+      <Filter>Source files\主要逻辑</Filter>
+    </ClCompile>
+    <ClCompile Include="User\Total_Control.c">
+      <Filter>Source files\外设\控制逻辑</Filter>
+    </ClCompile>
+    <ClCompile Include="User\FFCY_SDK.c">
+      <Filter>Source files\外设\控制逻辑</Filter>
+    </ClCompile>
+    <ClCompile Include="User\FFCY_Position_Ctrl.c">
+      <Filter>Source files\外设\控制逻辑</Filter>
+    </ClCompile>
+    <ClCompile Include="User\PID.c">
+      <Filter>Source files\外设\控制器</Filter>
+    </ClCompile>
+    <ClCompile Include="User\DMA\DMA_UART1.c">
+      <Filter>Source files\外设\UART</Filter>
+    </ClCompile>
+    <ClCompile Include="User\DMA\DMA_UART2.c">
+      <Filter>Source files\外设\UART</Filter>
+    </ClCompile>
+    <ClCompile Include="User\DMA\DMA_UART3.c">
+      <Filter>Source files\外设\UART</Filter>
+    </ClCompile>
+    <ClCompile Include="User\DMA\DMA_UART4.c">
+      <Filter>Source files\外设\UART</Filter>
+    </ClCompile>
+    <ClCompile Include="User\DMA\DMA_UART6.c">
+      <Filter>Source files\外设\UART</Filter>
+    </ClCompile>
+    <ClCompile Include="User\FFCY_Parament.c">
+      <Filter>Source files\外设\控制器</Filter>
+    </ClCompile>
+    <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\StartupFiles\startup_stm32f405xx.c">
+      <Filter>Source files\Device-specific files</Filter>
+    </ClCompile>
+    <ClCompile Include="User\USART.c">
+      <Filter>Source files\外设\UART</Filter>
+    </ClCompile>
+    <ClCompile Include="User\IMU_NEW.c">
+      <Filter>Source files\外设\IMU</Filter>
+    </ClCompile>
+    <ClCompile Include="User\IMU_Sensor\FFCY_NEW_BMI088.c">
+      <Filter>Source files\外设\IMUSensor</Filter>
+    </ClCompile>
+    <ClCompile Include="User\IMU_Sensor\FFCY_NEW_MPU6050.c">
+      <Filter>Source files\外设\IMUSensor</Filter>
+    </ClCompile>
+    <ClCompile Include="User\FFCY_NEW_IMUSensor.c">
+      <Filter>Source files\外设\IMUSensor</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Makefile" />
+    <None Include="debug.mak">
+      <Filter>Make files</Filter>
+    </None>
+    <None Include="Tanlor_Vx-Debug.vgdbsettings">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <None Include="release.mak">
+      <Filter>Make files</Filter>
+    </None>
+    <None Include="Tanlor_Vx-Release.vgdbsettings">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <None Include="stm32.mak">
+      <Filter>Source files\Device-specific files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="stm32.xml">
+      <Filter>VisualGDB settings</Filter>
+    </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="README.txt">
+      <Filter>Source files</Filter>
+    </Text>
+  </ItemGroup>
+</Project>

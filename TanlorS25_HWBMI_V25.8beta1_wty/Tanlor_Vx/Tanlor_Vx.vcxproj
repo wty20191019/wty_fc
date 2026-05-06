@@ -1,0 +1,190 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{DAD730EF-0646-46B4-9D3C-0C5993A86846}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Label="VisualGDBPackageDefinitions">
+    <ToolchainID>com.visualgdb.arm-eabi</ToolchainID>
+    <ToolchainVersion>7.2.0/8.0.1/r3</ToolchainVersion>
+    <BSP_ID>com.sysprogs.arm.stm32</BSP_ID>
+    <BSP_VERSION>4.7R3</BSP_VERSION>
+  </PropertyGroup>
+  <ImportGroup Label="VisualGDBFindComponents">
+    <Import Project="$(LOCALAPPDATA)\VisualGDB\FindComponents.props" />
+  </ImportGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <NMakeIncludeSearchPath>.;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0\arm-eabi\thumb\cortex_m4;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0\backward;$(TOOLCHAIN_ROOT)\lib\gcc\arm-eabi\7.2.0\include;$(TOOLCHAIN_ROOT)\lib\gcc\arm-eabi\7.2.0\include-fixed;$(TOOLCHAIN_ROOT)\arm-eabi\sys-include;$(TOOLCHAIN_ROOT)\arm-eabi\include;User;User/OLED;User/sys;STM32F4xx_Driver/inc;STM32F4xx_Driver;User/DMA;User/USB/inc;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes>$(ProjectDir)\gcc_Debug.h;$(VISUALGDB_DIR)\gcc_compat.h;$(BSP_ROOT)\stm32_compat.h;$(NMakeForcedIncludes)</NMakeForcedIncludes>
+    <NMakeBuildCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /build "$(ProjectPath)" "/solution:$(SolutionPath)"  "/config:$(Configuration)" "/platform:$(Platform)"</NMakeBuildCommandLine>
+    <NMakeCleanCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /clean "$(ProjectPath)" "/solution:$(SolutionPath)"  "/config:$(Configuration)" "/platform:$(Platform)"</NMakeCleanCommandLine>
+    <NMakeReBuildCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /rebuild "$(ProjectPath)" "/solution:$(SolutionPath)"  "/config:$(Configuration)" "/platform:$(Platform)"</NMakeReBuildCommandLine>
+    <NMakeOutput>$(ProjectDir)Tanlor_Vx-Debug.vgdbsettings</NMakeOutput>
+    <IncludePath />
+    <ReferencePath />
+    <LibraryPath />
+    <NMakePreprocessorDefinitions>__VisualGDB_CFG_Debug;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <NMakeIncludeSearchPath>.;c:\sysgcc\arm-eabi\arm-eabi\include\c++\7.2.0;c:\sysgcc\arm-eabi\arm-eabi\include\c++\7.2.0\arm-eabi\thumb\cortex_m4;c:\sysgcc\arm-eabi\arm-eabi\include\c++\7.2.0\backward;c:\sysgcc\arm-eabi\lib\gcc\arm-eabi\7.2.0\include;c:\sysgcc\arm-eabi\lib\gcc\arm-eabi\7.2.0\include-fixed;c:\sysgcc\arm-eabi\arm-eabi\sys-include;c:\sysgcc\arm-eabi\arm-eabi\include;$(LOCALAPPDATA)\VisualGDB\EmbeddedBSPs\arm-eabi\com.sysprogs.arm.stm32\STM32F4xxxx\STM32F4xx_StdPeriph_Driver\inc;$(LOCALAPPDATA)\VisualGDB\EmbeddedBSPs\arm-eabi\com.sysprogs.arm.stm32\STM32F4xxxx\CMSIS_StdPeriph\Device\ST\STM32F4xx\Include;$(LOCALAPPDATA)\VisualGDB\EmbeddedBSPs\arm-eabi\com.sysprogs.arm.stm32\STM32F4xxxx\CMSIS_StdPeriph\Include;$(LOCALAPPDATA)\VisualGDB\EmbeddedBSPs\arm-eabi\com.sysprogs.arm.stm32\STM32F4xxxx\CMSIS_StdPeriph\RTOS\Template;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes>$(ProjectDir)\gcc_Release.h;$(VISUALGDB_DIR)\gcc_compat.h;$(LOCALAPPDATA)\VisualGDB\EmbeddedBSPs\arm-eabi\com.sysprogs.arm.stm32\stm32_compat.h;$(NMakeForcedIncludes)</NMakeForcedIncludes>
+    <NMakePreprocessorDefinitions>__VisualGDB_CFG_Release;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakeBuildCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /build "$(ProjectPath)" "/solution:$(SolutionPath)" "/config:$(Configuration)" "/platform:$(Platform)"</NMakeBuildCommandLine>
+    <NMakeCleanCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /clean "$(ProjectPath)" "/solution:$(SolutionPath)" "/config:$(Configuration)" "/platform:$(Platform)"</NMakeCleanCommandLine>
+    <NMakeReBuildCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /rebuild "$(ProjectPath)" "/solution:$(SolutionPath)" "/config:$(Configuration)" "/platform:$(Platform)"</NMakeReBuildCommandLine>
+    <NMakeOutput>$(ProjectDir)Tanlor_Vx-Release.vgdbsettings</NMakeOutput>
+    <IncludePath />
+    <ReferencePath />
+    <LibraryPath />
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="STM32F4xx_Driver\src\misc.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_adc.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_can.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_cec.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_crc.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_cryp.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_cryp_aes.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_cryp_des.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_cryp_tdes.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_dac.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_dbgmcu.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_dcmi.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_dfsdm.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_dma.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_dma2d.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_dsi.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_exti.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_flash.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_flash_ramfunc.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_fmpi2c.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_fsmc.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_gpio.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_hash.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_hash_md5.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_hash_sha1.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_i2c.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_iwdg.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_lptim.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_ltdc.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_pwr.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_qspi.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_rcc.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_rng.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_rtc.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_sai.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_sdio.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_spdifrx.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_spi.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_syscfg.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_tim.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_usart.c" />
+    <ClCompile Include="STM32F4xx_Driver\src\stm32f4xx_wwdg.c" />
+    <ClCompile Include="TanlorVX.c" />
+    <ClCompile Include="system_stm32f4xx.c" />
+    <ClCompile Include="User\Bling.c" />
+    <ClCompile Include="User\Calibration.c" />
+    <ClCompile Include="User\delay.c" />
+    <ClCompile Include="User\DMA\DMA_UART1.c" />
+    <ClCompile Include="User\DMA\DMA_UART2.c" />
+    <ClCompile Include="User\DMA\DMA_UART3.c" />
+    <ClCompile Include="User\DMA\DMA_UART4.c" />
+    <ClCompile Include="User\DMA\DMA_UART6.c" />
+    <ClCompile Include="User\FFCY_ANO_Link.c" />
+    <ClCompile Include="User\FFCY_Math.c" />
+    <ClCompile Include="User\FFCY_Menu.c" />
+    <ClCompile Include="User\FFCY_NEW_IMUSensor.c" />
+    <ClCompile Include="User\FFCY_OpticalFlow.c" />
+    <ClCompile Include="User\FFCY_Parament.c" />
+    <ClCompile Include="User\FFCY_PMW3901.c" />
+    <ClCompile Include="User\FFCY_Position_Ctrl.c" />
+    <ClCompile Include="User\FFCY_SDK.c" />
+    <ClCompile Include="User\FFCY_vl53l0x.c" />
+    <ClCompile Include="User\Filter.c" />
+    <ClCompile Include="User\FLASH.c" />
+    <ClCompile Include="User\Flight_Parameter_Table.c" />
+    <ClCompile Include="User\glcdfont.c" />
+    <ClCompile Include="User\IMU.c" />
+    <ClCompile Include="User\IMU_NEW.c" />
+    <ClCompile Include="User\IMU_Sensor\FFCY_NEW_BMI088.c" />
+    <ClCompile Include="User\IMU_Sensor\FFCY_NEW_MPU6050.c" />
+    <ClCompile Include="User\KEY.c" />
+    <ClCompile Include="User\Total_Control.c" />
+    <ClCompile Include="User\RC.c" />
+    <ClCompile Include="User\OLED\oled.c" />
+    <ClCompile Include="User\PID.c" />
+    <ClCompile Include="User\PPM.c" />
+    <ClCompile Include="User\PWM.c" />
+    <ClCompile Include="User\ringbuf.c" />
+    <ClCompile Include="User\SBUS.c" />
+    <ClCompile Include="User\SINS.c" />
+    <ClCompile Include="User\SYSTEM.c" />
+    <ClCompile Include="User\T265.c" />
+    <ClCompile Include="User\TIM_Base.c" />
+    <ClCompile Include="User\Time_Cnt.c" />
+    <ClCompile Include="User\USART.c" />
+    <ClCompile Include="User\USB\src\usbd_cdc_core.c" />
+    <ClCompile Include="User\USB\src\usbd_cdc_vcp.c" />
+    <ClCompile Include="User\USB\src\usbd_core.c" />
+    <ClCompile Include="User\USB\src\usbd_desc.c" />
+    <ClCompile Include="User\USB\src\usbd_ioreq.c" />
+    <ClCompile Include="User\USB\src\usbd_req.c" />
+    <ClCompile Include="User\USB\src\usbd_usr.c" />
+    <ClCompile Include="User\USB\src\usb_bsp.c" />
+    <ClCompile Include="User\USB\src\usb_core.c" />
+    <ClCompile Include="User\USB\src\usb_dcd.c" />
+    <ClCompile Include="User\USB\src\usb_dcd_int.c" />
+    <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\StartupFiles\startup_stm32f405xx.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="debug.mak" />
+    <None Include="Makefile" />
+    <None Include="release.mak" />
+    <None Include="stm32.mak" />
+    <None Include="Tanlor_Vx-Debug.vgdbsettings" />
+    <None Include="Tanlor_Vx-Release.vgdbsettings" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="stm32.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="README.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
