@@ -646,6 +646,7 @@ void Reset_RC_Calibartion(uint8_t Type)
 float ESC_Calibration_Flag=0;
 #define Thr_Chl_Num  2
 void ESC_HardWave_Init()//只初始化校准电调的必要资源
+//没用被调用，保留代码以备后续使用
 {
 
   NVIC_InitTypeDef NVIC_InitStructure;//定义NVIC初始化结构体

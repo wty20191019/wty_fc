@@ -1,5 +1,6 @@
 #include "Headfile.h"
 
+
 USB_OTG_CORE_HANDLE    USB_OTG_dev;
 extern void Parament_init_check_andLoadDafault();
 u8 Moto_Ride_CNT = 0;
@@ -11,7 +12,7 @@ u8 Moto_Ride_CNT = 0;
 void Motor_Calibration()
 {
 	if (PPM_Databuf[2] > 1800)
-	{
+    {//电调校准
 		PWM_Set(PPM_Databuf[2], PPM_Databuf[2], PPM_Databuf[2], PPM_Databuf[2]);
 		TIM_Cmd(TIM3, ENABLE);  //使能TIM14
 		while (1)
@@ -26,7 +27,7 @@ void Motor_Calibration()
 	}
 
 	if (PPM_Databuf[1] > 1800)
-	{
+    {//电机怠速测试
 		TIM_Cmd(TIM3, ENABLE);  //使能TIM14
 		PWM_Set(Thr_Min, Thr_Min, Thr_Min, Thr_Min);
 		delay_ms(1000); delay_ms(1000); delay_ms(1000); delay_ms(1000);
@@ -51,25 +52,37 @@ void Motor_Calibration()
 }
 void Board_Init(void)
 {
+    //============PA0 LED初始化================
+	PA0_LED_Toggle_Init();
+
 	/*************基本功能初始化***************/
 	SystemInit();					//系统时钟初始化
 	delay_init(168);				//滴答延时初始化
 
-	USBD_Init(&USB_OTG_dev, USB_OTG_FS_CORE_ID, &USR_desc, &USBD_CDC_cb, &USR_cb);
+    //==============USB设备初始化=================//用于地面站调参和打印日志
+	//USBD_Init(&USB_OTG_dev, USB_OTG_FS_CORE_ID, &USR_desc, &USBD_CDC_cb, &USR_cb);
+	
+	
 	/************中断优先级设置***************/
-	NVIC_Configuration();
+    NVIC_Configuration();//中断优先级设置
 	TIM4_Configuration_Cnt();    //TIM2程序计时定时器
 
 	PPM_Init();					//PPM遥控器接收初始化
 	
 	/************硬件MPU6050初始化***************/
-	ImuSensor_Init();
-	GYRO_Calibration();           //陀螺仪零偏标定
+	//ImuSensor_Init();
+	//GYRO_Calibration();           //陀螺仪零偏标定
+
+
 	/************PWM部分     ***************/
 	PWM_Init();					//PWM初始化(不输出)
 	Motor_Calibration();		//电调校准及电机测试
 
-	Parament_init_check_andLoadDafault();
+
+    //==================参数初始化=================//
+    Parament_init_check_andLoadDafault();//参数初始化检查，加载默认参数
+
+
 	/*************串口初始化***************/
 	RingBuff_Init(&Ground_Station_Ringbuf);
 	//USART1_Init(921600);
@@ -81,8 +94,10 @@ void Board_Init(void)
 	DMA_USART6_Init(115200);
 
 	/*************外设初始化***************/
-	VL53LX_init();				//激光测距初始化
-	PMW3901_Init();				//光流初始化
+	//VL53LX_init();				//激光测距初始化
+	//PMW3901_Init();				//光流初始化
+
+
 	/***********参数初始化***************/
 	IMU_Acc_Cal_Init();						//加速度计校准值初始化
 	Quaternion_Init();						//初始四元数初始化
@@ -97,10 +112,10 @@ void Board_Init(void)
 	TIM_Cmd(TIM3, ENABLE);  //使能TIM14
 
 	OLED_Init();					//显示屏初始化
-	Draw_Logo1();
-	Bling_Init();				//指示灯、测试IO初始化
-	Key_Init();                   //按键初始化
-	LCD_CLS();
+	Draw_Logo1();					//显示标志图
+	//Bling_Init();					//指示灯、测试IO初始化
+	//Key_Init();                   //按键初始化
+    LCD_CLS();						//清屏
 
 	/*************定时器初始化***************/
 	TIM2_Configuration();

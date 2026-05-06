@@ -143,6 +143,7 @@
     <ClCompile Include="User\IMU_Sensor\FFCY_NEW_BMI088.c" />
     <ClCompile Include="User\IMU_Sensor\FFCY_NEW_MPU6050.c" />
     <ClCompile Include="User\KEY.c" />
+    <ClCompile Include="User\pa0_LED_toggle.c" />
     <ClCompile Include="User\Total_Control.c" />
     <ClCompile Include="User\RC.c" />
     <ClCompile Include="User\OLED\oled.c" />

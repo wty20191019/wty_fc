@@ -66,6 +66,9 @@
     <Filter Include="Source files\外设\IMUSensor">
       <UniqueIdentifier>{d2d7836e-d7ef-4096-98e9-70d235f8323d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source files\外设\pa0_LED_toggle">
+      <UniqueIdentifier>{3a3d59ce-2206-480a-b201-4e0e366605fb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="User\OLED\oled.c">
@@ -358,6 +361,9 @@
     </ClCompile>
     <ClCompile Include="User\FFCY_NEW_IMUSensor.c">
       <Filter>Source files\外设\IMUSensor</Filter>
+    </ClCompile>
+    <ClCompile Include="User\pa0_LED_toggle.c">
+      <Filter>Source files\外设\pa0_LED_toggle</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

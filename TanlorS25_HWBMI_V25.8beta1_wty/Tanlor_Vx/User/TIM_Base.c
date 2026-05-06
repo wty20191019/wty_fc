@@ -29,6 +29,8 @@ void TIM2_IRQHandler(void)//5ms
 		TIM_ClearITPendingBit(TIM2, TIM_FLAG_Update);
 		FFCY_Main_Processing();
 
+		PA0_LED_Toggle();
+
 
 	}
 }
