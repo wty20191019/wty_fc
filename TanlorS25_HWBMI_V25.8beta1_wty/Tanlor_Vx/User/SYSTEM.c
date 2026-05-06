@@ -114,7 +114,7 @@ void Board_Init(void)
 	OLED_Init();					//显示屏初始化
 	Draw_Logo1();					//显示标志图
 	//Bling_Init();					//指示灯、测试IO初始化
-	//Key_Init();                   //按键初始化
+    //Key_Init();                   //按键初始化//和PA0_LED_Toggle_Init冲突了，暂时注释掉
     LCD_CLS();						//清屏
 
 	/*************定时器初始化***************/
