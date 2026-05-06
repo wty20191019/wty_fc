@@ -247,7 +247,7 @@ int main(void)
 
     PWM_Init();//初始化TIM3的PWM输出
 	
-	PPM_Init(); //初始化PPM输入
+	//PPM_Init(); //初始化PPM输入
 
     if (ESC_AUTO_CALIBRATION != 0U)
     {
@@ -260,26 +260,26 @@ int main(void)
 
     PA0_LED_Toggle_Init();// 初始化PA0引脚用于LED闪烁
 
-    DMA_USART1_Init(115200);//初始化USART1用于串口调试输出，波特率115200
+    //DMA_USART1_Init(115200);//初始化USART1用于串口调试输出，波特率115200
 
 	systick_delay_ms(3000);
     
-    ImuSensor_Init();  //初始化ICM42688
-    Attitude6Axis_Init(&g_attitude, 2.0f, 0.02f);
+    //ImuSensor_Init();  //初始化ICM42688
+    //Attitude6Axis_Init(&g_attitude, 2.0f, 0.02f);
     
-    OLED_Init();     //初始化OLED显示屏
-    OLED_Clear();
+    //OLED_Init();     //初始化OLED显示屏
+    //OLED_Clear();
 
-    //ESC_SetChannelsUs(1050U,1050U,1050U,1050U);
+    ESC_SetChannelsUs(1050U,1050U,1050U,1050U);
 
 
 
     SCH_Init();
     //调度器==========================================================================
-    SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS		, 7             );
-    SCH_AddTask(PA0_LED_Toggle          , 50U                       ,14             );
-    SCH_AddTask(Task_Uart1Echo          , 100                       , 6             );
-    SCH_AddTask(Task_OledUpdate         , 100U                      , 8             );
+    //SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS		, 7             );
+    SCH_AddTask(PA0_LED_Toggle          , 20U                       ,14             );
+    //SCH_AddTask(Task_Uart1Echo          , 100                       , 6             );
+    //SCH_AddTask(Task_OledUpdate         , 100U                      , 8             );
     SCH_AddTask(read_PPM                , 20U                       , 5             );
     
 

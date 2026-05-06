@@ -109,73 +109,28 @@
     </AdditionalGDBSettings>
     <DebugMethod>
       <ID>com.sysprogs.arm.openocd</ID>
-      <Configuration>
-        <Entries>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.interface</Key>
-            <Value>interface/cmsis-dap.cfg</Value>
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.cpu</Key>
-            <Value />
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.chip</Key>
-            <Value />
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.board</Key>
-            <Value />
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.target</Key>
-            <Value>target/stm32f4x.cfg</Value>
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.extraargs</Key>
-            <Value>-c init -c "reset init"</Value>
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.initargs</Key>
-            <Value />
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.commands.halt</Key>
-            <Value>mon halt</Value>
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.commands.program</Key>
-            <Value>load</Value>
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.commands.autoprogram</Key>
-            <Value />
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.commands.reset</Key>
-            <Value>mon reset init</Value>
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.commands.resetafter</Key>
-            <Value />
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.quicksetup.enabled</Key>
-            <Value>1</Value>
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.delay</Key>
-            <Value>0</Value>
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.transport</Key>
-            <Value>-c "transport select hla_swd"</Value>
-          </KeyValue>
-          <KeyValue>
-            <Key>com.sysprogs.arm.openocd.quicksetup.interface</Key>
-            <Value>cmsis-dap</Value>
-          </KeyValue>
-        </Entries>
+      <Configuration xsi:type="com.visualgdb.edp.openocd.settings">
+        <CommandLine>-f interface/cmsis-dap.cfg -c "transport select swd" -f target/stm32f4x.cfg -c init -c "reset init"</CommandLine>
+        <ExtraParameters>
+          <Frequency xsi:nil="true" />
+          <BoostedFrequency xsi:nil="true" />
+          <ConnectUnderReset>false</ConnectUnderReset>
+        </ExtraParameters>
+        <LoadProgressGUIThreshold>131072</LoadProgressGUIThreshold>
+        <ProgramMode>Enabled</ProgramMode>
+        <StartupCommands>
+          <string>set remotetimeout 60</string>
+          <string>target extended-remote :$$SYS:GDB_PORT$$</string>
+          <string>mon reset init</string>
+          <string>mon halt</string>
+          <string>load</string>
+        </StartupCommands>
+        <ProgramFLASHUsingExternalTool>false</ProgramFLASHUsingExternalTool>
+        <PreferredGDBPort>0</PreferredGDBPort>
+        <PreferredTelnetPort>0</PreferredTelnetPort>
+        <AlwaysPassSerialNumber>false</AlwaysPassSerialNumber>
+        <SelectedCoreIndex xsi:nil="true" />
+        <LiveMemoryTimeout>5000</LiveMemoryTimeout>
       </Configuration>
     </DebugMethod>
     <AutoDetectRTOS>true</AutoDetectRTOS>
