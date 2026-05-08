@@ -267,8 +267,8 @@ int main(void)
     //ImuSensor_Init();  //初始化ICM42688
     //Attitude6Axis_Init(&g_attitude, 2.0f, 0.02f);
     
-    //OLED_Init();     //初始化OLED显示屏
-    //OLED_Clear();
+    OLED_Init();     //初始化OLED显示屏
+    OLED_Clear();
 
     ESC_SetChannelsUs(1050U,1050U,1050U,1050U);
 
@@ -277,9 +277,9 @@ int main(void)
     SCH_Init();
     //调度器==========================================================================
     //SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS		, 7             );
-    SCH_AddTask(PA0_LED_Toggle          , 20U                       ,14             );
+    SCH_AddTask(PA0_LED_Toggle          , 5U                       ,14             );
     //SCH_AddTask(Task_Uart1Echo          , 100                       , 6             );
-    //SCH_AddTask(Task_OledUpdate         , 100U                      , 8             );
+    SCH_AddTask(Task_OledUpdate         , 100U                      , 8             );
     SCH_AddTask(read_PPM                , 20U                       , 5             );
     
 
