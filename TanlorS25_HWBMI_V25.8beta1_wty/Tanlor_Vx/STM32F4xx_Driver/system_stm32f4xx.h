@@ -4,8 +4,8 @@
   * @author  MCD Application Team
   * @version V1.8.0
   * @date    09-November-2016
-  * @brief   CMSIS Cortex-M4 Device System Source File for STM32F4xx devices.       
-  ******************************************************************************  
+  * @brief   CMSIS Cortex-M4 Device System Source File for STM32F4xx devices.
+  ******************************************************************************
   * @attention
   *
   * <h2><center>&copy; COPYRIGHT 2016 STMicroelectronics</center></h2>
@@ -16,78 +16,78 @@
   *
   *        http://www.st.com/software_license_agreement_liberty_v2
   *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   * See the License for the specific language governing permissions and
   * limitations under the License.
   *
-  ******************************************************************************  
-  */ 
-
-/** @addtogroup CMSIS
-  * @{
+  ******************************************************************************
   */
 
-/** @addtogroup stm32f4xx_system
-  * @{
-  */  
-  
-/**
-  * @brief Define to prevent recursive inclusion
-  */
+  /** @addtogroup CMSIS
+    * @{
+    */
+
+    /** @addtogroup stm32f4xx_system
+      * @{
+      */
+
+      /**
+        * @brief Define to prevent recursive inclusion
+        */
 #ifndef __SYSTEM_STM32F4XX_H
 #define __SYSTEM_STM32F4XX_H
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif 
 
-/** @addtogroup STM32F4xx_System_Includes
-  * @{
-  */
+    /** @addtogroup STM32F4xx_System_Includes
+      * @{
+      */
 
-/**
-  * @}
-  */
-
-
-/** @addtogroup STM32F4xx_System_Exported_types
-  * @{
-  */
-
-extern uint32_t SystemCoreClock;          /*!< System Clock Frequency (Core Clock) */
+      /**
+        * @}
+        */
 
 
-/**
-  * @}
-  */
+        /** @addtogroup STM32F4xx_System_Exported_types
+          * @{
+          */
 
-/** @addtogroup STM32F4xx_System_Exported_Constants
-  * @{
-  */
+    extern uint32_t SystemCoreClock;          /*!< System Clock Frequency (Core Clock) */
 
-/**
-  * @}
-  */
 
-/** @addtogroup STM32F4xx_System_Exported_Macros
-  * @{
-  */
+    /**
+      * @}
+      */
 
-/**
-  * @}
-  */
+      /** @addtogroup STM32F4xx_System_Exported_Constants
+        * @{
+        */
 
-/** @addtogroup STM32F4xx_System_Exported_Functions
-  * @{
-  */
-  
-extern void SystemInit(void);
-extern void SystemCoreClockUpdate(void);
-/**
-  * @}
-  */
+        /**
+          * @}
+          */
+
+          /** @addtogroup STM32F4xx_System_Exported_Macros
+            * @{
+            */
+
+            /**
+              * @}
+              */
+
+              /** @addtogroup STM32F4xx_System_Exported_Functions
+                * @{
+                */
+
+    extern void SystemInit(void);
+    extern void SystemCoreClockUpdate(void);
+    /**
+      * @}
+      */
 
 #ifdef __cplusplus
 }
@@ -98,8 +98,8 @@ extern void SystemCoreClockUpdate(void);
 /**
   * @}
   */
-  
-/**
-  * @}
-  */  
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
+  /**
+    * @}
+    */
+    /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

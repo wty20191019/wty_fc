@@ -523,6 +523,9 @@
 #ifndef __UACCUM_MIN__
 #define __UACCUM_MIN__ 0.0UK
 #endif
+#ifndef flash_layout
+#define flash_layout 1
+#endif
 #ifndef __UACCUM_IBIT__
 #define __UACCUM_IBIT__ 16
 #endif
@@ -751,6 +754,9 @@
 #ifndef __UDQ_FBIT__
 #define __UDQ_FBIT__ 64
 #endif
+#ifndef DEBUG
+#define DEBUG 1
+#endif
 #ifndef __INT8_TYPE__
 #define __INT8_TYPE__ signed char
 #endif
@@ -858,6 +864,9 @@
 #endif
 #ifndef __DEC64_MAX__
 #define __DEC64_MAX__ 9.999999999999999E384DD
+#endif
+#ifndef STM32F40_41xxx
+#define STM32F40_41xxx 1
 #endif
 #ifndef __ARM_32BIT_STATE
 #define __ARM_32BIT_STATE 1
@@ -1360,19 +1369,18 @@
 #ifndef __ATOMIC_RELEASE
 #define __ATOMIC_RELEASE 3
 #endif
-#ifndef DEBUG
-#define DEBUG 1
-#endif
-#ifndef flash_layout
-#define flash_layout 
-#endif
-#ifndef STM32F40_41xxx
-#define STM32F40_41xxx 
-#endif
 #endif
 
 // --- Include directories begin --- //
+//EmbeddedProject1\board
+//EmbeddedProject1\module
+//EmbeddedProject1\OLED
+//EmbeddedProject1\uart
 //.
+//$(BSP_ROOT)/STM32F4xxxx/STM32F4xx_StdPeriph_Driver/inc
+//$(BSP_ROOT)/STM32F4xxxx/CMSIS_StdPeriph/Device/ST/STM32F4xx/Include
+//$(BSP_ROOT)/STM32F4xxxx/CMSIS_StdPeriph/Include
+//$(BSP_ROOT)/STM32F4xxxx/CMSIS_StdPeriph/RTOS/Template
 //$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0
 //$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0\arm-eabi\thumb\cortex_m4
 //$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0\backward
@@ -1380,10 +1388,6 @@
 //$(TOOLCHAIN_ROOT)\lib\gcc\arm-eabi\7.2.0\include-fixed
 //$(TOOLCHAIN_ROOT)\arm-eabi\sys-include
 //$(TOOLCHAIN_ROOT)\arm-eabi\include
-//$(BSP_ROOT)/STM32F4xxxx/STM32F4xx_StdPeriph_Driver/inc
-//$(BSP_ROOT)/STM32F4xxxx/CMSIS_StdPeriph/Device/ST/STM32F4xx/Include
-//$(BSP_ROOT)/STM32F4xxxx/CMSIS_StdPeriph/Include
-//$(BSP_ROOT)/STM32F4xxxx/CMSIS_StdPeriph/RTOS/Template
 // --- Include directories end --- //
 
 

@@ -50,6 +50,9 @@
 * @{
 */
 
+
+#include <stddef.h>
+
 #ifndef __STM32F4xx_H
 #define __STM32F4xx_H
 

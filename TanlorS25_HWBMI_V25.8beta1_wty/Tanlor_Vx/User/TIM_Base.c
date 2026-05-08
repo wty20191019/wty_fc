@@ -27,11 +27,11 @@ void TIM2_IRQHandler(void)//5ms
 	if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)
 	{
 		TIM_ClearITPendingBit(TIM2, TIM_FLAG_Update);
-		FFCY_Main_Processing();
+		//FFCY_Main_Processing();
 
-		PA0_LED_Toggle();
-
-
+        static uint8_t i = 0;
+        if (++i >= 5) PA0_LED_Toggle(), i = 0;
+		
 	}
 }
 
