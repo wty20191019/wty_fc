@@ -13,10 +13,12 @@ typedef void(*TaskFunc)(void);
 void SCH_Init(void);
 void SCH_AddTask(TaskFunc func, uint32_t period, uint8_t priority);
 void SCH_Tick(void);
-uint32_t SCH_GetTick(void); //获取系统运行的总毫秒数
-void SCH_Dispatch(void); //调度器主循环，应该在主函数的无限循环中调用
-void SCH_Delay(uint32_t ms); //阻塞式延时函数，单位毫秒
+uint32_t SCH_GetTick(void);		//获取系统运行的总毫秒数
+void SCH_Dispatch(void);		//在TIM2中断中执行到期任务
+void SCH_Delay(uint32_t ms);	//阻塞式延时函数，单位毫秒
 
 #endif
+
+
 
 

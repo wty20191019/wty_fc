@@ -242,31 +242,31 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
 //==========================================================================
 int main(void)
 {
-    board_init();//初始化系统时钟和SysTick
+    board_init();                               //初始化系统时钟和SysTick
 
-    PWM_Init();//初始化TIM3的PWM输出
+    PWM_Init();                                 //初始化TIM3的PWM输出
 	
-	PPM_Init(); //初始化PPM输入
+	PPM_Init();                                 //初始化PPM输入
 
     if (ESC_AUTO_CALIBRATION != 0U)
     {
-        ESC_CalibrateSequence(1000U, 1000U);//自动完成电调解锁和行程校准
+        ESC_CalibrateSequence(1000U, 1000U);    //自动完成电调解锁和行程校准
     }
     else
     {
         ESC_Init();
     }
 
-    PA0_LED_Toggle_Init();// 初始化PA0引脚用于LED闪烁
+    PA0_LED_Toggle_Init();                      // 初始化PA0引脚用于LED闪烁
 
-    //DMA_USART1_Init(115200);//初始化USART1用于串口调试输出，波特率115200
+    //DMA_USART1_Init(115200);                  //初始化USART1用于串口调试输出，波特率115200
 
 	systick_delay_ms(3000);
     
-    ImuSensor_Init();  //初始化ICM42688
+    ImuSensor_Init();                           //初始化ICM42688
     Attitude6Axis_Init(&g_attitude, 2.0f, 0.02f);
     
-    OLED_Init();     //初始化OLED显示屏
+    OLED_Init();                                //初始化OLED显示屏
     OLED_Clear();
 
     ESC_SetChannelsUs(1050U,1050U,1050U,1050U);
@@ -275,16 +275,14 @@ int main(void)
 
     SCH_Init();
     //调度器==========================================================================
-	SCH_AddTask(Task_ImuUpdate          , IMU_TASK_PERIOD_MS        , 7             );
-    SCH_AddTask(PA0_LED_Toggle          , 5U                       ,14              );
-    //SCH_AddTask(Task_Uart1Echo          , 100                       , 6             );
-    SCH_AddTask(Task_OledUpdate         , 100U                      , 8             );
+    SCH_AddTask(Task_ImuUpdate          , IMU_TASK_PERIOD_MS        , 7             );
+    SCH_AddTask(PA0_LED_Toggle          , 20U                       ,14             );
     
-
+    
     //================================================================================
     while (1)
     {
-        SCH_Dispatch();
+	    Task_OledUpdate();
     }
 }
 

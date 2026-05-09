@@ -52,6 +52,12 @@
     <Filter Include="Source files\module\scheduler">
       <UniqueIdentifier>{2fed698d-7c4b-4233-9c8b-35344badb7a6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source files\module\RC">
+      <UniqueIdentifier>{4012c7b1-724f-422d-8b3c-349ce6142f05}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\module\Time_Cnt">
+      <UniqueIdentifier>{86eadc1b-5927-4f96-a993-1550bde6693e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="system_stm32f4xx.c">
@@ -426,6 +432,12 @@
     <ClCompile Include="EmbeddedProject1\module\spi2.c">
       <Filter>Source files</Filter>
     </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\RC.c">
+      <Filter>Source files\module\RC</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\Time_Cnt.c">
+      <Filter>Source files\module\Time_Cnt</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
@@ -435,9 +447,6 @@
       <Filter>Source files\board</Filter>
     </ClInclude>
     <ClInclude Include="EmbeddedProject1\OLED\bmp.h">
-      <Filter>Source files\OLED</Filter>
-    </ClInclude>
-    <ClInclude Include="EmbeddedProject1\OLED\oled.h">
       <Filter>Source files\OLED</Filter>
     </ClInclude>
     <ClInclude Include="EmbeddedProject1\OLED\oledfont.h">

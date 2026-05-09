@@ -151,6 +151,7 @@ void TIM2_IRQHandler(void)
     TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
 
     SCH_Tick();
+    SCH_Dispatch();
   }
 }
 

@@ -39,7 +39,7 @@
 #define BMI088 1
 #define MPU6050 2
 #define ICM42688 3
-#define IMU_SENSOR ICM42688 
+#define IMU_SENSOR BMI088 
 
 #if IMU_SENSOR==MPU6050
 #define AcceMax_1G      4096
