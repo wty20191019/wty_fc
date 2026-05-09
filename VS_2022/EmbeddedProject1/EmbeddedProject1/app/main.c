@@ -1,5 +1,8 @@
+
+//==========================================================================
 #include "board.h"
 #include "stm32f4xx.h"
+#include <stdio.h>
 
 #include "DMA_UART1.h"
 #include "DMA_UART2.h"
@@ -8,10 +11,11 @@
 #include "DMA_UART5.h"
 #include "DMA_UART6.h"
 
+
+//==========================================================================
 #include "i2c1.h"
 #include "FFCY_NEW_ICM42688.h"
 #include "Attitude6Axis.h"
-#include <stdio.h>
 #include "oled.h"
 #include "pwm_tim3.h"
 #include "ppm_input.h"
@@ -20,6 +24,8 @@
 #include "pa0_LED_toggle.h"
 
 #include <string.h>
+
+
 
 #define ESC_AUTO_CALIBRATION         (0)                                    //首次使用或更换电调时建议打开，按文章流程自动完成解锁/行程校准
 #define IMU_TASK_PERIOD_MS           (5)                                    //IMU数据读取和OLED显示更新的周期，单位毫秒    
@@ -58,7 +64,7 @@ uint8_t channelCount = 0;
 //==========================================================================
 ////IMU数据读取
 //==========================================================================
-static void Task_ImuOledUpdate(void)  
+static void Task_ImuUpdate(void)  
 {
     
     float pitch_raw;
@@ -230,13 +236,6 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
 }
 
 
-//==========================================================================
-//读取ppm
-//==========================================================================
-void read_PPM(void)
-{
-
-}
 
 //==========================================================================
 //主函数
@@ -247,7 +246,7 @@ int main(void)
 
     PWM_Init();//初始化TIM3的PWM输出
 	
-	//PPM_Init(); //初始化PPM输入
+	PPM_Init(); //初始化PPM输入
 
     if (ESC_AUTO_CALIBRATION != 0U)
     {
@@ -264,8 +263,8 @@ int main(void)
 
 	systick_delay_ms(3000);
     
-    //ImuSensor_Init();  //初始化ICM42688
-    //Attitude6Axis_Init(&g_attitude, 2.0f, 0.02f);
+    ImuSensor_Init();  //初始化ICM42688
+    Attitude6Axis_Init(&g_attitude, 2.0f, 0.02f);
     
     OLED_Init();     //初始化OLED显示屏
     OLED_Clear();
@@ -276,11 +275,10 @@ int main(void)
 
     SCH_Init();
     //调度器==========================================================================
-    //SCH_AddTask(Task_ImuOledUpdate      , IMU_TASK_PERIOD_MS		, 7             );
-    SCH_AddTask(PA0_LED_Toggle          , 5U                       ,14             );
+	SCH_AddTask(Task_ImuUpdate          , IMU_TASK_PERIOD_MS        , 7             );
+    SCH_AddTask(PA0_LED_Toggle          , 5U                       ,14              );
     //SCH_AddTask(Task_Uart1Echo          , 100                       , 6             );
     SCH_AddTask(Task_OledUpdate         , 100U                      , 8             );
-    SCH_AddTask(read_PPM                , 20U                       , 5             );
     
 
     //================================================================================

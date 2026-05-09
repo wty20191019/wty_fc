@@ -79,6 +79,7 @@
     <ClCompile Include="EmbeddedProject1\module\pa0_LED_toggle.c" />
     <ClCompile Include="EmbeddedProject1\module\ppm_input.c" />
     <ClCompile Include="EmbeddedProject1\module\pwm_tim3.c" />
+    <ClCompile Include="EmbeddedProject1\module\spi2.c" />
     <ClCompile Include="EmbeddedProject1\module\stm32f4xx_it.c" />
     <ClCompile Include="EmbeddedProject1\module\tim2_scheduler.c" />
     <ClCompile Include="EmbeddedProject1\OLED\oled.c" />
@@ -90,18 +91,11 @@
     <ClCompile Include="EmbeddedProject1\uart\DMA_UART6.c" />
     <ClCompile Include="system_stm32f4xx.c" />
     <ClInclude Include="EmbeddedProject1\board\board.h" />
-    <ClInclude Include="EmbeddedProject1\module\Attitude6Axis.h" />
-    <ClInclude Include="EmbeddedProject1\module\esc_calibration.h" />
-    <ClInclude Include="EmbeddedProject1\module\FFCY_NEW_ICM42688.h" />
-    <ClInclude Include="EmbeddedProject1\module\i2c1.h" />
     <ClInclude Include="EmbeddedProject1\module\IMU_FilterPortable.h" />
     <ClInclude Include="EmbeddedProject1\module\KalmanFilter.h" />
-    <ClInclude Include="EmbeddedProject1\module\pa0_LED_toggle.h" />
     <ClInclude Include="EmbeddedProject1\module\ppm_input.h" />
-    <ClInclude Include="EmbeddedProject1\module\pwm_tim3.h" />
+    <ClInclude Include="EmbeddedProject1\module\spi2.h" />
     <ClInclude Include="EmbeddedProject1\module\stm32f4xx_conf.h" />
-    <ClInclude Include="EmbeddedProject1\module\stm32f4xx_it.h" />
-    <ClInclude Include="EmbeddedProject1\module\tim2_scheduler.h" />
     <ClInclude Include="EmbeddedProject1\OLED\bmp.h" />
     <ClInclude Include="EmbeddedProject1\OLED\oled.h" />
     <ClInclude Include="EmbeddedProject1\OLED\oledfont.h" />

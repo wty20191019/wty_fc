@@ -1,24 +1,15 @@
 #include "FFCY_NEW_ICM42688.h"
+#include "i2c1.h"
 #include "IMU_FilterPortable.h"  //包含IMU滤波器的头文件
 #include "KalmanFilter.h"//包含卡尔曼滤波器的头文件
 #include "board.h"
 
-#define ICM42688_USE_SPI 0
-#define ICM42688_USE_i2c 1
-
-#define ICM42688_USE_mod ICM42688_USE_SPI
-
-
-#if (ICM42688_USE_mod==ICM42688_USE_SPI)
-    #include "spi2.h"
-#endif
-
-#if (ICM42688_USE_mod==ICM42688_USE_i2c)
-    #include "i2c1.h"
-#endif
-
-
-
+#define ICM42688_ACCEL_XOUT    0x1F//加速度计X轴数据寄存器地址
+#define ICM42688_ACCEL_YOUT    0x21//加速度计Y轴数据寄存器地址
+#define ICM42688_ACCEL_ZOUT    0x23//加速度计Z轴数据寄存器地址
+#define ICM42688_GYRO_XOUT     0x25//陀螺仪X轴数据寄存器地址
+#define ICM42688_GYRO_YOUT     0x27//陀螺仪Y轴数据寄存器地址
+#define ICM42688_GYRO_ZOUT     0x29//陀螺仪Z轴数据寄存器地址
 
 MPU6050_Data MPU_Data;
 MPU6050_Data MPU_FilteredData;
@@ -26,21 +17,21 @@ MPU6050_Data MPU_FilteredData;
 u32 IIC_Timeout_Cnt = 0;
 u32 IIC_Timeout_Cnt_noTimesClear = 0;
 
-#if ICM42688_GYRO_BIAS_ENABLE//陀螺仪偏置校准相关的静态变量
-    static float s_gyro_bias_lsb[3] = {0.0f, 0.0f, 0.0f};
-    static uint8_t s_gyro_bias_ready = 0U;
+#if ICM42688_GYRO_BIAS_ENABLE
+static float s_gyro_bias_lsb[3] = {0.0f, 0.0f, 0.0f};
+static uint8_t s_gyro_bias_ready = 0U;
 #endif
 
-#if ICM42688_SOFT_FILTER_ENABLE//软件低通滤波器相关的静态变量
-    static IMU_FilterPortableBiquadCoeff s_acc_lpf_coeff;
-    static IMU_FilterPortableBiquadCoeff s_gyro_lpf_coeff;
-    static IMU_FilterPortableBiquadState s_acc_lpf_state[3];
-    static IMU_FilterPortableBiquadState s_gyro_lpf_state[3];
+#if ICM42688_SOFT_FILTER_ENABLE
+static IMU_FilterPortableBiquadCoeff s_acc_lpf_coeff;
+static IMU_FilterPortableBiquadCoeff s_gyro_lpf_coeff;
+static IMU_FilterPortableBiquadState s_acc_lpf_state[3];
+static IMU_FilterPortableBiquadState s_gyro_lpf_state[3];
 #endif
 
-#if ICM42688_KALMAN_ENABLE//卡尔曼滤波器相关的静态变量
-    static KalmanFilterState s_gyro_kalman[3];
-    static KalmanFilterState s_acc_kalman[3];
+#if ICM42688_KALMAN_ENABLE
+static KalmanFilterState s_gyro_kalman[3];
+static KalmanFilterState s_acc_kalman[3];
 #endif
 
 static uint8_t s_device_address = ICM42688_ADDRESS_DEFAULT;
@@ -77,71 +68,71 @@ static uint8_t icm42688_acc_norm_is_valid_1g(int16_t ax, int16_t ay, int16_t az)
     return (norm_sq >= min_sq && norm_sq <= max_sq) ? 1U : 0U;
 }
 
-#if ICM42688_GYRO_BIAS_ENABLE//陀螺仪偏置校准函数，采集一定数量的样本并计算平均值作为偏置，校准期间需要保持IMU静止
-    static void icm42688_calibrate_gyro_bias(void)
+#if ICM42688_GYRO_BIAS_ENABLE
+static void icm42688_calibrate_gyro_bias(void)
+{
+    uint32_t valid = 0U;
+    uint32_t attempt = 0U;
+    int32_t sum_x = 0;
+    int32_t sum_y = 0;
+    int32_t sum_z = 0;
+    const uint32_t max_attempt = ICM42688_GYRO_BIAS_CAL_SAMPLES * 3U;
+
+    s_gyro_bias_lsb[0] = 0.0f;
+    s_gyro_bias_lsb[1] = 0.0f;
+    s_gyro_bias_lsb[2] = 0.0f;
+    s_gyro_bias_ready = 0U;
+
+    while ((valid < ICM42688_GYRO_BIAS_CAL_SAMPLES) && (attempt < max_attempt))
     {
-        uint32_t valid = 0U;
-        uint32_t attempt = 0U;
-        int32_t sum_x = 0;
-        int32_t sum_y = 0;
-        int32_t sum_z = 0;
-        const uint32_t max_attempt = ICM42688_GYRO_BIAS_CAL_SAMPLES * 3U;
+        int16_t gx;
+        int16_t gy;
+        int16_t gz;
+        int16_t ax;
+        int16_t ay;
+        int16_t az;
 
-        s_gyro_bias_lsb[0] = 0.0f;
-        s_gyro_bias_lsb[1] = 0.0f;
-        s_gyro_bias_lsb[2] = 0.0f;
-        s_gyro_bias_ready = 0U;
+        attempt++;
+        IIC_Timeout_Cnt = 0U;
 
-        while ((valid < ICM42688_GYRO_BIAS_CAL_SAMPLES) && (attempt < max_attempt))
+        gx = GetData_Gyro(ICM42688_GYRO_XOUT);
+        gy = GetData_Gyro(ICM42688_GYRO_YOUT);
+        gz = GetData_Gyro(ICM42688_GYRO_ZOUT);
+        ax = GetData_Acc(ICM42688_ACCEL_XOUT);
+        ay = GetData_Acc(ICM42688_ACCEL_YOUT);
+        az = GetData_Acc(ICM42688_ACCEL_ZOUT);
+
+        if (IIC_Timeout_Cnt != 0U)
         {
-            int16_t gx;
-            int16_t gy;
-            int16_t gz;
-            int16_t ax;
-            int16_t ay;
-            int16_t az;
-
-            attempt++;
-            IIC_Timeout_Cnt = 0U;
-
-            gx = GetData_Gyro(ICM42688_GYRO_XOUT);
-            gy = GetData_Gyro(ICM42688_GYRO_YOUT);
-            gz = GetData_Gyro(ICM42688_GYRO_ZOUT);
-            ax = GetData_Acc(ICM42688_ACCEL_XOUT);
-            ay = GetData_Acc(ICM42688_ACCEL_YOUT);
-            az = GetData_Acc(ICM42688_ACCEL_ZOUT);
-
-            if (IIC_Timeout_Cnt != 0U)
-            {
-                continue;
-            }
-
-            if ((icm42688_abs_i16(gx) > ICM42688_GYRO_BIAS_MAX_ABS_LSB) ||
-                (icm42688_abs_i16(gy) > ICM42688_GYRO_BIAS_MAX_ABS_LSB) ||
-                (icm42688_abs_i16(gz) > ICM42688_GYRO_BIAS_MAX_ABS_LSB))
-            {
-                continue;
-            }
-
-            if (icm42688_acc_norm_is_valid_1g(ax, ay, az) == 0U)
-            {
-                continue;
-            }
-
-            sum_x += gx;
-            sum_y += gy;
-            sum_z += gz;
-            valid++;
+            continue;
         }
 
-        if (valid > 0U)
+        if ((icm42688_abs_i16(gx) > ICM42688_GYRO_BIAS_MAX_ABS_LSB) ||
+            (icm42688_abs_i16(gy) > ICM42688_GYRO_BIAS_MAX_ABS_LSB) ||
+            (icm42688_abs_i16(gz) > ICM42688_GYRO_BIAS_MAX_ABS_LSB))
         {
-            s_gyro_bias_lsb[0] = (float)sum_x / (float)valid;
-            s_gyro_bias_lsb[1] = (float)sum_y / (float)valid;
-            s_gyro_bias_lsb[2] = (float)sum_z / (float)valid;
-            s_gyro_bias_ready = 1U;
+            continue;
         }
+
+        if (icm42688_acc_norm_is_valid_1g(ax, ay, az) == 0U)
+        {
+            continue;
+        }
+
+        sum_x += gx;
+        sum_y += gy;
+        sum_z += gz;
+        valid++;
     }
+
+    if (valid > 0U)
+    {
+        s_gyro_bias_lsb[0] = (float)sum_x / (float)valid;
+        s_gyro_bias_lsb[1] = (float)sum_y / (float)valid;
+        s_gyro_bias_lsb[2] = (float)sum_z / (float)valid;
+        s_gyro_bias_ready = 1U;
+    }
+}
 #endif
 
 static uint8_t icm42688_normalize_address(uint8_t dev_address)
@@ -169,24 +160,6 @@ static ICM42688_Status icm42688_probe_address(uint8_t addr)
 
 static ICM42688_Status icm42688_write_reg_current(uint8_t reg_addr, uint8_t data)
 {
-#if (ICM42688_USE_mod==ICM42688_USE_SPI)
-    /* SPI write: send register address (write = MSB=0) followed by data */
-    SPI2_Status status;
-    uint8_t tx[2] = { (uint8_t)(reg_addr & 0x7FU), data };
-    uint8_t rx[2] = {0};
-
-    status = spi2_transfer(tx, rx, 2U, 20000U);
-
-    if (status == SPI2_TIMEOUT)
-    {
-        IIC_Timeout_Cnt++;
-        IIC_Timeout_Cnt_noTimesClear++;
-    }
-
-    return (status == SPI2_OK) ? ICM42688_OK : ((status == SPI2_TIMEOUT) ? ICM42688_TIMEOUT : ICM42688_ERROR);
-#endif	
-	
-#if (ICM42688_USE_mod==ICM42688_USE_i2c)	
     I2C1_Status status = i2c1_mem_write(s_device_address, reg_addr, &data, 1U, 20000U);
 
     if (status == I2C1_TIMEOUT)
@@ -196,34 +169,10 @@ static ICM42688_Status icm42688_write_reg_current(uint8_t reg_addr, uint8_t data
     }
 
     return (status == I2C1_OK) ? ICM42688_OK : ((status == I2C1_TIMEOUT) ? ICM42688_TIMEOUT : ICM42688_ERROR);
-#endif
 }
 
 static ICM42688_Status icm42688_read_reg_current(uint8_t reg_addr, uint8_t *data)
 {
-#if (ICM42688_USE_mod==ICM42688_USE_SPI)
-    /* SPI read: send register address with MSB=1, then read data */
-    SPI2_Status status;
-    uint8_t tx[2] = { (uint8_t)(reg_addr | 0x80U), 0xFFU };
-    uint8_t rx[2] = {0};
-
-    status = spi2_transfer(tx, rx, 2U, 20000U);
-
-    if (status == SPI2_TIMEOUT)
-    {
-        IIC_Timeout_Cnt++;
-        IIC_Timeout_Cnt_noTimesClear++;
-    }
-
-    if (status == SPI2_OK)
-    {
-        *data = rx[1];
-        return ICM42688_OK;
-    }
-
-    return (status == SPI2_TIMEOUT) ? ICM42688_TIMEOUT : ICM42688_ERROR;
-	
-#elif (ICM42688_USE_mod==ICM42688_USE_i2c)
     I2C1_Status status = i2c1_mem_read(s_device_address, reg_addr, data, 1U, 20000U);
 
     if (status == I2C1_TIMEOUT)
@@ -233,8 +182,6 @@ static ICM42688_Status icm42688_read_reg_current(uint8_t reg_addr, uint8_t *data
     }
 
     return (status == I2C1_OK) ? ICM42688_OK : ((status == I2C1_TIMEOUT) ? ICM42688_TIMEOUT : ICM42688_ERROR);
-#endif
-	
 }
 
 ICM42688_Status ICM42688_ReadWhoAmI(uint8_t *who_am_i)
@@ -249,51 +196,17 @@ ICM42688_Status ICM42688_ReadWhoAmI(uint8_t *who_am_i)
 
 void ICM42688_WriteReg(uint8_t DevAddress, uint8_t RegAddress, uint8_t Data)
 {
-#if (ICM42688_USE_mod==ICM42688_USE_SPI)
-    SPI2_Status status;
-    uint8_t tx[2] = { (uint8_t)(RegAddress & 0x7FU), Data };
-    uint8_t rx[2] = {0};
-
-    status = spi2_transfer(tx, rx, 2U, 20000U);
-    if (status == SPI2_TIMEOUT)
-    {
-        IIC_Timeout_Cnt++;
-        IIC_Timeout_Cnt_noTimesClear++;
-    }
-#elif (ICM42688_USE_mod==ICM42688_USE_i2c)
     I2C1_Status status = i2c1_mem_write(icm42688_normalize_address(DevAddress), RegAddress, &Data, 1U, 20000U);
     if (status == I2C1_TIMEOUT)
     {
         IIC_Timeout_Cnt++;
         IIC_Timeout_Cnt_noTimesClear++;
     }
-#endif
 }
 
 uint8_t ICM42688_ReadReg(uint8_t DevAddress, uint8_t RegAddress)
 {
     uint8_t data = 0;
-#if (ICM42688_USE_mod==ICM42688_USE_SPI)
-    SPI2_Status status;
-    uint8_t tx[2] = { (uint8_t)(RegAddress | 0x80U), 0xFFU };
-    uint8_t rx[2] = {0};
-
-    status = spi2_transfer(tx, rx, 2U, 20000U);
-    if (status == SPI2_TIMEOUT)
-    {
-        IIC_Timeout_Cnt++;
-        IIC_Timeout_Cnt_noTimesClear++;
-        return 0;
-    }
-
-    if (status == SPI2_OK)
-    {
-        return rx[1];
-    }
-
-    return 0;
-	
-#elif (ICM42688_USE_mod==ICM42688_USE_i2c)
     I2C1_Status status = i2c1_mem_read(icm42688_normalize_address(DevAddress), RegAddress, &data, 1U, 20000U);
     if (status == I2C1_TIMEOUT)
     {
@@ -302,8 +215,6 @@ uint8_t ICM42688_ReadReg(uint8_t DevAddress, uint8_t RegAddress)
     }
 
     return data;
-#endif
-	
 }
 
 int16_t GetData_Gyro(uint8_t REG_Address)
@@ -396,19 +307,8 @@ void ImuSensor_ProcessData(void)
 
 ICM42688_Status ICM42688_Init(void)
 {
-#if (ICM42688_USE_mod==ICM42688_USE_SPI)
-    /* initialize SPI2 with a reasonable prescaler if using SPI */
-    #ifndef ICM42688_SPI_PRESCALER
-    #define ICM42688_SPI_PRESCALER SPI_BaudRatePrescaler_16
-    #endif
-    spi2_init(ICM42688_SPI_PRESCALER);
-	
-#elif (ICM42688_USE_mod==ICM42688_USE_i2c)
     i2c1_init(400000U);
-#endif
 
-    /* Probe device: for I2C try default and alternate addresses; for SPI try default once */
-#if (ICM42688_USE_mod==ICM42688_USE_i2c)
     if (icm42688_probe_address(ICM42688_ADDRESS_DEFAULT) != ICM42688_OK)
     {
         if (icm42688_probe_address(ICM42688_ADDRESS_ALT) != ICM42688_OK)
@@ -416,14 +316,7 @@ ICM42688_Status ICM42688_Init(void)
             return ICM42688_TIMEOUT;
         }
     }
-#elif (ICM42688_USE_mod==ICM42688_USE_SPI)
-    if (icm42688_probe_address(ICM42688_ADDRESS_DEFAULT) != ICM42688_OK)
-    {
-        return ICM42688_TIMEOUT;
-    }
-#endif
 
-    /* Common sensor configuration (works over I2C or SPI via icm42688_write_reg_current) */
     if (icm42688_write_reg_current(ICM42688_REG_BANK_SEL, 0x00) != ICM42688_OK)
     {
         return ICM42688_TIMEOUT;
@@ -459,20 +352,11 @@ ICM42688_Status ICM42688_Init(void)
 
 void ImuSensor_Init(void)
 {
-
-    /* Try to initialize device several times instead of infinite loop to avoid hanging
-       If initialization fails after attempts, give up and return (caller must handle) */
-#ifndef ICM42688_INIT_MAX_ATTEMPTS
-#define ICM42688_INIT_MAX_ATTEMPTS 5
-#endif
-    int attempts = 0;
-    while ((ICM42688_Init() != ICM42688_OK) && (attempts++ < ICM42688_INIT_MAX_ATTEMPTS))
+    while (ICM42688_Init() != ICM42688_OK)
     {
-        systick_delay_ms(200);
     }
-
-    /* short delay after init (or after giving up) */
-    systick_delay_ms(1000);
+	
+	systick_delay_ms(1000);
 
 #if ICM42688_GYRO_BIAS_ENABLE
     icm42688_calibrate_gyro_bias();

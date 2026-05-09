@@ -47,6 +47,13 @@ uint16 PPM_Finished_Time=0;
 uint16 PPM_Is_Okay=0;
 uint16 PPM_Databuf[10]={0};
 
+
+
+
+
+
+
+
 /***************************************************
 函数名: void EXTI9_5_IRQHandler(void)
 说明:	PPM接收中断函数

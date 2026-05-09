@@ -141,6 +141,7 @@
     <ClCompile Include="User\IMU.c" />
     <ClCompile Include="User\IMU_NEW.c" />
     <ClCompile Include="User\IMU_Sensor\FFCY_NEW_BMI088.c" />
+    <ClCompile Include="User\IMU_Sensor\FFCY_NEW_ICM42688.c" />
     <ClCompile Include="User\IMU_Sensor\FFCY_NEW_MPU6050.c" />
     <ClCompile Include="User\KEY.c" />
     <ClCompile Include="User\pa0_LED_toggle.c" />
@@ -184,6 +185,9 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="User\IMU_Sensor\FFCY_NEW_ICM42688.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
