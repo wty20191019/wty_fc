@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <VisualGDBProjectSettings2 xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <ConfigurationName>Debug</ConfigurationName>
+  <ConfigurationName>Debug2</ConfigurationName>
   <Project xsi:type="com.visualgdb.project.embedded">
     <CustomSourceDirectories>
       <Directories />
@@ -23,7 +23,7 @@
       </Version>
     </ToolchainID>
     <MakeFilePathRelativeToSourceDir>Makefile</MakeFilePathRelativeToSourceDir>
-    <MakeConfigurationName>Debug</MakeConfigurationName>
+    <MakeConfigurationName>Debug2</MakeConfigurationName>
     <AdditionalMakeArguments>$(LocalMultiThreadedBuildFlags)</AdditionalMakeArguments>
     <MakeCommandTemplate>
       <SkipWhenRunningCommandList>false</SkipWhenRunningCommandList>
@@ -105,6 +105,28 @@
     </AdditionalGDBSettings>
     <DebugMethod>
       <ID>com.sysprogs.arm.openocd</ID>
+      <Configuration xsi:type="com.visualgdb.edp.openocd.settings">
+        <CommandLine>-c "debug_level 3" -f interface/cmsis-dap.cfg -c "transport select swd" -c "adapter speed 3000" -f target/stm32f4x.cfg -c init -c "reset init"</CommandLine>
+        <ExtraParameters>
+          <Frequency xsi:nil="true" />
+          <BoostedFrequency xsi:nil="true" />
+          <ConnectUnderReset>false</ConnectUnderReset>
+        </ExtraParameters>
+        <LoadProgressGUIThreshold>131072</LoadProgressGUIThreshold>
+        <ProgramMode>Enabled</ProgramMode>
+        <StartupCommands>
+          <string>set remotetimeout 60</string>
+          <string>target extended-remote :$$SYS:GDB_PORT$$</string>
+          <string>mon halt</string>
+          <string>load</string>
+        </StartupCommands>
+        <ProgramFLASHUsingExternalTool>false</ProgramFLASHUsingExternalTool>
+        <PreferredGDBPort>0</PreferredGDBPort>
+        <PreferredTelnetPort>0</PreferredTelnetPort>
+        <AlwaysPassSerialNumber>true</AlwaysPassSerialNumber>
+        <SelectedCoreIndex xsi:nil="true" />
+        <LiveMemoryTimeout>5000</LiveMemoryTimeout>
+      </Configuration>
     </DebugMethod>
     <AutoDetectRTOS>true</AutoDetectRTOS>
     <SemihostingSupport>Auto</SemihostingSupport>

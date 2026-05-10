@@ -435,6 +435,18 @@
     <None Include="EmbeddedProject1-Debug.vgdbsettings">
       <Filter>VisualGDB settings</Filter>
     </None>
+    <None Include="debug2.mak">
+      <Filter>Make files</Filter>
+    </None>
+    <None Include="EmbeddedProject1.vcxproj.user">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <None Include="EmbeddedProject1-Debug2.vgdbsettings">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <None Include="EmbeddedProject1-Release.vgdbsettings">
+      <Filter>VisualGDB settings</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EmbeddedProject1\board\board.h">

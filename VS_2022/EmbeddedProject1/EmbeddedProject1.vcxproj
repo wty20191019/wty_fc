@@ -1,6 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug2|Win32">
+      <Configuration>Debug2</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
@@ -16,6 +20,9 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'" Label="Configuration">
     <ConfigurationType>Makefile</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -47,6 +54,18 @@
     <ReferencePath />
     <LibraryPath />
     <NMakePreprocessorDefinitions>__VisualGDB_CFG_Debug;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">
+    <NMakeIncludeSearchPath>EmbeddedProject1\board;EmbeddedProject1\module;EmbeddedProject1\OLED;EmbeddedProject1\uart;.;$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_StdPeriph_Driver\inc;$(BSP_ROOT)\STM32F4xxxx\CMSIS_StdPeriph\Device\ST\STM32F4xx\Include;$(BSP_ROOT)\STM32F4xxxx\CMSIS_StdPeriph\Include;$(BSP_ROOT)\STM32F4xxxx\CMSIS_StdPeriph\RTOS\Template;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0\arm-eabi\thumb\cortex_m4;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0\backward;$(TOOLCHAIN_ROOT)\lib\gcc\arm-eabi\7.2.0\include;$(TOOLCHAIN_ROOT)\lib\gcc\arm-eabi\7.2.0\include-fixed;$(TOOLCHAIN_ROOT)\arm-eabi\sys-include;$(TOOLCHAIN_ROOT)\arm-eabi\include;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes>$(ProjectDir)\gcc_Debug2.h;$(VISUALGDB_DIR)\gcc_compat.h;$(BSP_ROOT)\stm32_compat.h;$(NMakeForcedIncludes)</NMakeForcedIncludes>
+    <NMakeBuildCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /build "$(ProjectPath)" "/solution:$(SolutionPath)"  "/config:$(Configuration)" "/platform:$(Platform)"</NMakeBuildCommandLine>
+    <NMakeCleanCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /clean "$(ProjectPath)" "/solution:$(SolutionPath)"  "/config:$(Configuration)" "/platform:$(Platform)"</NMakeCleanCommandLine>
+    <NMakeReBuildCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /rebuild "$(ProjectPath)" "/solution:$(SolutionPath)"  "/config:$(Configuration)" "/platform:$(Platform)"</NMakeReBuildCommandLine>
+    <NMakeOutput>$(ProjectDir)EmbeddedProject1-Debug2.vgdbsettings</NMakeOutput>
+    <IncludePath />
+    <ReferencePath />
+    <LibraryPath />
+    <NMakePreprocessorDefinitions>__VisualGDB_CFG_Debug2;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <NMakeIncludeSearchPath>.;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0\arm-eabi\thumb\cortex_m4;$(TOOLCHAIN_ROOT)\arm-eabi\include\c++\7.2.0\backward;$(TOOLCHAIN_ROOT)\lib\gcc\arm-eabi\7.2.0\include;$(TOOLCHAIN_ROOT)\lib\gcc\arm-eabi\7.2.0\include-fixed;$(TOOLCHAIN_ROOT)\arm-eabi\sys-include;$(TOOLCHAIN_ROOT)\arm-eabi\include;$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_StdPeriph_Driver\inc;$(BSP_ROOT)\STM32F4xxxx\CMSIS_StdPeriph\Device\ST\STM32F4xx\Include;$(BSP_ROOT)\STM32F4xxxx\CMSIS_StdPeriph\Include;$(BSP_ROOT)\STM32F4xxxx\CMSIS_StdPeriph\RTOS\Template;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
@@ -101,7 +120,11 @@
     <ClInclude Include="EmbeddedProject1\module\Time_Cnt.h" />
     <ClInclude Include="EmbeddedProject1\OLED\bmp.h" />
     <ClInclude Include="EmbeddedProject1\OLED\oledfont.h" />
+    <None Include="debug2.mak" />
     <None Include="EmbeddedProject1-Debug.vgdbsettings" />
+    <None Include="EmbeddedProject1-Debug2.vgdbsettings" />
+    <None Include="EmbeddedProject1-Release.vgdbsettings" />
+    <None Include="EmbeddedProject1.vcxproj.user" />
     <None Include="stm32.mak" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_StdPeriph_Driver\src\misc.c" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_adc.c" />
