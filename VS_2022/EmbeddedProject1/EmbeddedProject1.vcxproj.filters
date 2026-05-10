@@ -405,9 +405,6 @@
     <ClCompile Include="EmbeddedProject1\module\stm32f4xx_it.c">
       <Filter>Source files\module</Filter>
     </ClCompile>
-    <ClCompile Include="EmbeddedProject1\module\KalmanFilter.c">
-      <Filter>Source files</Filter>
-    </ClCompile>
     <ClCompile Include="EmbeddedProject1\module\ppm_input.c">
       <Filter>Source files\module</Filter>
     </ClCompile>
@@ -423,11 +420,14 @@
     <ClCompile Include="EmbeddedProject1\module\tim2_scheduler.c">
       <Filter>Source files\module\scheduler</Filter>
     </ClCompile>
-    <ClCompile Include="EmbeddedProject1\module\spi2.c">
-      <Filter>Source files</Filter>
-    </ClCompile>
     <ClCompile Include="EmbeddedProject1\module\Time_Cnt.c">
       <Filter>Source files\module\Time_Cnt</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\spi2.c">
+      <Filter>Source files\module\IMU</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\KalmanFilter.c">
+      <Filter>Source files\module\IMU</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

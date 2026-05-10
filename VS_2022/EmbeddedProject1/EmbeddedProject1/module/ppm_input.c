@@ -1,7 +1,8 @@
 #include "stm32f4xx.h"
 #include "ppm_input.h"
 #include "Time_Cnt.h"
-
+#include <string.h>
+#include <string.h>
 
 
 
@@ -15,7 +16,7 @@ uint16 PPM_Start_Time = 0;
 uint16 PPM_Finished_Time = 0;
 uint16 PPM_Is_Okay = 0;
 uint16 PPM_Databuf[10] = { 0 };
-ss
+
 
 //PPM输入引脚初始化
 void PPM_GPIO_Init(void)

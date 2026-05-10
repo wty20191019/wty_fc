@@ -1,5 +1,6 @@
 #include "oled.h"
 #include "stdlib.h"
+#include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include "oledfont.h"  	 
@@ -414,17 +415,15 @@ void OLED_ShowBinNum(u8 x,u8 y,u32 num,u8 len,u8 size1,u8 mode)
 void OLED_ShowFloatNum(u8 x,u8 y,double num,u8 intLen,u8 fraLen,u8 size1,u8 mode)
 {
     u8 charWidth = (size1 == 8U) ? 6U : (u8)(size1 / 2U);
-    double absValue = (num < 0.0) ? -num : num;
+    int isNeg = signbit(num);
+    double absValue = isNeg ? -num : num;
     u32 scale = OLED_Pow(10, fraLen);
     u32 scaled = (u32)(absValue * (double)scale + 0.5);
     u32 intPart = scaled / scale;
     u32 fraPart = scaled % scale;
 
-    if (num < 0.0)
-    {
-        OLED_ShowChar(x, y, '-', size1, mode);
-        x = (u8)(x + charWidth);
-    }
+    OLED_ShowChar(x, y, isNeg ? '-' : '+', size1, mode);
+    x = (u8)(x + charWidth);
 
     OLED_ShowNum(x, y, intPart, intLen, size1, mode);
     x = (u8)(x + charWidth * intLen);

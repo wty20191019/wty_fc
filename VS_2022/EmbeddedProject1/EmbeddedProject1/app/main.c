@@ -203,28 +203,6 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
     
     
     OLED_Refresh();//更新显示=============================================
-
-
-    {
-        int pitchScaled = (int)(pitchDeg * 100.0f);
-        int rollScaled = (int)(rollDeg * 100.0f);
-        int yawScaled = (int)(yawDeg * 100.0f);
-
-        int pitchInt = pitchScaled / 100;
-        int rollInt = rollScaled / 100;
-        int yawInt = yawScaled / 100;
-
-        int pitchFrac = pitchScaled % 100;
-        int rollFrac = rollScaled % 100;
-        int yawFrac = yawScaled % 100;
-
-        if (pitchFrac < 0) { pitchFrac = -pitchFrac; }
-        if (rollFrac < 0)  { rollFrac = -rollFrac; }
-        if (yawFrac < 0)   { yawFrac = -yawFrac; }
-
-        
-    }
-
 }
 
 //==========================================================================
