@@ -289,16 +289,16 @@ int main(void)
 	
 	PPM_Init();                                 //初始化PPM输入
 
-    if (ESC_AUTO_CALIBRATION != 0U)
+    if (ESC_AUTO_CALIBRATION != 0U)             //电调自动校准功能
     {
-        ESC_CalibrateSequence(1000U, 1000U);    //自动完成电调解锁和行程校准
+        ESC_CalibrateSequence(1000U, 1000U);    
     }
     else
     {
         ESC_Init();
     }
 
-    PA0_LED_Toggle_Init();                      // 初始化PA0引脚用于LED闪烁
+    PA0_LED_Toggle_Init();                      // 初始化PA0_LED闪烁_最低优先级任务
 
     //DMA_USART1_Init(115200);                  //初始化USART1用于串口调试输出，波特率115200
 
@@ -323,7 +323,7 @@ int main(void)
     //================================================================================
     while (1)
     {
-	    Task_OledUpdate();
+        Task_OledUpdate();
     }
 }
 
