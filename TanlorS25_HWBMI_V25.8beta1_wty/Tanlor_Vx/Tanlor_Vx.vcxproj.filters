@@ -365,9 +365,6 @@
     <ClCompile Include="User\pa0_LED_toggle.c">
       <Filter>Source files\外设\pa0_LED_toggle</Filter>
     </ClCompile>
-    <ClCompile Include="User\IMU_Sensor\FFCY_NEW_ICM42688.c">
-      <Filter>Source files\外设\IMUSensor</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
@@ -396,10 +393,5 @@
     <Text Include="README.txt">
       <Filter>Source files</Filter>
     </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="User\IMU_Sensor\FFCY_NEW_ICM42688.h">
-      <Filter>Header files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

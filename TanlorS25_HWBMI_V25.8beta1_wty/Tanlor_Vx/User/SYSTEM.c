@@ -50,18 +50,14 @@ void Motor_Calibration()
 		}
 	}
 }
-
-//================系统初始化===================
 void Board_Init(void)
 {
+    //============PA0 LED初始化================
+	PA0_LED_Toggle_Init();
 
 	/*************基本功能初始化***************/
 	SystemInit();					//系统时钟初始化
 	delay_init(168);				//滴答延时初始化
-
-
-    //============PA0 LED初始化================
-    PA0_LED_Toggle_Init();
 
     //==============USB设备初始化=================//用于地面站调参和打印日志
 	//USBD_Init(&USB_OTG_dev, USB_OTG_FS_CORE_ID, &USR_desc, &USBD_CDC_cb, &USR_cb);
@@ -102,14 +98,14 @@ void Board_Init(void)
 	//PMW3901_Init();				//光流初始化
 
 
-	///***********参数初始化***************/
-	//IMU_Acc_Cal_Init();						//加速度计校准值初始化
-	//Quaternion_Init();						//初始四元数初始化
-	//Butterworth_Parameter_Init();			//滤波器参数初始化
-	//RC_Calibration_Trigger();				//遥控器标定参数初始化
-	//Horizontal_Calibration_Init();			//OFFSET水平标定参数初始化
-	//PID_Paramter_Init_With_Flash();			//PID控制器初始化，可以通过地面站修改参数
-	//Load_saved_sdk_parament();				//水平标定参数初始化
+	/***********参数初始化***************/
+	IMU_Acc_Cal_Init();						//加速度计校准值初始化
+	Quaternion_Init();						//初始四元数初始化
+	Butterworth_Parameter_Init();			//滤波器参数初始化
+	RC_Calibration_Trigger();				//遥控器标定参数初始化
+	Horizontal_Calibration_Init();			//OFFSET水平标定参数初始化
+	PID_Paramter_Init_With_Flash();			//PID控制器初始化，可以通过地面站修改参数
+	Load_saved_sdk_parament();				//水平标定参数初始化
 
 
 	PWM_Set(Thr_Min, Thr_Min, Thr_Min, Thr_Min);

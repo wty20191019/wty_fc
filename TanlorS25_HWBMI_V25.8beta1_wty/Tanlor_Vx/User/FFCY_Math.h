@@ -29,4 +29,4 @@ float invSqrt(float x);
 float constrain_float(float amt, float low, float high);
 int16_t constrain_int16_t(int16_t amt, int16_t low, int16_t high);
 float pythagorous2(float a, float b);
-#endif 
+#endif

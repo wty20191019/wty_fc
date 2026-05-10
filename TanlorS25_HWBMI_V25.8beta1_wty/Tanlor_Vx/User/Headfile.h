@@ -38,7 +38,6 @@
 //  мсбщрг ------------------------------------
 #define BMI088 1
 #define MPU6050 2
-#define ICM42688 3
 #define IMU_SENSOR BMI088 
 
 #if IMU_SENSOR==MPU6050
@@ -95,7 +94,6 @@
 #include "stm32f4xx_dma.h"
 #include "stm32f4xx_exti.h"
 #include "stm32f4xx_flash.h"
-#include "stm32f4xx_spi.h"
 //#include "stm32f4xx_adc.h"
 #include "stm32f4xx_i2c.h"
 #include "copyright.h"
@@ -356,7 +354,6 @@ extern _Baro Baro_Show;
 #include "Flight_Control_Fault.h"
 #include "NamelessCotrun_SDK.h"
 #include "FFCY_Position_Ctrl.h"
-
 
 
 
