@@ -30,13 +30,13 @@ void TIM4_Configuration_Cnt(void)
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
     TIM_DeInit(TIM4);
 
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE); //TIM14时钟使能    
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);    //TIM14时钟使能    
 
     GPIO_PinAFConfig(GPIOB, GPIO_PinSource8, GPIO_AF_TIM4);
 
 
-    TIM_TimeBaseStructure.TIM_Period = 10000;       //10ms
-    TIM_TimeBaseStructure.TIM_Prescaler = 84 - 1; //1us
+    TIM_TimeBaseStructure.TIM_Period = 10000;                   //10ms
+    TIM_TimeBaseStructure.TIM_Prescaler = 84 - 1;               //1us
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
     TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);

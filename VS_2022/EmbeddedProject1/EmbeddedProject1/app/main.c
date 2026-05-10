@@ -108,6 +108,7 @@ static void Task_ImuUpdate(void)
     rollDeg = roll_raw - g_roll_zero;//减去零偏得到最终的姿态角度值
     yawDeg = yaw_raw - g_yaw_zero;//减去零偏得到最终的姿态角度值
 }
+
 //==========================================================================
 //串口1收到的数据原样回发
 //==========================================================================
@@ -235,6 +236,43 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
 
 }
 
+//==========================================================================
+//NVIC中断优先级配置
+//==========================================================================
+void NVIC_Configuration(void)
+{
+    NVIC_InitTypeDef NVIC_InitStructure;                            //定义NVIC初始化结构体
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);                 //优先级组2
+
+
+    //飞计数定时器
+    NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn;                 //定时器4中断通道
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;    //抢占优先级0
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x02;           //子优先级2
+    NVIC_Init(&NVIC_InitStructure);
+
+    //PPM接收机
+    NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;              //外部中断0
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;    //抢占优先级0
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x04;           //子优先级4
+    NVIC_Init(&NVIC_InitStructure);
+
+    //DMA中断优先级
+    NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream7_IRQn;         //DMA2 Stream7中断通道（USART1）
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01;    //抢占优先级1
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;           //子优先级0
+    NVIC_Init(&NVIC_InitStructure);
+
+
+    //飞控任务调度定时器
+    NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;                 //定时器2中断通道
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x02;    //抢占优先级2
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x02;           //子优先级2
+    NVIC_Init(&NVIC_InitStructure);
+
+}
+
+
 
 
 //==========================================================================
@@ -242,6 +280,9 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
 //==========================================================================
 int main(void)
 {
+    
+    NVIC_Configuration();                       //配置NVIC中断优先级
+    
     board_init();                               //初始化系统时钟和SysTick
 
     PWM_Init();                                 //初始化TIM3的PWM输出

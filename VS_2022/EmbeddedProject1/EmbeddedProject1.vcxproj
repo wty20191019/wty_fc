@@ -83,7 +83,6 @@
     <ClCompile Include="EmbeddedProject1\module\spi2.c" />
     <ClCompile Include="EmbeddedProject1\module\stm32f4xx_it.c" />
     <ClCompile Include="EmbeddedProject1\module\tim2_scheduler.c" />
-    <ClCompile Include="EmbeddedProject1\module\Time_Cnt.c" />
     <ClCompile Include="EmbeddedProject1\OLED\oled.c" />
     <ClCompile Include="EmbeddedProject1\uart\DMA_UART1.c" />
     <ClCompile Include="EmbeddedProject1\uart\DMA_UART2.c" />
@@ -100,12 +99,6 @@
     <ClInclude Include="EmbeddedProject1\module\stm32f4xx_conf.h" />
     <ClInclude Include="EmbeddedProject1\OLED\bmp.h" />
     <ClInclude Include="EmbeddedProject1\OLED\oledfont.h" />
-    <ClInclude Include="EmbeddedProject1\uart\DMA_UART1.h" />
-    <ClInclude Include="EmbeddedProject1\uart\DMA_UART2.h" />
-    <ClInclude Include="EmbeddedProject1\uart\DMA_UART3.h" />
-    <ClInclude Include="EmbeddedProject1\uart\DMA_UART4.h" />
-    <ClInclude Include="EmbeddedProject1\uart\DMA_UART5.h" />
-    <ClInclude Include="EmbeddedProject1\uart\DMA_UART6.h" />
     <None Include="stm32.mak" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\StartupFiles\startup_stm32f405xx.c" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_StdPeriph_Driver\src\misc.c" />
