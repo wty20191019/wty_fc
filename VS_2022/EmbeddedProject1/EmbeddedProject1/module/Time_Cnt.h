@@ -12,9 +12,8 @@
 #ifndef _TIME_CNT_H_
 #define _TIME_CNT_H_
 
-
 void TIM4_Configuration_Cnt(void);
-
+extern u32 TIME_ISR_CNT;
 
 #endif
 

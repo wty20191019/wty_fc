@@ -79,10 +79,10 @@
     <ClCompile Include="EmbeddedProject1\module\pa0_LED_toggle.c" />
     <ClCompile Include="EmbeddedProject1\module\ppm_input.c" />
     <ClCompile Include="EmbeddedProject1\module\pwm_tim3.c" />
-    <ClCompile Include="EmbeddedProject1\module\RC.c" />
     <ClCompile Include="EmbeddedProject1\module\spi2.c" />
     <ClCompile Include="EmbeddedProject1\module\stm32f4xx_it.c" />
     <ClCompile Include="EmbeddedProject1\module\tim2_scheduler.c" />
+    <ClCompile Include="EmbeddedProject1\module\Time_Cnt.c" />
     <ClCompile Include="EmbeddedProject1\OLED\oled.c" />
     <ClCompile Include="EmbeddedProject1\uart\DMA_UART1.c" />
     <ClCompile Include="EmbeddedProject1\uart\DMA_UART2.c" />
@@ -92,13 +92,16 @@
     <ClCompile Include="EmbeddedProject1\uart\DMA_UART6.c" />
     <ClCompile Include="system_stm32f4xx.c" />
     <ClInclude Include="EmbeddedProject1\board\board.h" />
+    <ClInclude Include="EmbeddedProject1\module\Headfile.h" />
     <ClInclude Include="EmbeddedProject1\module\IMU_FilterPortable.h" />
     <ClInclude Include="EmbeddedProject1\module\KalmanFilter.h" />
     <ClInclude Include="EmbeddedProject1\module\ppm_input.h" />
     <ClInclude Include="EmbeddedProject1\module\spi2.h" />
     <ClInclude Include="EmbeddedProject1\module\stm32f4xx_conf.h" />
+    <ClInclude Include="EmbeddedProject1\module\Time_Cnt.h" />
     <ClInclude Include="EmbeddedProject1\OLED\bmp.h" />
     <ClInclude Include="EmbeddedProject1\OLED\oledfont.h" />
+    <None Include="EmbeddedProject1-Debug.vgdbsettings" />
     <None Include="stm32.mak" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\StartupFiles\startup_stm32f405xx.c" />
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_StdPeriph_Driver\src\misc.c" />
@@ -200,8 +203,6 @@
     <None Include="Makefile" />
     <None Include="debug.mak" />
     <None Include="release.mak" />
-    <None Include="EmbeddedProject1-Debug.vgdbsettings" />
-    <None Include="EmbeddedProject1-Release.vgdbsettings" />
     <None Include="stm32.xml" />
   </ItemGroup>
 </Project>

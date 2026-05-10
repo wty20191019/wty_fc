@@ -321,7 +321,7 @@ void Save_PID_Parameter(void)
 }
 
 u8 Data_False_Flag = 0;
-void Flash_Bug(void)
+void Flash_Bug(void)//解决Flash擦除后，数据读取为0xFF的情况，增加了一个标志位，擦除后如果读取到的数据不为0xFF，则继续擦除，直到读取到的数据为0xFF
 {
 	ReadFlashParameterOne(DATA_TRUE_FLAG, &Data_True_data); 
 	if (Data_True_data == Para_Version)

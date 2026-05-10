@@ -1,6 +1,8 @@
 #include "stm32f4xx.h"
 #include "ppm_input.h"
-#include <string.h>
+#include "Time_Cnt.h"
+
+
 
 
 uint16 PPM_Sample_Cnt = 0;
@@ -13,15 +15,9 @@ uint16 PPM_Start_Time = 0;
 uint16 PPM_Finished_Time = 0;
 uint16 PPM_Is_Okay = 0;
 uint16 PPM_Databuf[10] = { 0 };
-u32 TIME_ISR_CNT = 0;
+ss
 
-/***************************************************
-函数名: void PPM_GPIO_Init(void)
-说明:    PPM输入引脚初始化
-入口:    无
-出口:    无
-备注:    PA8/EXTI8，可按宏定义迁移到其他引脚
-****************************************************/
+//PPM输入引脚初始化
 void PPM_GPIO_Init(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -36,47 +32,6 @@ void PPM_GPIO_Init(void)
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
     GPIO_Init(PPM_GPIO_PORT, &GPIO_InitStructure);
-}
-
-
-//TIM4时间基准初始化
-void TIM4_Configuration_Cnt(void)
-{
-    GPIO_InitTypeDef GPIO_InitStructure;
-    TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-    TIM_OCInitTypeDef  TIM_OCInitStructure;
-
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
-    TIM_DeInit(TIM4);
-
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
-
-    TIM_TimeBaseStructure.TIM_Period = 10000;
-    TIM_TimeBaseStructure.TIM_Prescaler = 84 - 1;
-    TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
-    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
-
-    TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2;
-    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
-    TIM_OC3Init(TIM4, &TIM_OCInitStructure);
-    TIM_OC3PreloadConfig(TIM4, TIM_OCPreload_Enable);
-
-    TIM_ARRPreloadConfig(TIM4, ENABLE);
-    TIM_ClearFlag(TIM4, TIM_FLAG_Update);
-    TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
-    TIM_Cmd(TIM4, ENABLE);
-}
-
-//TIM4中断
-void TIM4_IRQHandler(void)
-{
-    if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET)
-    {
-        TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
-        TIME_ISR_CNT++;
-    }
 }
 
 //PPM接收初始化
@@ -97,7 +52,6 @@ void PPM_Init()
     PPM_Start_Time = 0;
     PPM_Finished_Time = 0;
     PPM_Is_Okay = 0;
-    TIME_ISR_CNT = 0;
     memset(PPM_Databuf, 0, sizeof(PPM_Databuf));
 
     NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn;

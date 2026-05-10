@@ -3,16 +3,12 @@
 #include "board.h"
 #include "stm32f4xx.h"
 #include <stdio.h>
+#include <string.h>
 
-#include "DMA_UART1.h"
-#include "DMA_UART2.h"
-#include "DMA_UART3.h"
-#include "DMA_UART4.h"
-#include "DMA_UART5.h"
-#include "DMA_UART6.h"
 
 
 //==========================================================================
+
 #include "i2c1.h"
 #include "FFCY_NEW_ICM42688.h"
 #include "Attitude6Axis.h"
@@ -22,8 +18,9 @@
 #include "esc_calibration.h"
 #include "tim2_scheduler.h"
 #include "pa0_LED_toggle.h"
+#include "DMA_UART1.h"
 
-#include <string.h>
+
 
 
 
@@ -58,7 +55,7 @@ static uint8_t g_uart1PacketActive = 0U;
 
 
 
-uint8_t channelCount = 0;
+
 
 
 //==========================================================================
@@ -225,14 +222,8 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
         if (rollFrac < 0)  { rollFrac = -rollFrac; }
         if (yawFrac < 0)   { yawFrac = -yawFrac; }
 
-        //Serial1_Printf("[plot,%d.%02d,%d.%02d,%d.%02d]\r\n", pitchInt, pitchFrac, rollInt, rollFrac, yawInt, yawFrac);
-	    
+        
     }
-
-	if (channelCount >= 4U)
-	{
-		//Serial1_Printf("[plot,%u,%u,%u,%u]\r\n", channels[0], channels[1], channels[2], channels[3]);
-	}
 
 }
 
