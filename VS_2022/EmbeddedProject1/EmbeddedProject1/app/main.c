@@ -277,7 +277,7 @@ int main(void)
     Attitude6Axis_Init(&g_attitude, 2.0f, 0.02f);   //初始化姿态算法状态，参数为陀螺仪滤波系数和加速度计权重
     
     
-    //ALL_Control_Init();                             //初始化飞控算法状态
+    ALL_Control_Init();                             //初始化飞控算法状态
     
     OLED_Init();                                    //初始化OLED显示屏
     OLED_Clear();
@@ -289,7 +289,7 @@ int main(void)
     SCH_Init();
     //调度器==========================================================================
     SCH_AddTask(Task_ImuUpdate          , IMU_TASK_PERIOD_MS        , 7             );
-    //SCH_AddTask(ALL_Control_Task        , IMU_TASK_PERIOD_MS        , 6             );
+    SCH_AddTask(ALL_Control_Task        , IMU_TASK_PERIOD_MS        , 6             );
     SCH_AddTask(PA0_LED_Toggle          , 20U                       ,14             );
     
     

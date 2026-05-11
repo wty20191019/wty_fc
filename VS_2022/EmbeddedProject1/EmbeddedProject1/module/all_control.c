@@ -10,6 +10,33 @@
 //PPM_Databuf[2] throttle
 //PPM_Databuf[3] yaw
 
+uint16_t yaw_thresh_low;
+uint16_t yaw_thresh_high;
+uint16_t yaw_ppm;
+
+uint16_t throttle;
+float roll_set;
+float pitch_set;
+float yaw_rate_set; //角速度设定值由偏航角PID输出得到，因此命名为yaw_rate_set更合适
+float roll_rate_set; //角速度设定值由角度PID输出得到，因此命名为roll_rate_set更合适
+float pitch_rate_set; // 同上，命名为pitch_rate_set更合适
+
+float roll_out;
+float pitch_out;
+float yaw_out;
+
+float yaw_error;
+
+float roll_rate;
+float pitch_rate;
+float yaw_rate;
+
+
+
+uint16_t yaw_ppm;
+uint16_t yaw_thresh_high;
+uint16_t yaw_thresh_low;
+
 
 
 extern float pitchDeg;
@@ -20,7 +47,7 @@ extern float yawDeg;
 #define PPM_MAX_US            (2000U)   //PPM输入的最大脉宽，单位微秒，通常为2000us
 #define PPM_MID_US            (1500U)   //PPM输入的中立脉宽，单位微秒，通常为1500us
 #define PPM_DEADBAND_US       (20U)     //遥控器死区范围
-#define THROTTLE_ARM_US       (1050U)   //油门解锁的脉宽阈值，单位微秒
+#define THROTTLE_ARM_US       (1100U)   //油门解锁的脉宽阈值，单位微秒
 #define CONTROL_DT_SEC        (0.005f)  //控制循环的时间间隔 5ms
 
 #define ROLL_ANGLE_MAX_DEG    (10.0f)   //最大横滚角度，单位度
@@ -44,6 +71,14 @@ static PID_Handle_t g_pid_yaw_rate;
 
 static float g_yaw_target = 0.0f;
 static uint8_t g_control_ready = 0U;
+
+//================================
+#define SCALE_PERCENT_MAX     (0.8f)    //用于计算摇杆（解锁/锁定）阈值的比例，0.9表示需要达到摇杆范围的90%才能触发（解锁/锁定）动作
+#define LOCK_COUNT_THRESHOLD  (200U)    //用于计算摇杆（解锁/锁定）阈值的计数阈值 1s
+static uint16_t g_lock_count = 0U;      //锁定计数器
+static uint16_t g_unlock_count = 0U;    //解锁计数器
+static uint8_t  ESC_lock = 0U;          //解锁状态标志
+
 
 //将输入值限制在指定范围内
 static uint16_t ClampPulse(uint16_t value, uint16_t min_value, uint16_t max_value)
@@ -131,19 +166,7 @@ void ALL_Control_Init(void)
 
 void ALL_Control_Task(void)
 {
-    uint16_t throttle;
-    float roll_set;
-    float pitch_set;
-    float yaw_rate_set; //角速度设定值由偏航角PID输出得到，因此命名为yaw_rate_set更合适
-    float roll_rate_set; //角速度设定值由角度PID输出得到，因此命名为roll_rate_set更合适
-    float pitch_rate_set; // 同上，命名为pitch_rate_set更合适
-    float roll_out;
-    float pitch_out;
-    float yaw_out;
-    float yaw_error;
-    float roll_rate;
-    float pitch_rate;
-    float yaw_rate;
+
 
     if (g_control_ready == 0U)
     {
@@ -152,18 +175,102 @@ void ALL_Control_Task(void)
 
     throttle = ClampPulse(PPM_Databuf[2], PPM_MIN_US, PPM_MAX_US);
 
-    if (PPM_Databuf[2] == 0U || throttle < THROTTLE_ARM_US)
+    
     {
-        PID_Reset(&g_pid_roll_angle);
-        PID_Reset(&g_pid_pitch_angle);
-        PID_Reset(&g_pid_yaw_angle);
-        PID_Reset(&g_pid_roll_rate);
-        PID_Reset(&g_pid_pitch_rate);
-        PID_Reset(&g_pid_yaw_rate);
-        g_yaw_target = yawDeg;
-        ESC_SetChannelsUs(PPM_MIN_US, PPM_MIN_US, PPM_MIN_US, PPM_MIN_US);
-        return;
+        yaw_ppm = ClampPulse(PPM_Databuf[3], PPM_MIN_US, PPM_MAX_US);
+        yaw_thresh_high = (uint16_t)(PPM_MID_US + (uint16_t)((PPM_MAX_US - PPM_MID_US) * SCALE_PERCENT_MAX));
+        yaw_thresh_low  = (uint16_t)(PPM_MID_US - (uint16_t)((PPM_MAX_US - PPM_MID_US) * SCALE_PERCENT_MAX));
+
+        
+//        if (PPM_Databuf[2] == 0U)
+//        {
+//            ESC_lock = 0U;
+//            PID_Reset(&g_pid_roll_angle);
+//            PID_Reset(&g_pid_pitch_angle);
+//            PID_Reset(&g_pid_yaw_angle);
+//            PID_Reset(&g_pid_roll_rate);
+//            PID_Reset(&g_pid_pitch_rate);
+//            PID_Reset(&g_pid_yaw_rate);
+//            g_yaw_target = yawDeg;
+//            g_lock_count = 0U;
+//            g_unlock_count = 0U;
+//            ESC_SetChannelsUs(PPM_MIN_US, PPM_MIN_US, PPM_MIN_US, PPM_MIN_US);
+//            return;
+//        }
+
+        
+        if (ESC_lock == 0U)
+        {
+            if (throttle <= THROTTLE_ARM_US && yaw_ppm <= yaw_thresh_low)
+            {
+                g_unlock_count++;
+            }
+            else
+            {
+                g_unlock_count = 0U;
+            }
+
+            //解锁条件：油门在解锁阈值以下，且偏航摇杆向左（小于低阈值）持续达到计数阈值
+            if (throttle <= THROTTLE_ARM_US && yaw_ppm >= yaw_thresh_high)
+            {
+                g_lock_count++;
+            }
+            else
+            {
+                g_lock_count = 0U;
+            }
+
+            if (g_unlock_count > LOCK_COUNT_THRESHOLD)
+            {
+                ESC_lock = 1U;
+                g_lock_count = 0U;
+                g_unlock_count = 0U;
+                
+                //解锁时重置PID状态，避免由于长时间锁定导致的积分累积和微分突变问题
+                PID_Reset(&g_pid_roll_rate);
+                PID_Reset(&g_pid_pitch_rate);
+                PID_Reset(&g_pid_yaw_rate);
+                g_yaw_target = yawDeg;
+            }
+            else
+            {
+                
+                ESC_SetChannelsUs(PPM_MIN_US, PPM_MIN_US, PPM_MIN_US, PPM_MIN_US);
+                return;
+            }
+        }
+        else 
+        {
+            //锁定条件：油门在解锁阈值以下，且偏航摇杆向右（大于高阈值）持续达到计数阈值
+            if (throttle <= THROTTLE_ARM_US && yaw_ppm >= yaw_thresh_high)
+            {
+                g_lock_count++;
+            }
+            else
+            {
+                g_lock_count = 0U;
+            }
+
+            if (g_lock_count > LOCK_COUNT_THRESHOLD)
+            {
+                ESC_lock = 0U;
+                g_lock_count = 0U;
+                g_unlock_count = 0U;
+                PID_Reset(&g_pid_roll_angle);
+                PID_Reset(&g_pid_pitch_angle);
+                PID_Reset(&g_pid_yaw_angle);
+                PID_Reset(&g_pid_roll_rate);
+                PID_Reset(&g_pid_pitch_rate);
+                PID_Reset(&g_pid_yaw_rate);
+                g_yaw_target = yawDeg;
+                ESC_SetChannelsUs(PPM_MIN_US, PPM_MIN_US, PPM_MIN_US, PPM_MIN_US);
+                return;
+            }
+        }
     }
+    
+    
+    // ---------------------------------------------------------------
 
     roll_set        = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[0])    , -ROLL_ANGLE_MAX_DEG   , ROLL_ANGLE_MAX_DEG    );
     pitch_set       = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[1])    , -PITCH_ANGLE_MAX_DEG  , PITCH_ANGLE_MAX_DEG   );
