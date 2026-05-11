@@ -77,25 +77,6 @@ float PID_Update(PID_Handle_t *pid, float setpoint, float measurement, float dt)
     return output;
 }
 
-void PID_SetOutputLimits(PID_Handle_t *pid, float outMin, float outMax)
-{
-    if (pid == NULL) return;
-    pid->outMin = outMin;
-    pid->outMax = outMax;
-
-    if (pid->integratorMin < outMin) pid->integratorMin = outMin;
-    if (pid->integratorMax > outMax) pid->integratorMax = outMax;
-}
-
-void PID_SetIntegratorLimits(PID_Handle_t *pid, float iMin, float iMax)
-{
-    if (pid == NULL) return;
-    pid->integratorMin = iMin;
-    pid->integratorMax = iMax;
-    if (pid->integrator > pid->integratorMax) pid->integrator = pid->integratorMax;
-    if (pid->integrator < pid->integratorMin) pid->integrator = pid->integratorMin;
-}
-
 void PID_SetDerivativeFilterAlpha(PID_Handle_t *pid, float alpha)
 {
     if (pid == NULL) return;

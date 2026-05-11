@@ -4,6 +4,14 @@
 #include "ppm_input.h"
 #include "FFCY_NEW_ICM42688.h"
 
+
+//PPM_Databuf[0] roll
+//PPM_Databuf[1] pitch
+//PPM_Databuf[2] throttle
+//PPM_Databuf[3] yaw
+
+
+
 extern float pitchDeg;
 extern float rollDeg;
 extern float yawDeg;
@@ -142,9 +150,9 @@ void ALL_Control_Task(void)
         ALL_Control_Init();
     }
 
-    throttle = ClampPulse(PPM_Databuf[0], PPM_MIN_US, PPM_MAX_US);
+    throttle = ClampPulse(PPM_Databuf[2], PPM_MIN_US, PPM_MAX_US);
 
-    if (PPM_Databuf[0] == 0U || throttle < THROTTLE_ARM_US)
+    if (PPM_Databuf[2] == 0U || throttle < THROTTLE_ARM_US)
     {
         PID_Reset(&g_pid_roll_angle);
         PID_Reset(&g_pid_pitch_angle);
@@ -157,9 +165,9 @@ void ALL_Control_Task(void)
         return;
     }
 
-    roll_set        = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[1]), -ROLL_ANGLE_MAX_DEG, ROLL_ANGLE_MAX_DEG);
-    pitch_set       = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[2]), -PITCH_ANGLE_MAX_DEG, PITCH_ANGLE_MAX_DEG);
-    yaw_rate_set    = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[3]), -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
+    roll_set        = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[0])    , -ROLL_ANGLE_MAX_DEG   , ROLL_ANGLE_MAX_DEG    );
+    pitch_set       = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[1])    , -PITCH_ANGLE_MAX_DEG  , PITCH_ANGLE_MAX_DEG   );
+    yaw_rate_set    = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[3])    , -YAW_RATE_MAX_DPS     , YAW_RATE_MAX_DPS      );
 
     g_yaw_target += yaw_rate_set * CONTROL_DT_SEC;
     yaw_error = g_yaw_target - yawDeg;
@@ -173,21 +181,21 @@ void ALL_Control_Task(void)
         g_yaw_target += 360.0f;
     }
 
-    roll_rate_set  = PID_Update(&g_pid_roll_angle, roll_set, rollDeg, CONTROL_DT_SEC);
-    pitch_rate_set = PID_Update(&g_pid_pitch_angle, pitch_set, pitchDeg, CONTROL_DT_SEC);
-    yaw_rate_set   = PID_Update(&g_pid_yaw_angle, g_yaw_target, yawDeg, CONTROL_DT_SEC);
+    roll_rate_set   = PID_Update(&g_pid_roll_angle   , roll_set      , rollDeg   , CONTROL_DT_SEC    );
+    pitch_rate_set  = PID_Update(&g_pid_pitch_angle  , pitch_set     , pitchDeg  , CONTROL_DT_SEC    );
+    yaw_rate_set    = PID_Update(&g_pid_yaw_angle    , g_yaw_target  , yawDeg    , CONTROL_DT_SEC    );
 
-    roll_rate   = (-MPU_FilteredData.GyroY) * ICM42688_GYRO_DPS_PER_LSB;
-    pitch_rate  = (MPU_FilteredData.GyroX) * ICM42688_GYRO_DPS_PER_LSB;
-    yaw_rate    = (MPU_FilteredData.GyroZ) * ICM42688_GYRO_DPS_PER_LSB;
+    roll_rate       = (-MPU_FilteredData.GyroY) * ICM42688_GYRO_DPS_PER_LSB;
+    pitch_rate      = (MPU_FilteredData.GyroX)  * ICM42688_GYRO_DPS_PER_LSB;
+    yaw_rate        = (MPU_FilteredData.GyroZ)  * ICM42688_GYRO_DPS_PER_LSB;
 
-    roll_out    = PID_Update(&g_pid_roll_rate, roll_rate_set, roll_rate, CONTROL_DT_SEC);
-    pitch_out   = PID_Update(&g_pid_pitch_rate, pitch_rate_set, pitch_rate, CONTROL_DT_SEC);
-    yaw_out     = PID_Update(&g_pid_yaw_rate, yaw_rate_set, yaw_rate, CONTROL_DT_SEC);
+    roll_out        = PID_Update(&g_pid_roll_rate   , roll_rate_set     , roll_rate     , CONTROL_DT_SEC    );
+    pitch_out       = PID_Update(&g_pid_pitch_rate  , pitch_rate_set    , pitch_rate    , CONTROL_DT_SEC    );
+    yaw_out         = PID_Update(&g_pid_yaw_rate    , yaw_rate_set      , yaw_rate      , CONTROL_DT_SEC    );
 
-    roll_out    = ClampFloat(roll_out, PID_OUTPUT_MIN, PID_OUTPUT_MAX);
-    pitch_out   = ClampFloat(pitch_out, PID_OUTPUT_MIN, PID_OUTPUT_MAX);
-    yaw_out     = ClampFloat(yaw_out, PID_OUTPUT_MIN, PID_OUTPUT_MAX);
+    roll_out        = ClampFloat(roll_out   , PID_OUTPUT_MIN    , PID_OUTPUT_MAX    );
+    pitch_out       = ClampFloat(pitch_out  , PID_OUTPUT_MIN    , PID_OUTPUT_MAX    );
+    yaw_out         = ClampFloat(yaw_out    , PID_OUTPUT_MIN    , PID_OUTPUT_MAX    );
 
     
     
@@ -203,6 +211,8 @@ void ALL_Control_Task(void)
                           ClampPulse((uint16_t)motor3, PPM_MIN_US, PPM_MAX_US),
                           ClampPulse((uint16_t)motor4, PPM_MIN_US, PPM_MAX_US));
     }
+    
+    
 }
 
 
