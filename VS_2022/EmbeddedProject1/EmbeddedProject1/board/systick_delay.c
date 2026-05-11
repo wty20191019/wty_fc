@@ -1,8 +1,7 @@
 
-#include <board.h>
+#include "systick_delay.h"
 
 static __IO uint32_t g_system_tick = 0;
-
 
 /**
  * This function will initial stm32 board.

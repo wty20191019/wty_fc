@@ -1,7 +1,7 @@
 #include "FFCY_NEW_ICM42688.h"
 #include "IMU_FilterPortable.h"  //包含IMU滤波器的头文件
 #include "KalmanFilter.h"//包含卡尔曼滤波器的头文件
-#include "board.h"
+#include "systick_delay.h"
 
 #define ICM42688_USE_SPI 0
 #define ICM42688_USE_i2c 1

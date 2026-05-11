@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include "oledfont.h"  	 
-#include "board.h"
+#include "systick_delay.h"
 
 u8 OLED_GRAM[144][8];
 
@@ -42,14 +42,13 @@ void OLED_DisplayTurn(u8 i)
  * 函 数 功 能：延时
  * 传 入 参 数：无
  * 函 数 返 回：无
- * 作       者：www.lckfb.com
- * 备       注：
 **********************************************************/
 void IIC_delay(void)
 {
-//        //delay_us(1);
-//		uint32_t i = 10;
-//		while(i--);
+//     delay_us(1);
+
+//     uint32_t i = 10;
+//     while(i--);
 }
 
 //起始信号

@@ -9,10 +9,6 @@
       <UniqueIdentifier>{5bcf6c6a-c53f-46ff-a0e3-417fed288d09}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource files">
-      <UniqueIdentifier>{bdf77105-ec41-4eba-98f6-decdfcf2225c}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
-    </Filter>
     <Filter Include="Source files\Device-specific files">
       <UniqueIdentifier>{926ba7fc-86da-4c33-853b-9b41c3a67a3c}</UniqueIdentifier>
     </Filter>
@@ -34,15 +30,6 @@
     <Filter Include="Source files\app">
       <UniqueIdentifier>{80d6bc6a-1e9a-44f1-9d4a-45523aa66d63}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source files\board">
-      <UniqueIdentifier>{14512411-99e9-4595-9e07-58701ff74841}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source files\OLED">
-      <UniqueIdentifier>{c1d962c1-9934-4062-afdf-af7a304e6d37}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source files\uart">
-      <UniqueIdentifier>{526c1497-ff53-4964-83c7-272f40f3deb2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source files\module">
       <UniqueIdentifier>{01521914-e55d-4a19-ae54-207cc0c9a359}</UniqueIdentifier>
     </Filter>
@@ -55,7 +42,16 @@
     <Filter Include="Source files\module\Time_Cnt">
       <UniqueIdentifier>{a35d4d48-ab03-40ff-a936-bf39989a8617}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source files\module\Control">
+    <Filter Include="Source files\module\systick_delay">
+      <UniqueIdentifier>{14512411-99e9-4595-9e07-58701ff74841}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\module\OLED">
+      <UniqueIdentifier>{c1d962c1-9934-4062-afdf-af7a304e6d37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\module\uart">
+      <UniqueIdentifier>{526c1497-ff53-4964-83c7-272f40f3deb2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\app\Control">
       <UniqueIdentifier>{9f08a845-4846-4bca-aaf0-da5d5d529ffe}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -369,29 +365,29 @@
     <ClCompile Include="EmbeddedProject1\app\main.c">
       <Filter>Source files\app</Filter>
     </ClCompile>
-    <ClCompile Include="EmbeddedProject1\board\board.c">
-      <Filter>Source files\board</Filter>
+    <ClCompile Include="EmbeddedProject1\board\systick_delay.c">
+      <Filter>Source files\module\systick_delay</Filter>
     </ClCompile>
     <ClCompile Include="EmbeddedProject1\OLED\oled.c">
-      <Filter>Source files\OLED</Filter>
+      <Filter>Source files\module\OLED</Filter>
     </ClCompile>
     <ClCompile Include="EmbeddedProject1\uart\DMA_UART1.c">
-      <Filter>Source files\uart</Filter>
+      <Filter>Source files\module\uart</Filter>
     </ClCompile>
     <ClCompile Include="EmbeddedProject1\uart\DMA_UART2.c">
-      <Filter>Source files\uart</Filter>
+      <Filter>Source files\module\uart</Filter>
     </ClCompile>
     <ClCompile Include="EmbeddedProject1\uart\DMA_UART3.c">
-      <Filter>Source files\uart</Filter>
+      <Filter>Source files\module\uart</Filter>
     </ClCompile>
     <ClCompile Include="EmbeddedProject1\uart\DMA_UART4.c">
-      <Filter>Source files\uart</Filter>
+      <Filter>Source files\module\uart</Filter>
     </ClCompile>
     <ClCompile Include="EmbeddedProject1\uart\DMA_UART5.c">
-      <Filter>Source files\uart</Filter>
+      <Filter>Source files\module\uart</Filter>
     </ClCompile>
     <ClCompile Include="EmbeddedProject1\uart\DMA_UART6.c">
-      <Filter>Source files\uart</Filter>
+      <Filter>Source files\module\uart</Filter>
     </ClCompile>
     <ClCompile Include="EmbeddedProject1\module\esc_calibration.c">
       <Filter>Source files\module</Filter>
@@ -429,6 +425,12 @@
     <ClCompile Include="EmbeddedProject1\module\KalmanFilter.c">
       <Filter>Source files\module\IMU</Filter>
     </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\pid.c">
+      <Filter>Source files\app\Control</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\all_control.c">
+      <Filter>Source files\app\Control</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
@@ -437,32 +439,17 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="EmbeddedProject1\board\board.h">
-      <Filter>Source files\board</Filter>
-    </ClInclude>
     <ClInclude Include="EmbeddedProject1\OLED\bmp.h">
-      <Filter>Source files\OLED</Filter>
+      <Filter>Source files\module\OLED</Filter>
     </ClInclude>
     <ClInclude Include="EmbeddedProject1\OLED\oledfont.h">
-      <Filter>Source files\OLED</Filter>
+      <Filter>Source files\module\OLED</Filter>
     </ClInclude>
     <ClInclude Include="EmbeddedProject1\module\stm32f4xx_conf.h">
       <Filter>Source files\module</Filter>
     </ClInclude>
-    <ClInclude Include="EmbeddedProject1\module\KalmanFilter.h">
-      <Filter>Header files</Filter>
-    </ClInclude>
-    <ClInclude Include="EmbeddedProject1\module\ppm_input.h">
-      <Filter>Header files</Filter>
-    </ClInclude>
     <ClInclude Include="EmbeddedProject1\module\IMU_FilterPortable.h">
       <Filter>Source files\module\IMU</Filter>
-    </ClInclude>
-    <ClInclude Include="EmbeddedProject1\module\spi2.h">
-      <Filter>Header files</Filter>
-    </ClInclude>
-    <ClInclude Include="EmbeddedProject1\module\Time_Cnt.h">
-      <Filter>Source files\module\Time_Cnt</Filter>
     </ClInclude>
     <ClInclude Include="EmbeddedProject1\module\Headfile.h">
       <Filter>Source files\module</Filter>

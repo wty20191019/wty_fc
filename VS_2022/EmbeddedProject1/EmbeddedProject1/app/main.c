@@ -1,6 +1,5 @@
 
 //==========================================================================
-#include "board.h"
 #include "stm32f4xx.h"
 #include <stdio.h>
 #include <string.h>
@@ -9,6 +8,7 @@
 
 //==========================================================================
 
+#include "systick_delay.h"
 #include "i2c1.h"
 #include "FFCY_NEW_ICM42688.h"
 #include "Attitude6Axis.h"
@@ -19,6 +19,7 @@
 #include "tim2_scheduler.h"
 #include "pa0_LED_toggle.h"
 #include "DMA_UART1.h"
+#include "all_control.h"
 
 
 
@@ -267,16 +268,18 @@ int main(void)
         ESC_Init();
     }
 
-    PA0_LED_Toggle_Init();                      // 初始化PA0_LED闪烁_最低优先级任务
+    PA0_LED_Toggle_Init();                          // 初始化PA0_LED闪烁_最低优先级任务
 
-    //DMA_USART1_Init(115200);                  //初始化USART1用于串口调试输出，波特率115200
+    DMA_USART1_Init(115200);                        //初始化USART1用于串口调试输出，波特率115200
 
-	systick_delay_ms(3000);
+    systick_delay_ms(3000);                         //启动后延时3秒
+    ImuSensor_Init();                               //初始化ICM42688
+    Attitude6Axis_Init(&g_attitude, 2.0f, 0.02f);   //初始化姿态算法状态，参数为陀螺仪滤波系数和加速度计权重
     
-    ImuSensor_Init();                           //初始化ICM42688
-    Attitude6Axis_Init(&g_attitude, 2.0f, 0.02f);
     
-    OLED_Init();                                //初始化OLED显示屏
+    //ALL_Control_Init();                             //初始化飞控算法状态
+    
+    OLED_Init();                                    //初始化OLED显示屏
     OLED_Clear();
 
     ESC_SetChannelsUs(1050U,1050U,1050U,1050U);
@@ -286,6 +289,7 @@ int main(void)
     SCH_Init();
     //调度器==========================================================================
     SCH_AddTask(Task_ImuUpdate          , IMU_TASK_PERIOD_MS        , 7             );
+    //SCH_AddTask(ALL_Control_Task        , IMU_TASK_PERIOD_MS        , 6             );
     SCH_AddTask(PA0_LED_Toggle          , 20U                       ,14             );
     
     
@@ -293,6 +297,7 @@ int main(void)
     while (1)
     {
         Task_OledUpdate();
+        Task_Uart1Echo();
     }
 }
 

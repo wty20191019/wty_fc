@@ -1,6 +1,6 @@
 #include "esc_calibration.h"
 
-#include "board.h"
+#include "systick_delay.h"
 #include "pwm_tim3.h"
 
 #define ESC_PULSE_MIN_US            (1000U)     //1000U对应1ms，电调常用的最小有效脉宽值，单位微秒
