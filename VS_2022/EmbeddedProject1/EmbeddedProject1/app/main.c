@@ -54,6 +54,34 @@ static char g_uart1PacketBuf[UART1_PACKET_BUF_SIZE];
 static uint16_t g_uart1PacketLen = 0U;
 static uint8_t g_uart1PacketActive = 0U;
 
+//将滑动条原始值转换为PID增益，支持两种格式：
+static float SliderRawToPidGain(uint32_t sliderId, uint32_t raw)
+{
+    if (raw > 1000U)
+    {
+        // 兼容 fixed-point：例如 2500 表示 2.500
+        return (float)raw / 1000.0f;
+    }
+
+    uint32_t paramIndex = 0U;
+    if (sliderId > 0U)
+    {
+        paramIndex = (sliderId - 1U) % 3U;
+    }
+
+    float maxGain = 10.0f; // kp 默认 0..10
+    if (paramIndex == 1U)
+    {
+        maxGain = 5.0f; // ki 默认 0..5
+    }
+    else if (paramIndex == 2U)
+    {
+        maxGain = 2.0f; // kd 默认 0..2
+    }
+
+    return ((float)raw / 1000.0f) * maxGain;
+}
+
 
 
 
@@ -139,6 +167,7 @@ static void Task_Uart1Echo(void)
                 char packetCopy[UART1_PACKET_BUF_SIZE];
                 unsigned int sliderId;
                 unsigned int sliderValue;
+                float sliderValueF;
 
                 g_uart1PacketActive = 0U;
 
@@ -152,13 +181,27 @@ static void Task_Uart1Echo(void)
 
                 if (sscanf(packetCopy, "slider,%u,%u", &sliderId, &sliderValue) == 2)//尝试解析滑动条数据包，格式为[slider,ID,VALUE]
                 {
-                    Serial1_Printf("[uart1] slider=%u value=%u\r\n", sliderId, sliderValue);
+                    float gain = SliderRawToPidGain((uint32_t)sliderId, (uint32_t)sliderValue);
 
-                    if (sliderId == 1)
+                    if (ALL_Control_TunePidBySlider((uint32_t)sliderId, gain) != 0U)
                     {
-                        ESC_SetChannelsUs(sliderValue, sliderValue, sliderValue, sliderValue);
+                        Serial1_Printf("[pid] slider=%u gain=%.3f\r\n", sliderId, gain);
                     }
-                    
+                    else
+                    {
+                        Serial1_Printf("[pid] unknown slider=%u raw=%u\r\n", sliderId, sliderValue);
+                    }
+                }
+                else if (sscanf(packetCopy, "slider,%u,%f", &sliderId, &sliderValueF) == 2)
+                {
+                    if (ALL_Control_TunePidBySlider((uint32_t)sliderId, sliderValueF) != 0U)
+                    {
+                        Serial1_Printf("[pid] slider=%u gain=%.3f\r\n", sliderId, sliderValueF);
+                    }
+                    else
+                    {
+                        Serial1_Printf("[pid] unknown slider=%u value=%.3f\r\n", sliderId, sliderValueF);
+                    }
                 }
                 else
                 {
@@ -282,7 +325,7 @@ int main(void)
     OLED_Init();                                    //初始化OLED显示屏
     OLED_Clear();
 
-    ESC_SetChannelsUs(1050U,1050U,1050U,1050U);
+    //ESC_SetChannelsUs(1050U,1050U,1050U,1050U);
 
 
 

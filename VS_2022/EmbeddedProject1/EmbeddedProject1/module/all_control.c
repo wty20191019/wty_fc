@@ -4,6 +4,10 @@
 #include "ppm_input.h"
 #include "FFCY_NEW_ICM42688.h"
 
+#include "stm32f4xx.h"
+
+#include <stddef.h>
+
 
 //PPM_Databuf[0] roll
 //PPM_Databuf[1] pitch
@@ -33,9 +37,6 @@ float yaw_rate;
 
 
 
-uint16_t yaw_ppm;
-uint16_t yaw_thresh_high;
-uint16_t yaw_thresh_low;
 
 
 
@@ -62,9 +63,10 @@ extern float yawDeg;
 #define PID_OUTPUT_MIN        (-200.0f) //PID输出最小值
 #define PID_OUTPUT_MAX        (200.0f)  //PID输出最大值
 
-static PID_Handle_t g_pid_roll_angle;
+static PID_Handle_t g_pid_roll_angle;//
 static PID_Handle_t g_pid_pitch_angle;
 static PID_Handle_t g_pid_yaw_angle;
+
 static PID_Handle_t g_pid_roll_rate;
 static PID_Handle_t g_pid_pitch_rate;
 static PID_Handle_t g_pid_yaw_rate;
@@ -74,10 +76,113 @@ static uint8_t g_control_ready = 0U;
 
 //================================
 #define SCALE_PERCENT_MAX     (0.8f)    //用于计算摇杆（解锁/锁定）阈值的比例，0.9表示需要达到摇杆范围的90%才能触发（解锁/锁定）动作
-#define LOCK_COUNT_THRESHOLD  (200U)    //用于计算摇杆（解锁/锁定）阈值的计数阈值 1s
+#define LOCK_COUNT_THRESHOLD  (100U)    //用于计算摇杆（解锁/锁定）阈值的计数阈值 1s
 static uint16_t g_lock_count = 0U;      //锁定计数器
 static uint16_t g_unlock_count = 0U;    //解锁计数器
 static uint8_t  ESC_lock = 0U;          //解锁状态标志
+
+
+
+//根据 PID 索引获取对应的 PID 句柄
+static PID_Handle_t *ALL_Control_GetPidHandle(ALL_PidIndex_t index)
+{
+    switch (index)
+    {
+    case ALL_PID_ROLL_ANGLE:
+        return &g_pid_roll_angle;
+    case ALL_PID_PITCH_ANGLE:
+        return &g_pid_pitch_angle;
+    case ALL_PID_YAW_ANGLE:
+        return &g_pid_yaw_angle;
+    case ALL_PID_ROLL_RATE:
+        return &g_pid_roll_rate;
+    case ALL_PID_PITCH_RATE:
+        return &g_pid_pitch_rate;
+    case ALL_PID_YAW_RATE:
+        return &g_pid_yaw_rate;
+    default:
+        return NULL;
+    }
+}
+
+// 通过上位机滑动条在线调参：sliderId 映射到某个 PID 的某个参数(kp/ki/kd)
+uint8_t ALL_Control_TunePidBySlider(uint32_t sliderId, float value)
+{
+    PID_Handle_t *pid = NULL;
+    ALL_PidParam_t param = ALL_PID_PARAM_KP;
+
+    switch (sliderId)
+    {
+    case 1U:  pid = ALL_Control_GetPidHandle(ALL_PID_ROLL_ANGLE);  param = ALL_PID_PARAM_KP; break;
+    case 2U:  pid = ALL_Control_GetPidHandle(ALL_PID_ROLL_ANGLE);  param = ALL_PID_PARAM_KI; break;
+    case 3U:  pid = ALL_Control_GetPidHandle(ALL_PID_ROLL_ANGLE);  param = ALL_PID_PARAM_KD; break;
+    case 4U:  pid = ALL_Control_GetPidHandle(ALL_PID_PITCH_ANGLE); param = ALL_PID_PARAM_KP; break;
+    case 5U:  pid = ALL_Control_GetPidHandle(ALL_PID_PITCH_ANGLE); param = ALL_PID_PARAM_KI; break;
+    case 6U:  pid = ALL_Control_GetPidHandle(ALL_PID_PITCH_ANGLE); param = ALL_PID_PARAM_KD; break;
+    case 7U:  pid = ALL_Control_GetPidHandle(ALL_PID_YAW_ANGLE);   param = ALL_PID_PARAM_KP; break;
+    case 8U:  pid = ALL_Control_GetPidHandle(ALL_PID_YAW_ANGLE);   param = ALL_PID_PARAM_KI; break;
+    case 9U:  pid = ALL_Control_GetPidHandle(ALL_PID_YAW_ANGLE);   param = ALL_PID_PARAM_KD; break;
+    case 10U: pid = ALL_Control_GetPidHandle(ALL_PID_ROLL_RATE);   param = ALL_PID_PARAM_KP; break;
+    case 11U: pid = ALL_Control_GetPidHandle(ALL_PID_ROLL_RATE);   param = ALL_PID_PARAM_KI; break;
+    case 12U: pid = ALL_Control_GetPidHandle(ALL_PID_ROLL_RATE);   param = ALL_PID_PARAM_KD; break;
+    case 13U: pid = ALL_Control_GetPidHandle(ALL_PID_PITCH_RATE);  param = ALL_PID_PARAM_KP; break;
+    case 14U: pid = ALL_Control_GetPidHandle(ALL_PID_PITCH_RATE);  param = ALL_PID_PARAM_KI; break;
+    case 15U: pid = ALL_Control_GetPidHandle(ALL_PID_PITCH_RATE);  param = ALL_PID_PARAM_KD; break;
+    case 16U: pid = ALL_Control_GetPidHandle(ALL_PID_YAW_RATE);    param = ALL_PID_PARAM_KP; break;
+    case 17U: pid = ALL_Control_GetPidHandle(ALL_PID_YAW_RATE);    param = ALL_PID_PARAM_KI; break;
+    case 18U: pid = ALL_Control_GetPidHandle(ALL_PID_YAW_RATE);    param = ALL_PID_PARAM_KD; break;
+    default:
+        pid = NULL;
+        break;
+    }
+
+    if (pid == NULL)
+    {
+        return 0U;
+    }
+
+    if (value < 0.0f)
+    {
+        value = 0.0f;
+    }
+
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+
+    switch (param)
+    {
+    case ALL_PID_PARAM_KP:
+        pid->kp = value;
+        break;
+    case ALL_PID_PARAM_KI:
+        pid->ki = value;
+        break;
+    case ALL_PID_PARAM_KD:
+        pid->kd = value;
+        break;
+    default:
+        break;
+    }
+
+    // 在线调参后重置 PID 状态，避免积分/微分状态突变
+    PID_Reset(pid);
+
+    if (primask == 0U)
+    {
+        __enable_irq();
+    }
+
+    return 1U;
+}
+
+
+
+
+
+
+
+
+
 
 
 //将输入值限制在指定范围内
@@ -87,7 +192,6 @@ static uint16_t ClampPulse(uint16_t value, uint16_t min_value, uint16_t max_valu
     {
         return min_value;
     }
-
     if (value > max_value)
     {
         return max_value;
@@ -147,14 +251,17 @@ static uint16_t ApplyPpmDeadband(uint16_t input)
 //初始化PID控制器参数和状态
 void ALL_Control_Init(void)
 {
-    PID_Init(&g_pid_roll_angle  , 4.0f  , 0.0f  , 0.0f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
-    PID_Init(&g_pid_pitch_angle , 4.0f  , 0.0f  , 0.0f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS );
-    PID_Init(&g_pid_yaw_angle   , 2.0f  , 0.0f  , 0.0f  , -YAW_RATE_MAX_DPS  , YAW_RATE_MAX_DPS   );
+    //角度环PID参数
+    PID_Init(&g_pid_roll_angle  , 2.5f  , 0.0f  , 0.0f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
+    PID_Init(&g_pid_pitch_angle , 2.5f  , 0.0f  , 0.0f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
+    PID_Init(&g_pid_yaw_angle   , 1.0f  , 0.0f  , 0.0f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
 
-    PID_Init(&g_pid_roll_rate   , 0.15f , 0.0f  , 0.003f, PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
-    PID_Init(&g_pid_pitch_rate  , 0.15f , 0.0f  , 0.003f, PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
-    PID_Init(&g_pid_yaw_rate    , 0.25f , 0.0f  , 0.0f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
+    //角速度环PID参数
+    PID_Init(&g_pid_roll_rate   , 0.3f , 0.0f  , 0.0f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_pitch_rate  , 0.3f , 0.0f  , 0.0f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_yaw_rate    , 0.2f , 0.0f  , 0.0f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
 
+    
     //设置PID微分滤波系数，值越小滤波效果越强，值为1表示不使用滤波
     PID_SetDerivativeFilterAlpha(&g_pid_roll_rate   , 0.8f      );
     PID_SetDerivativeFilterAlpha(&g_pid_pitch_rate  , 0.8f      );
@@ -181,26 +288,9 @@ void ALL_Control_Task(void)
         yaw_thresh_high = (uint16_t)(PPM_MID_US + (uint16_t)((PPM_MAX_US - PPM_MID_US) * SCALE_PERCENT_MAX));
         yaw_thresh_low  = (uint16_t)(PPM_MID_US - (uint16_t)((PPM_MAX_US - PPM_MID_US) * SCALE_PERCENT_MAX));
 
-        
-//        if (PPM_Databuf[2] == 0U)
-//        {
-//            ESC_lock = 0U;
-//            PID_Reset(&g_pid_roll_angle);
-//            PID_Reset(&g_pid_pitch_angle);
-//            PID_Reset(&g_pid_yaw_angle);
-//            PID_Reset(&g_pid_roll_rate);
-//            PID_Reset(&g_pid_pitch_rate);
-//            PID_Reset(&g_pid_yaw_rate);
-//            g_yaw_target = yawDeg;
-//            g_lock_count = 0U;
-//            g_unlock_count = 0U;
-//            ESC_SetChannelsUs(PPM_MIN_US, PPM_MIN_US, PPM_MIN_US, PPM_MIN_US);
-//            return;
-//        }
-
-        
         if (ESC_lock == 0U)
-        {
+        {   
+            //解锁条件：油门在解锁阈值以下，且偏航摇杆向左（小于低阈值）持续达到计数阈值
             if (throttle <= THROTTLE_ARM_US && yaw_ppm <= yaw_thresh_low)
             {
                 g_unlock_count++;
@@ -210,7 +300,7 @@ void ALL_Control_Task(void)
                 g_unlock_count = 0U;
             }
 
-            //解锁条件：油门在解锁阈值以下，且偏航摇杆向左（小于低阈值）持续达到计数阈值
+            //锁定条件：油门在解锁阈值以下，且偏航摇杆向右（大于高阈值）持续达到计数阈值
             if (throttle <= THROTTLE_ARM_US && yaw_ppm >= yaw_thresh_high)
             {
                 g_lock_count++;
@@ -240,7 +330,8 @@ void ALL_Control_Task(void)
             }
         }
         else 
-        {
+        {   
+            
             //锁定条件：油门在解锁阈值以下，且偏航摇杆向右（大于高阈值）持续达到计数阈值
             if (throttle <= THROTTLE_ARM_US && yaw_ppm >= yaw_thresh_high)
             {
@@ -288,6 +379,7 @@ void ALL_Control_Task(void)
         g_yaw_target += 360.0f;
     }
 
+    //角度PID计算得到角速度设定值
     roll_rate_set   = PID_Update(&g_pid_roll_angle   , roll_set      , rollDeg   , CONTROL_DT_SEC    );
     pitch_rate_set  = PID_Update(&g_pid_pitch_angle  , pitch_set     , pitchDeg  , CONTROL_DT_SEC    );
     yaw_rate_set    = PID_Update(&g_pid_yaw_angle    , g_yaw_target  , yawDeg    , CONTROL_DT_SEC    );
@@ -296,6 +388,7 @@ void ALL_Control_Task(void)
     pitch_rate      = (MPU_FilteredData.GyroX)  * ICM42688_GYRO_DPS_PER_LSB;
     yaw_rate        = (MPU_FilteredData.GyroZ)  * ICM42688_GYRO_DPS_PER_LSB;
 
+    //角速度PID计算得到最终的控制输出
     roll_out        = PID_Update(&g_pid_roll_rate   , roll_rate_set     , roll_rate     , CONTROL_DT_SEC    );
     pitch_out       = PID_Update(&g_pid_pitch_rate  , pitch_rate_set    , pitch_rate    , CONTROL_DT_SEC    );
     yaw_out         = PID_Update(&g_pid_yaw_rate    , yaw_rate_set      , yaw_rate      , CONTROL_DT_SEC    );
@@ -308,10 +401,10 @@ void ALL_Control_Task(void)
     
     
     {
-        float motor1 = (float)throttle + pitch_out + roll_out - yaw_out;
-        float motor2 = (float)throttle + pitch_out - roll_out + yaw_out;
-        float motor3 = (float)throttle - pitch_out - roll_out - yaw_out;
-        float motor4 = (float)throttle - pitch_out + roll_out + yaw_out;
+        float motor1 = (float)throttle + pitch_out - roll_out - yaw_out;
+        float motor2 = (float)throttle - pitch_out - roll_out + yaw_out;
+        float motor3 = (float)throttle - pitch_out + roll_out - yaw_out;
+        float motor4 = (float)throttle + pitch_out + roll_out + yaw_out;
 
         ESC_SetChannelsUs(ClampPulse((uint16_t)motor1, PPM_MIN_US, PPM_MAX_US),
                           ClampPulse((uint16_t)motor2, PPM_MIN_US, PPM_MAX_US),
