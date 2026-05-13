@@ -217,9 +217,9 @@ void Task_OledUpdate(void)  //OLED显示更新的任务函数声明
     OLED_Printf(0, 8,  8, 1, "P:");             OLED_ShowFloatNum(12, 8 , pitchDeg, 2, 2, 8, 1);
     OLED_Printf(0, 16, 8, 1, "R:");             OLED_ShowFloatNum(12, 16, rollDeg,  2, 2, 8, 1);
     OLED_Printf(0, 24, 8, 1, "Y:");             OLED_ShowFloatNum(12, 24, yawDeg,   2, 2, 8, 1);
-    OLED_Printf(0, 32, 8, 1, "AX:%+6d", MPU_FilteredData.AccX);
-    OLED_Printf(0, 40, 8, 1, "AY:%+6d", MPU_FilteredData.AccY);
-    OLED_Printf(0, 48, 8, 1, "AZ:%+6d", MPU_FilteredData.AccZ);
+    OLED_Printf(0, 32, 8, 1, "AX:%+6d GX:%+6d", MPU_FilteredData.AccX, MPU_FilteredData.GyroX);
+    OLED_Printf(0, 40, 8, 1, "AY:%+6d GY:%+6d", MPU_FilteredData.AccY, MPU_FilteredData.GyroY);
+    OLED_Printf(0, 48, 8, 1, "AZ:%+6d GZ:%+6d", MPU_FilteredData.AccZ, MPU_FilteredData.GyroZ);
     OLED_Printf(0, 56, 8, 1, "T :%+6d", MPU_FilteredData.Temp);
     
     
@@ -319,6 +319,8 @@ int main(void)
     {
         Task_OledUpdate();
         Task_Uart1Echo();
+        
+        systick_delay_ms(20);
     }
 }
 
