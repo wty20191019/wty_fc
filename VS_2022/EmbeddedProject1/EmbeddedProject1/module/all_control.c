@@ -252,9 +252,9 @@ static uint16_t ApplyPpmDeadband(uint16_t input)
 void ALL_Control_Init(void)
 {
     //角度环PID参数
-    PID_Init(&g_pid_roll_angle  , 2.5f  , 0.0f  , 0.0f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
-    PID_Init(&g_pid_pitch_angle , 2.5f  , 0.0f  , 0.0f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
-    PID_Init(&g_pid_yaw_angle   , 1.0f  , 0.0f  , 0.0f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
+    PID_Init(&g_pid_roll_angle  , 0.0f  , 0.0f  , 0.0f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
+    PID_Init(&g_pid_pitch_angle , 0.0f  , 0.0f  , 0.0f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
+    PID_Init(&g_pid_yaw_angle   , 0.0f  , 0.0f  , 0.0f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
 
     //角速度环PID参数
     PID_Init(&g_pid_roll_rate   , 0.3f , 0.0f  , 0.0f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
