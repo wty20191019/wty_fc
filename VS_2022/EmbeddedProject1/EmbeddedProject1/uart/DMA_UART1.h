@@ -12,11 +12,11 @@
 extern "C" {
 #endif
 
-void DMA_USART1_Init(uint32_t baudrate);//³õÊ¼»¯USART1µÄDMA¹¦ÄÜ
-void DMA_USART1_Send(const uint8_t *data, uint16_t len);//Í¨¹ıDMA·¢ËÍÊı¾İ
-void DMA_USART1_SendString(const char *str);//Í¨¹ıDMA·¢ËÍ×Ö·û´®
-uint16_t DMA_USART1_Read(uint8_t *out, uint16_t maxLen);//´ÓDMA½ÓÊÕ»º³åÇø¶ÁÈ¡Êı¾İ
-void Serial1_Printf(char *format, ...);//´®¿Ú1¸ñÊ½»¯Êä³ö
+void DMA_USART1_Init(uint32_t baudrate);//åˆå§‹åŒ–USART1çš„DMAåŠŸèƒ½
+void DMA_USART1_Send(const uint8_t *data, uint16_t len);//é€šè¿‡DMAå‘é€æ•°æ®
+void DMA_USART1_SendString(const char *str);//é€šè¿‡DMAå‘é€å­—ç¬¦ä¸²
+uint16_t DMA_USART1_Read(uint8_t *out, uint16_t maxLen);//ä»DMAæ¥æ”¶ç¼“å†²åŒºè¯»å–æ•°æ®
+void Serial1_Printf(char *format, ...);//ä¸²å£1æ ¼å¼åŒ–è¾“å‡º
 
 
 

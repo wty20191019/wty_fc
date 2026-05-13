@@ -57,29 +57,7 @@ static uint8_t g_uart1PacketActive = 0U;
 //将滑动条原始值转换为PID增益，支持两种格式：
 static float SliderRawToPidGain(uint32_t sliderId, uint32_t raw)
 {
-    if (raw > 1000U)
-    {
-        // 兼容 fixed-point：例如 2500 表示 2.500
-        return (float)raw / 1000.0f;
-    }
-
-    uint32_t paramIndex = 0U;
-    if (sliderId > 0U)
-    {
-        paramIndex = (sliderId - 1U) % 3U;
-    }
-
-    float maxGain = 10.0f; // kp 默认 0..10
-    if (paramIndex == 1U)
-    {
-        maxGain = 5.0f; // ki 默认 0..5
-    }
-    else if (paramIndex == 2U)
-    {
-        maxGain = 2.0f; // kd 默认 0..2
-    }
-
-    return ((float)raw / 1000.0f) * maxGain;
+    return ((float)raw / 1000.0f) ;
 }
 
 
