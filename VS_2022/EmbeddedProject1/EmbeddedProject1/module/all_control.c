@@ -64,6 +64,18 @@ extern float yawDeg;
 #define PID_OUTPUT_MIN        (-200.0f) //PID输出最小值
 #define PID_OUTPUT_MAX        (200.0f)  //PID输出最大值
 
+// 通过 PPM_Databuf[6] 切换控制模式：
+// <1090  角速度 + 角度(自稳)
+// >1900  角速度(手动/ACRO)
+#define MODE_SWITCH_LOW_US    (1090U)
+#define MODE_SWITCH_HIGH_US   (1900U)
+
+typedef enum
+{
+    ALL_CONTROL_MODE_ANGLE_RATE = 0U,
+    ALL_CONTROL_MODE_RATE_ONLY  = 1U
+} ALL_ControlMode_t;
+
 static PID_Handle_t g_pid_roll_angle;//
 static PID_Handle_t g_pid_pitch_angle;
 static PID_Handle_t g_pid_yaw_angle;
@@ -74,6 +86,8 @@ static PID_Handle_t g_pid_yaw_rate;
 
 static float g_yaw_target = 0.0f;
 static uint8_t g_control_ready = 0U;
+
+static ALL_ControlMode_t g_control_mode = ALL_CONTROL_MODE_ANGLE_RATE;
 
 //================================
 #define SCALE_PERCENT_MAX     (0.8f)    //用于计算摇杆（解锁/锁定）阈值的比例，0.9表示需要达到摇杆范围的90%才能触发（解锁/锁定）动作
@@ -254,14 +268,14 @@ static uint16_t ApplyPpmDeadband(uint16_t input)
 void ALL_Control_Init(void)
 {
     //角度环PID参数
-    PID_Init(&g_pid_roll_angle  , 0.0f  , 0.0f  , 0.0f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
-    PID_Init(&g_pid_pitch_angle , 0.0f  , 0.0f  , 0.0f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
-    PID_Init(&g_pid_yaw_angle   , 0.0f  , 0.0f  , 0.0f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
+    PID_Init(&g_pid_roll_angle  , 1.0f  , 0.0f  , 0.0f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
+    PID_Init(&g_pid_pitch_angle , 1.0f  , 0.0f  , 0.0f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
+    PID_Init(&g_pid_yaw_angle   , 1.0f  , 0.0f  , 0.0f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
 
     //角速度环PID参数
-    PID_Init(&g_pid_roll_rate   , 0.06f , 0.0f  , 0.03f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
-    PID_Init(&g_pid_pitch_rate  , 0.06f , 0.0f  , 0.03f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
-    PID_Init(&g_pid_yaw_rate    , 0.06f , 0.0f  , 0.03f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_roll_rate   , 1.0f , 0.01f  , 0.08f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_pitch_rate  , 1.0f , 0.01f  , 0.08f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_yaw_rate    , 1.0f , 0.01f  , 0.08f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
 
     
     //设置PID微分滤波系数，值越小滤波效果越强，值为1表示不使用滤波
@@ -283,6 +297,33 @@ void ALL_Control_Task(void)
     }
 
     throttle = ClampPulse(PPM_Databuf[2], PPM_MIN_US, PPM_MAX_US);
+
+    // 模式切换：中间区域保持当前模式(避免抖动)
+    {
+        uint16_t mode_ppm = ClampPulse(PPM_Databuf[6], PPM_MIN_US, PPM_MAX_US);
+        ALL_ControlMode_t prevMode = g_control_mode;
+
+        if (mode_ppm < MODE_SWITCH_LOW_US)
+        {
+            g_control_mode = ALL_CONTROL_MODE_ANGLE_RATE;
+        }
+        else if (mode_ppm > MODE_SWITCH_HIGH_US)
+        {
+            g_control_mode = ALL_CONTROL_MODE_RATE_ONLY;
+        }
+
+        if (g_control_mode != prevMode)
+        {
+            // 切换模式时重置 PID，避免状态突变
+            PID_Reset(&g_pid_roll_angle);
+            PID_Reset(&g_pid_pitch_angle);
+            PID_Reset(&g_pid_yaw_angle);
+            PID_Reset(&g_pid_roll_rate);
+            PID_Reset(&g_pid_pitch_rate);
+            PID_Reset(&g_pid_yaw_rate);
+            g_yaw_target = yawDeg;
+        }
+    }
 
     
     {
@@ -358,29 +399,44 @@ void ALL_Control_Task(void)
         }
     }
     
-    
     // ---------------------------------------------------------------
-
-    roll_set        = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[0])    , -ROLL_ANGLE_MAX_DEG   , ROLL_ANGLE_MAX_DEG    );
-    pitch_set       = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[1])    , -PITCH_ANGLE_MAX_DEG  , PITCH_ANGLE_MAX_DEG   );
-    yaw_rate_set    = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[3])    , -YAW_RATE_MAX_DPS     , YAW_RATE_MAX_DPS      );
-
-    g_yaw_target += yaw_rate_set * CONTROL_DT_SEC;
-    yaw_error = g_yaw_target - yawDeg;
-
-    if (yaw_error > 180.0f)
+    if (g_control_mode == ALL_CONTROL_MODE_ANGLE_RATE)
     {
-        g_yaw_target -= 360.0f;
-    }
-    else if (yaw_error < -180.0f)
-    {
-        g_yaw_target += 360.0f;
-    }
+        // 自稳：摇杆 -> 角度目标 -> 角速度目标
+        roll_set  = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[0]), -ROLL_ANGLE_MAX_DEG,  ROLL_ANGLE_MAX_DEG);
+        pitch_set = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[1]), -PITCH_ANGLE_MAX_DEG, PITCH_ANGLE_MAX_DEG);
 
-    //角度PID计算得到角速度设定值
-    roll_rate_set   = PID_Update(&g_pid_roll_angle   , roll_set      , rollDeg   , CONTROL_DT_SEC    );
-    pitch_rate_set  = PID_Update(&g_pid_pitch_angle  , pitch_set     , pitchDeg  , CONTROL_DT_SEC    );
-    yaw_rate_set    = PID_Update(&g_pid_yaw_angle    , g_yaw_target  , yawDeg    , CONTROL_DT_SEC    );
+        // 偏航：摇杆给“角速度”，积分成角度目标(偏航保持)
+        {
+            float yaw_rate_cmd = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[3]), -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
+            g_yaw_target += yaw_rate_cmd * CONTROL_DT_SEC;
+        }
+
+        yaw_error = g_yaw_target - yawDeg;
+        if (yaw_error > 180.0f)
+        {
+            g_yaw_target -= 360.0f;
+        }
+        else if (yaw_error < -180.0f)
+        {
+            g_yaw_target += 360.0f;
+        }
+
+        // 角度 PID 计算得到角速度设定值
+        roll_rate_set  = PID_Update(&g_pid_roll_angle,  roll_set,     rollDeg,  CONTROL_DT_SEC);
+        pitch_rate_set = PID_Update(&g_pid_pitch_angle, pitch_set,    pitchDeg, CONTROL_DT_SEC);
+        yaw_rate_set   = PID_Update(&g_pid_yaw_angle,   g_yaw_target, yawDeg,   CONTROL_DT_SEC);
+    }
+    else
+    {
+        // 角速度：摇杆直接给角速度
+        roll_rate_set  = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[0]), -ROLL_RATE_MAX_DPS,  ROLL_RATE_MAX_DPS);
+        pitch_rate_set = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[1]), -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
+        yaw_rate_set   = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[3]), -YAW_RATE_MAX_DPS,   YAW_RATE_MAX_DPS);
+
+        // 角速度模式下保持 yaw_target 跟随当前 yaw，方便切回自稳不跳变
+        g_yaw_target = yawDeg;
+    }
 
     roll_rate       = (-MPU_FilteredData.GyroY) * ICM42688_GYRO_DPS_PER_LSB;
     pitch_rate      = (MPU_FilteredData.GyroX)  * ICM42688_GYRO_DPS_PER_LSB;
