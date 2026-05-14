@@ -19,6 +19,7 @@ uint16_t yaw_thresh_high;
 uint16_t yaw_ppm;
 
 uint16_t throttle;
+uint16_t throttle_run;
 float roll_set;
 float pitch_set;
 float yaw_rate_set; //角速度设定值由偏航角PID输出得到，因此命名为yaw_rate_set更合适
@@ -79,7 +80,8 @@ static uint8_t g_control_ready = 0U;
 #define LOCK_COUNT_THRESHOLD  (100U)    //用于计算摇杆（解锁/锁定）阈值的计数阈值 1s
 static uint16_t g_lock_count = 0U;      //锁定计数器
 static uint16_t g_unlock_count = 0U;    //解锁计数器
-static uint8_t  ESC_lock = 0U;          //解锁状态标志
+
+static uint8_t  ESC_lock = 1U;          // ESC_lock: 1=锁定(电机停转)    0=解锁(允许输出)
 
 
 
@@ -257,9 +259,9 @@ void ALL_Control_Init(void)
     PID_Init(&g_pid_yaw_angle   , 0.0f  , 0.0f  , 0.0f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
 
     //角速度环PID参数
-    PID_Init(&g_pid_roll_rate   , 0.3f , 0.0f  , 0.0f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
-    PID_Init(&g_pid_pitch_rate  , 0.3f , 0.0f  , 0.0f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
-    PID_Init(&g_pid_yaw_rate    , 0.2f , 0.0f  , 0.0f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_roll_rate   , 0.06f , 0.0f  , 0.03f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_pitch_rate  , 0.06f , 0.0f  , 0.03f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_yaw_rate    , 0.06f , 0.0f  , 0.03f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
 
     
     //设置PID微分滤波系数，值越小滤波效果越强，值为1表示不使用滤波
@@ -288,9 +290,10 @@ void ALL_Control_Task(void)
         yaw_thresh_high = (uint16_t)(PPM_MID_US + (uint16_t)((PPM_MAX_US - PPM_MID_US) * SCALE_PERCENT_MAX));
         yaw_thresh_low  = (uint16_t)(PPM_MID_US - (uint16_t)((PPM_MAX_US - PPM_MID_US) * SCALE_PERCENT_MAX));
 
-        if (ESC_lock == 0U)
-        {   
-            //解锁条件：油门在解锁阈值以下，且偏航摇杆向左（小于低阈值）持续达到计数阈值
+        
+        if (ESC_lock == 1U) // 当前处于锁定状态
+        {
+            // 解锁条件：油门低 + 偏航左
             if (throttle <= THROTTLE_ARM_US && yaw_ppm <= yaw_thresh_low)
             {
                 g_unlock_count++;
@@ -299,40 +302,32 @@ void ALL_Control_Task(void)
             {
                 g_unlock_count = 0U;
             }
-
-            //锁定条件：油门在解锁阈值以下，且偏航摇杆向右（大于高阈值）持续达到计数阈值
-            if (throttle <= THROTTLE_ARM_US && yaw_ppm >= yaw_thresh_high)
-            {
-                g_lock_count++;
-            }
-            else
-            {
-                g_lock_count = 0U;
-            }
+            g_lock_count = 0U;
 
             if (g_unlock_count > LOCK_COUNT_THRESHOLD)
             {
-                ESC_lock = 1U;
-                g_lock_count = 0U;
+                ESC_lock = 0U;
                 g_unlock_count = 0U;
-                
-                //解锁时重置PID状态，避免由于长时间锁定导致的积分累积和微分突变问题
+
+                // 解锁时重置 PID 状态，避免积分累积/微分突变
+                PID_Reset(&g_pid_roll_angle);
+                PID_Reset(&g_pid_pitch_angle);
+                PID_Reset(&g_pid_yaw_angle);
                 PID_Reset(&g_pid_roll_rate);
                 PID_Reset(&g_pid_pitch_rate);
                 PID_Reset(&g_pid_yaw_rate);
                 g_yaw_target = yawDeg;
             }
-            else
-            {
-                
-                ESC_SetChannelsUs(PPM_MIN_US, PPM_MIN_US, PPM_MIN_US, PPM_MIN_US);
-                return;
-            }
+
+            // 锁定时强制电机最小，并直接返回
+            ESC_SetChannelsUs(PPM_MIN_US, PPM_MIN_US, PPM_MIN_US, PPM_MIN_US);
+            return;
         }
-        else 
-        {   
-            
-            //锁定条件：油门在解锁阈值以下，且偏航摇杆向右（大于高阈值）持续达到计数阈值
+        else // ESC_lock == 0U 当前处于解锁状态
+        {
+            throttle_run = throttle;
+
+            // 锁定条件：油门低 + 偏航右
             if (throttle <= THROTTLE_ARM_US && yaw_ppm >= yaw_thresh_high)
             {
                 g_lock_count++;
@@ -341,12 +336,13 @@ void ALL_Control_Task(void)
             {
                 g_lock_count = 0U;
             }
+            g_unlock_count = 0U;
 
             if (g_lock_count > LOCK_COUNT_THRESHOLD)
             {
-                ESC_lock = 0U;
+                ESC_lock = 1U;
                 g_lock_count = 0U;
-                g_unlock_count = 0U;
+
                 PID_Reset(&g_pid_roll_angle);
                 PID_Reset(&g_pid_pitch_angle);
                 PID_Reset(&g_pid_yaw_angle);
@@ -399,12 +395,16 @@ void ALL_Control_Task(void)
 
     
     
-    
+    if (ESC_lock == 1U) // 当前处于锁定状态
     {
-        float motor1 = (float)throttle + pitch_out - roll_out - yaw_out;
-        float motor2 = (float)throttle - pitch_out - roll_out + yaw_out;
-        float motor3 = (float)throttle - pitch_out + roll_out - yaw_out;
-        float motor4 = (float)throttle + pitch_out + roll_out + yaw_out;
+        ESC_SetChannelsUs(PPM_MIN_US, PPM_MIN_US, PPM_MIN_US, PPM_MIN_US);
+    }
+    else // ESC_lock == 0U 当前处于解锁状态
+    {
+        float motor1 = (float)throttle_run + pitch_out - roll_out - yaw_out;
+        float motor2 = (float)throttle_run - pitch_out - roll_out + yaw_out;
+        float motor3 = (float)throttle_run - pitch_out + roll_out - yaw_out;
+        float motor4 = (float)throttle_run + pitch_out + roll_out + yaw_out;
 
         ESC_SetChannelsUs(ClampPulse((uint16_t)motor1, PPM_MIN_US, PPM_MAX_US),
                           ClampPulse((uint16_t)motor2, PPM_MIN_US, PPM_MAX_US),

@@ -303,7 +303,7 @@ int main(void)
     OLED_Init();                                    //初始化OLED显示屏
     OLED_Clear();
 
-    //ESC_SetChannelsUs(1050U,1050U,1050U,1050U);
+    ESC_SetChannelsUs(1000U,1000U,1000U,1000U);
 
 
 
