@@ -46,6 +46,12 @@ void PWM_Init(void)
 	TIM_OC4PreloadConfig(TIM3, TIM_OCPreload_Enable);
 	TIM_ARRPreloadConfig(TIM3, ENABLE);
 
+    TIM_SetCompare4(TIM3, 1000);
+    TIM_SetCompare3(TIM3, 1000);
+    TIM_SetCompare2(TIM3, 1000);
+    TIM_SetCompare1(TIM3, 1000);
+    
+    
 	TIM_Cmd(TIM3, ENABLE);
 }
 

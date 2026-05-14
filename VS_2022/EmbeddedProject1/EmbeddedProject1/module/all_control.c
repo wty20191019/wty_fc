@@ -318,10 +318,11 @@ void ALL_Control_Task(void)
                 PID_Reset(&g_pid_yaw_rate);
                 g_yaw_target = yawDeg;
             }
-
+        
             // 锁定时强制电机最小，并直接返回
             ESC_SetChannelsUs(PPM_MIN_US, PPM_MIN_US, PPM_MIN_US, PPM_MIN_US);
-            return;
+            throttle_run = PPM_MIN_US;
+            
         }
         else // ESC_lock == 0U 当前处于解锁状态
         {
@@ -351,7 +352,8 @@ void ALL_Control_Task(void)
                 PID_Reset(&g_pid_yaw_rate);
                 g_yaw_target = yawDeg;
                 ESC_SetChannelsUs(PPM_MIN_US, PPM_MIN_US, PPM_MIN_US, PPM_MIN_US);
-                return;
+                throttle_run = PPM_MIN_US;
+                
             }
         }
     }
