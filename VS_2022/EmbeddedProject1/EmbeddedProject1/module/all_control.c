@@ -275,7 +275,7 @@ void ALL_Control_Init(void)
 
 void ALL_Control_Task(void)
 {
-
+    
 
     if (g_control_ready == 0U)
     {

@@ -5,6 +5,7 @@
 
 void ALL_Control_Init(void);
 void ALL_Control_Task(void);
+uint8_t ALL_Control_TunePidBySlider(uint32_t sliderId, float value);
 
 typedef enum
 {
@@ -53,6 +54,6 @@ typedef enum
 
 
 
-uint8_t ALL_Control_TunePidBySlider(uint32_t sliderId, float value);
+
 
 #endif

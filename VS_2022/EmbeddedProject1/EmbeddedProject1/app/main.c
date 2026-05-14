@@ -289,6 +289,10 @@ int main(void)
         ESC_Init();
     }
 
+    
+    
+    
+    
     PA0_LED_Toggle_Init();                          // 初始化PA0_LED闪烁_最低优先级任务
 
     DMA_USART1_Init(115200);                        //初始化USART1用于串口调试输出，波特率115200
@@ -305,8 +309,10 @@ int main(void)
 
     ESC_SetChannelsUs(1000U,1000U,1000U,1000U);
 
+    
+    while (PPM_Databuf[0] == 0) ;                   //等待PPM信号稳定
 
-
+    
     SCH_Init();
     //调度器==========================================================================
     SCH_AddTask(Task_ImuUpdate          , IMU_TASK_PERIOD_MS        , 7             );
