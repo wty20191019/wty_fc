@@ -52,9 +52,9 @@ extern float yawDeg;
 #define THROTTLE_ARM_US       (1100U)   //油门解锁的脉宽阈值，单位微秒
 #define CONTROL_DT_SEC        (0.005f)  //控制循环的时间间隔 5ms
 
-#define ROLL_ANGLE_MAX_DEG    (45.0f)   //最大横滚角度，单位度
-#define PITCH_ANGLE_MAX_DEG   (45.0f)   //最大俯仰角度，单位度
-#define YAW_RATE_MAX_DPS      (45.0f)   //最大偏航角速度，单位度每秒
+#define ROLL_ANGLE_MAX_DEG    (15.0f)   //最大横滚角度，单位度
+#define PITCH_ANGLE_MAX_DEG   (15.0f)   //最大俯仰角度，单位度
+#define YAW_RATE_MAX_DPS      (30.0f)   //最大偏航角速度，单位度每秒
 
 #define ROLL_RATE_MAX_DPS     (160.0f)  //最大横滚角速度，单位度每秒
 #define PITCH_RATE_MAX_DPS    (160.0f)  //最大俯仰角速度，单位度每秒
@@ -269,9 +269,9 @@ static uint16_t ApplyPpmDeadband(uint16_t input)
 void ALL_Control_Init(void)
 {
     //角度环PID参数
-    PID_Init(&g_pid_roll_angle  , 1.0f  , 0.0f  , 0.0f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
-    PID_Init(&g_pid_pitch_angle , 1.0f  , 0.0f  , 0.0f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
-    PID_Init(&g_pid_yaw_angle   , 1.0f  , 0.0f  , 0.0f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
+    PID_Init(&g_pid_roll_angle  , 4.514f  , 0.0f  , 0.0077f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
+    PID_Init(&g_pid_pitch_angle , 4.514f  , 0.0f  , 0.0077f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
+    PID_Init(&g_pid_yaw_angle   , 1.0f  , 0.0f  , 0.000f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
 
     //角速度环PID参数
     PID_Init(&g_pid_roll_rate   , 1.0f , 0.01f  , 0.08f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
