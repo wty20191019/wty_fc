@@ -401,7 +401,7 @@ ICM42688_Status ICM42688_Init(void)
     #ifndef ICM42688_SPI_PRESCALER
     #define ICM42688_SPI_PRESCALER SPI_BaudRatePrescaler_16
     #endif
-    spi2_init(ICM42688_SPI_PRESCALER);
+    spi2_init(ICM42688_SPI_PRESCALER); 
 	
 #elif (ICM42688_USE_mod==ICM42688_USE_i2c)
     i2c1_init(400000U);

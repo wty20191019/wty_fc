@@ -4,7 +4,7 @@
 ```git
 git pull
 ```
-### 查看状态
+### 查看状态 
 ```git
 git status
 ```

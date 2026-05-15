@@ -52,8 +52,8 @@ extern float yawDeg;
 #define THROTTLE_ARM_US       (1100U)   //油门解锁的脉宽阈值，单位微秒
 #define CONTROL_DT_SEC        (0.005f)  //控制循环的时间间隔 5ms
 
-#define ROLL_ANGLE_MAX_DEG    (10.0f)   //最大横滚角度，单位度
-#define PITCH_ANGLE_MAX_DEG   (10.0f)   //最大俯仰角度，单位度
+#define ROLL_ANGLE_MAX_DEG    (45.0f)   //最大横滚角度，单位度
+#define PITCH_ANGLE_MAX_DEG   (45.0f)   //最大俯仰角度，单位度
 #define YAW_RATE_MAX_DPS      (45.0f)   //最大偏航角速度，单位度每秒
 
 #define ROLL_RATE_MAX_DPS     (160.0f)  //最大横滚角速度，单位度每秒
@@ -97,6 +97,10 @@ static uint16_t g_unlock_count = 0U;    //解锁计数器
 
 static uint8_t  ESC_lock = 1U;          // ESC_lock: 1=锁定(电机停转)    0=解锁(允许输出)
 
+
+
+static uint8_t PPM_ready_count = 0U;
+static uint8_t IS_PPM_ready = 0U;
 
 
 //根据 PID 索引获取对应的 PID 句柄
@@ -289,7 +293,7 @@ void ALL_Control_Init(void)
 
 void ALL_Control_Task(void)
 {
-    
+
 
     if (g_control_ready == 0U)
     {
@@ -365,7 +369,7 @@ void ALL_Control_Task(void)
             throttle_run = PPM_MIN_US;
             
         }
-        else // ESC_lock == 0U 当前处于解锁状态
+        else if(ESC_lock == 0) // ESC_lock == 0U 当前处于解锁状态
         {
             throttle_run = throttle;
 
@@ -400,7 +404,7 @@ void ALL_Control_Task(void)
     }
     
     // ---------------------------------------------------------------
-    if (g_control_mode == ALL_CONTROL_MODE_ANGLE_RATE)
+    if (g_control_mode == ALL_CONTROL_MODE_ANGLE_RATE)//自稳模式
     {
         // 自稳：摇杆 -> 角度目标 -> 角速度目标
         roll_set  = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[0]), -ROLL_ANGLE_MAX_DEG,  ROLL_ANGLE_MAX_DEG);
@@ -427,7 +431,7 @@ void ALL_Control_Task(void)
         pitch_rate_set = PID_Update(&g_pid_pitch_angle, pitch_set,    pitchDeg, CONTROL_DT_SEC);
         yaw_rate_set   = PID_Update(&g_pid_yaw_angle,   g_yaw_target, yawDeg,   CONTROL_DT_SEC);
     }
-    else
+    else if(g_control_mode == ALL_CONTROL_MODE_RATE_ONLY)// ALL_CONTROL_MODE_RATE_ONLY 手动/ACRO模式
     {
         // 角速度：摇杆直接给角速度
         roll_rate_set  = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[0]), -ROLL_RATE_MAX_DPS,  ROLL_RATE_MAX_DPS);
@@ -438,37 +442,41 @@ void ALL_Control_Task(void)
         g_yaw_target = yawDeg;
     }
 
-    roll_rate       = (-MPU_FilteredData.GyroY) * ICM42688_GYRO_DPS_PER_LSB;
-    pitch_rate      = (MPU_FilteredData.GyroX)  * ICM42688_GYRO_DPS_PER_LSB;
-    yaw_rate        = (MPU_FilteredData.GyroZ)  * ICM42688_GYRO_DPS_PER_LSB;
+    
+        roll_rate       = (-MPU_FilteredData.GyroY) * ICM42688_GYRO_DPS_PER_LSB;
+        pitch_rate      = (MPU_FilteredData.GyroX)  * ICM42688_GYRO_DPS_PER_LSB;
+        yaw_rate        = (MPU_FilteredData.GyroZ)  * ICM42688_GYRO_DPS_PER_LSB;
 
-    //角速度PID计算得到最终的控制输出
-    roll_out        = PID_Update(&g_pid_roll_rate   , roll_rate_set     , roll_rate     , CONTROL_DT_SEC    );
-    pitch_out       = PID_Update(&g_pid_pitch_rate  , pitch_rate_set    , pitch_rate    , CONTROL_DT_SEC    );
-    yaw_out         = PID_Update(&g_pid_yaw_rate    , yaw_rate_set      , yaw_rate      , CONTROL_DT_SEC    );
+        //角速度PID计算得到最终的控制输出
+        roll_out        = PID_Update(&g_pid_roll_rate, roll_rate_set, roll_rate, CONTROL_DT_SEC);
+        pitch_out       = PID_Update(&g_pid_pitch_rate, pitch_rate_set, pitch_rate, CONTROL_DT_SEC);
+        yaw_out         = PID_Update(&g_pid_yaw_rate, yaw_rate_set, yaw_rate, CONTROL_DT_SEC);
 
-    roll_out        = ClampFloat(roll_out   , PID_OUTPUT_MIN    , PID_OUTPUT_MAX    );
-    pitch_out       = ClampFloat(pitch_out  , PID_OUTPUT_MIN    , PID_OUTPUT_MAX    );
-    yaw_out         = ClampFloat(yaw_out    , PID_OUTPUT_MIN    , PID_OUTPUT_MAX    );
+        roll_out        = ClampFloat(roll_out, PID_OUTPUT_MIN, PID_OUTPUT_MAX);
+        pitch_out       = ClampFloat(pitch_out, PID_OUTPUT_MIN, PID_OUTPUT_MAX);
+        yaw_out         = ClampFloat(yaw_out, PID_OUTPUT_MIN, PID_OUTPUT_MAX);
 
     
     
-    if (ESC_lock == 1U) // 当前处于锁定状态
-    {
-        ESC_SetChannelsUs(PPM_MIN_US, PPM_MIN_US, PPM_MIN_US, PPM_MIN_US);
-    }
-    else // ESC_lock == 0U 当前处于解锁状态
-    {
-        float motor1 = (float)throttle_run + pitch_out - roll_out - yaw_out;
-        float motor2 = (float)throttle_run - pitch_out - roll_out + yaw_out;
-        float motor3 = (float)throttle_run - pitch_out + roll_out - yaw_out;
-        float motor4 = (float)throttle_run + pitch_out + roll_out + yaw_out;
+        if (ESC_lock == 1U) // 当前处于锁定状态
+        {
+            ESC_SetChannelsUs(PPM_MIN_US, PPM_MIN_US, PPM_MIN_US, PPM_MIN_US);
+        }
+        else // ESC_lock == 0U 当前处于解锁状态
+        {
+            float motor1 = (float)throttle_run + pitch_out + roll_out + yaw_out;
+            float motor2 = (float)throttle_run - pitch_out + roll_out - yaw_out;
+            float motor3 = (float)throttle_run - pitch_out - roll_out + yaw_out;
+            float motor4 = (float)throttle_run + pitch_out - roll_out - yaw_out;
 
-        ESC_SetChannelsUs(ClampPulse((uint16_t)motor1, PPM_MIN_US, PPM_MAX_US),
-                          ClampPulse((uint16_t)motor2, PPM_MIN_US, PPM_MAX_US),
-                          ClampPulse((uint16_t)motor3, PPM_MIN_US, PPM_MAX_US),
-                          ClampPulse((uint16_t)motor4, PPM_MIN_US, PPM_MAX_US));
-    }
+            ESC_SetChannelsUs(ClampPulse((uint16_t)motor1, PPM_MIN_US, PPM_MAX_US),
+                ClampPulse((uint16_t)motor2, PPM_MIN_US, PPM_MAX_US),
+                ClampPulse((uint16_t)motor3, PPM_MIN_US, PPM_MAX_US),
+                ClampPulse((uint16_t)motor4, PPM_MIN_US, PPM_MAX_US));
+        }
+    
+    
+    
     
     
 }
