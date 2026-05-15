@@ -99,9 +99,6 @@ static uint8_t  ESC_lock = 1U;          // ESC_lock: 1=锁定(电机停转)    0
 
 
 
-static uint8_t PPM_ready_count = 0U;
-static uint8_t IS_PPM_ready = 0U;
-
 
 //根据 PID 索引获取对应的 PID 句柄
 static PID_Handle_t *ALL_Control_GetPidHandle(ALL_PidIndex_t index)
@@ -407,7 +404,7 @@ void ALL_Control_Task(void)
     if (g_control_mode == ALL_CONTROL_MODE_ANGLE_RATE)//自稳模式
     {
         // 自稳：摇杆 -> 角度目标 -> 角速度目标
-        roll_set  = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[0]), -ROLL_ANGLE_MAX_DEG,  ROLL_ANGLE_MAX_DEG);
+        roll_set  = - MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[0]), -ROLL_ANGLE_MAX_DEG,  ROLL_ANGLE_MAX_DEG);
         pitch_set = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[1]), -PITCH_ANGLE_MAX_DEG, PITCH_ANGLE_MAX_DEG);
 
         // 偏航：摇杆给“角速度”，积分成角度目标(偏航保持)
@@ -416,6 +413,7 @@ void ALL_Control_Task(void)
             g_yaw_target += yaw_rate_cmd * CONTROL_DT_SEC;
         }
 
+        
         yaw_error = g_yaw_target - yawDeg;
         if (yaw_error > 180.0f)
         {
@@ -434,7 +432,7 @@ void ALL_Control_Task(void)
     else if(g_control_mode == ALL_CONTROL_MODE_RATE_ONLY)// ALL_CONTROL_MODE_RATE_ONLY 手动/ACRO模式
     {
         // 角速度：摇杆直接给角速度
-        roll_rate_set  = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[0]), -ROLL_RATE_MAX_DPS,  ROLL_RATE_MAX_DPS);
+        roll_rate_set  = - MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[0]), -ROLL_RATE_MAX_DPS,  ROLL_RATE_MAX_DPS);
         pitch_rate_set = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[1]), -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
         yaw_rate_set   = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[3]), -YAW_RATE_MAX_DPS,   YAW_RATE_MAX_DPS);
 
@@ -464,10 +462,10 @@ void ALL_Control_Task(void)
         }
         else // ESC_lock == 0U 当前处于解锁状态
         {
-            float motor1 = (float)throttle_run + pitch_out + roll_out + yaw_out;
-            float motor2 = (float)throttle_run - pitch_out + roll_out - yaw_out;
-            float motor3 = (float)throttle_run - pitch_out - roll_out + yaw_out;
-            float motor4 = (float)throttle_run + pitch_out - roll_out - yaw_out;
+            float motor1 = (float)throttle_run + pitch_out - roll_out - yaw_out;
+            float motor2 = (float)throttle_run - pitch_out - roll_out + yaw_out;
+            float motor3 = (float)throttle_run - pitch_out + roll_out - yaw_out;
+            float motor4 = (float)throttle_run + pitch_out + roll_out + yaw_out;
 
             ESC_SetChannelsUs(ClampPulse((uint16_t)motor1, PPM_MIN_US, PPM_MAX_US),
                 ClampPulse((uint16_t)motor2, PPM_MIN_US, PPM_MAX_US),
