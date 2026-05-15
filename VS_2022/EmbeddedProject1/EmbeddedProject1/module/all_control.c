@@ -64,6 +64,9 @@ extern float yawDeg;
 #define PID_OUTPUT_MIN        (-200.0f) //PID输出最小值
 #define PID_OUTPUT_MAX        (200.0f)  //PID输出最大值
 
+#define YAW_PID_OUTPUT_MAX    ( 100.0f)
+#define YAW_PID_OUTPUT_MIX    (-100.0f)
+
 // 通过 PPM_Databuf[6] 切换控制模式：
 // <1090  角速度 + 角度(自稳)
 // >1900  角速度(手动/ACRO)
@@ -271,12 +274,12 @@ void ALL_Control_Init(void)
     //角度环PID参数
     PID_Init(&g_pid_roll_angle  , 4.514f  , 0.0f  , 0.0077f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
     PID_Init(&g_pid_pitch_angle , 4.514f  , 0.0f  , 0.0077f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
-    PID_Init(&g_pid_yaw_angle   , 1.0f  , 0.0f  , 0.000f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
+    PID_Init(&g_pid_yaw_angle   , 0.001f  , 0.0f  , 0.000f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
 
     //角速度环PID参数
-    PID_Init(&g_pid_roll_rate   , 1.0f , 0.01f  , 0.08f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
-    PID_Init(&g_pid_pitch_rate  , 1.0f , 0.01f  , 0.08f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
-    PID_Init(&g_pid_yaw_rate    , 1.0f , 0.01f  , 0.08f  , PID_OUTPUT_MIN     , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_roll_rate   , 1.0f  , 0.01f     , 0.08f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_pitch_rate  , 1.0f  , 0.01f     , 0.08f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_yaw_rate    , 0.001f  , 0.01f     , 0.00f     , YAW_PID_OUTPUT_MIX    , YAW_PID_OUTPUT_MAX);
 
     
     //设置PID微分滤波系数，值越小滤波效果越强，值为1表示不使用滤波
@@ -428,6 +431,7 @@ void ALL_Control_Task(void)
         roll_rate_set  = PID_Update(&g_pid_roll_angle,  roll_set,     rollDeg,  CONTROL_DT_SEC);
         pitch_rate_set = PID_Update(&g_pid_pitch_angle, pitch_set,    pitchDeg, CONTROL_DT_SEC);
         yaw_rate_set   = PID_Update(&g_pid_yaw_angle,   g_yaw_target, yawDeg,   CONTROL_DT_SEC);
+        //yaw_rate_set   = MapPpmToFloat(ApplyPpmDeadband(PPM_Databuf[3]), -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
     }
     else if(g_control_mode == ALL_CONTROL_MODE_RATE_ONLY)// ALL_CONTROL_MODE_RATE_ONLY 手动/ACRO模式
     {
@@ -462,10 +466,10 @@ void ALL_Control_Task(void)
         }
         else // ESC_lock == 0U 当前处于解锁状态
         {
-            float motor1 = (float)throttle_run + pitch_out - roll_out - yaw_out;
-            float motor2 = (float)throttle_run - pitch_out - roll_out + yaw_out;
-            float motor3 = (float)throttle_run - pitch_out + roll_out - yaw_out;
-            float motor4 = (float)throttle_run + pitch_out + roll_out + yaw_out;
+            float motor1 = (float)throttle_run + pitch_out - roll_out + yaw_out;
+            float motor2 = (float)throttle_run - pitch_out - roll_out - yaw_out;
+            float motor3 = (float)throttle_run - pitch_out + roll_out + yaw_out;
+            float motor4 = (float)throttle_run + pitch_out + roll_out - yaw_out;
 
             ESC_SetChannelsUs(ClampPulse((uint16_t)motor1, PPM_MIN_US, PPM_MAX_US),
                 ClampPulse((uint16_t)motor2, PPM_MIN_US, PPM_MAX_US),
