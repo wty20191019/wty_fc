@@ -203,6 +203,21 @@ static void Task_Uart1Echo(void)
         }
     }
     
+    {
+        int p10 = (int)(pitchDeg * 10.0f);
+        int r10 = (int)(rollDeg * 10.0f);
+        int y10 = (int)(yawDeg * 10.0f);
+        int p_int = p10 / 10;
+        int r_int = r10 / 10;
+        int y_int = y10 / 10;
+        int p_frac = p10 % 10; if (p_frac < 0) p_frac = -p_frac;
+        int r_frac = r10 % 10; if (r_frac < 0) r_frac = -r_frac;
+        int y_frac = y10 % 10; if (y_frac < 0) y_frac = -y_frac;
+        Serial1_Printf("[plot,%d.%d,%d.%d,%d.%d]\r\n", p_int, p_frac, r_int, r_frac, y_int, y_frac);
+    }
+    
+    
+    
 }
 
 //==========================================================================
