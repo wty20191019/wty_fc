@@ -33,8 +33,8 @@
 //=====================================================================
 //硬件低通滤波器配置
 //=====================================================================
-
 //可选的滤波档位，单位Hz，实际截止频率可能略有偏差，具体数值请参考ICM42688数据手册
+
 #define ICM42688_FILTER_BW_180HZ     0x00U  
 #define ICM42688_FILTER_BW_121HZ     0x01U
 #define ICM42688_FILTER_BW_73HZ      0x02U
@@ -44,11 +44,8 @@
 #define ICM42688_FILTER_BW_16HZ      0x06U
 #define ICM42688_FILTER_BW_8HZ       0x07U
 
-
-
-
 #define ICM42688_ACCEL_UI_FILT_BW    ICM42688_FILTER_BW_8HZ       //加速度计的数字低通滤波档位
-#define ICM42688_GYRO_UI_FILT_BW     ICM42688_FILTER_BW_8HZ        //陀螺仪的数字低通滤波档位       
+#define ICM42688_GYRO_UI_FILT_BW     ICM42688_FILTER_BW_25HZ        //陀螺仪的数字低通滤波档位       
 #define ICM42688_HW_FILTER_CFG       ((uint8_t)(((ICM42688_ACCEL_UI_FILT_BW & 0x0FU) << 4) | (ICM42688_GYRO_UI_FILT_BW & 0x0FU)))
 
 //==========================================================================
@@ -58,8 +55,8 @@
 
 #define ICM42688_SOFT_FILTER_SAMPLE_HZ          200.0f      //软件低通滤波器的采样频率，单位Hz，应与实际读取IMU数据的频率相匹配
 #define ICM42688_acc_SOFT_FILTER_CUTOFF_HZ      1.0f        //acc 软件低通滤波器的截止频率，单位Hz
-#define ICM42688_gyro_SOFT_FILTER_CUTOFF_HZ     1.0f        //gyro软件低通滤波器的截止频率，单位Hz
-#define ICM42688_SOFT_FILTER_WARMUP_COUNT       128U        //软件低通滤波器的预热采样次数，滤波器在预热期间不输出有效数据//建议设置为采样频率的1-2秒的采样数量，例如100Hz采样频率可以设置为100-200
+#define ICM42688_gyro_SOFT_FILTER_CUTOFF_HZ     20.0f        //gyro软件低通滤波器的截止频率，单位Hz
+#define ICM42688_SOFT_FILTER_WARMUP_COUNT       200U        //软件低通滤波器的预热采样次数，滤波器在预热期间不输出有效数据//建议设置为采样频率的1-2秒的采样数量，例如100Hz采样频率可以设置为100-200
 
 
 //==========================================================================
@@ -68,13 +65,34 @@
 #define ICM42688_KALMAN_ENABLE              0       //是否启用卡尔曼滤波器
 
 
+
 //==========================================================================
-//陀螺仪偏置校准
+//陀螺仪偏置校准//gyro
 //==========================================================================
 #define ICM42688_GYRO_BIAS_ENABLE          1        //是否启用陀螺仪偏置校准和跟踪功能
 
-#define ICM42688_GYRO_BIAS_CAL_SAMPLES     500U     //陀螺仪偏置校准时的采样数量，校准期间需要保持IMU静止，建议设置为200-500
-#define ICM42688_GYRO_BIAS_MAX_ABS_LSB     200      //陀螺仪偏置校准时的最大绝对值阈值，单位LSB，超过此值的样本将被丢弃，建议设置为200-500LSB（约12-30dps）以适应不同的IMU安装环境
+#define ICM42688_GYRO_BIAS_CAL_SAMPLES     1000U    //陀螺仪偏置校准时的采样数量
+#define ICM42688_GYRO_BIAS_MAX_ABS_LSB     2500     //陀螺仪偏置校准时的最大绝对值阈值(LSB)
+
+
+//==========================================================================
+//加速度计偏置校准//ACC
+//==========================================================================
+#define ICM42688_ACC_BIAS_ENABLE           1        //是否启用加速度计偏置校准（静止、水平放置时效果最佳）
+
+#define ICM42688_ACC_BIAS_CAL_SAMPLES      1000U    //加速度计偏置校准采样数量
+#define ICM42688_ACC_BIAS_MAX_ABS_XY_LSB   2500     //校准期间   X/Y        最大绝对值阈值（LSB），用于判断是否接近水平静止
+#define ICM42688_ACC_BIAS_MAX_1G_DEV_LSB   2500     //校准期间  | |Az|-1g | 最大偏  差阈值（LSB）
+
+/* 期望的静止重力向量（单位：LSB）。
+ * 默认假设水平放置，Z轴读数约为 +1g。
+ * 如你的板子方向相反（静止时Az约为-1g）
+ * 可将Z期望改为(-ICM42688_ACC_1G_LSB)。 */
+
+#define ICM42688_ACC_BIAS_EXPECT_X_LSB     0
+#define ICM42688_ACC_BIAS_EXPECT_Y_LSB     0
+#define ICM42688_ACC_BIAS_EXPECT_Z_LSB     (ICM42688_ACC_1G_LSB)
+
 
 //==========================================================================
 //跟踪功能

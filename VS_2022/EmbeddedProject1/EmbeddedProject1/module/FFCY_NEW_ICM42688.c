@@ -31,6 +31,11 @@ u32 IIC_Timeout_Cnt_noTimesClear = 0;
     static uint8_t s_gyro_bias_ready = 0U;
 #endif
 
+#if ICM42688_ACC_BIAS_ENABLE//加速度计偏置校准相关的静态变量
+    static float s_acc_bias_lsb[3] = {0.0f, 0.0f, 0.0f};
+    static uint8_t s_acc_bias_ready = 0U;
+#endif
+
 #if ICM42688_SOFT_FILTER_ENABLE//软件低通滤波器相关的静态变量
     static IMU_FilterPortableBiquadCoeff s_acc_lpf_coeff;
     static IMU_FilterPortableBiquadCoeff s_gyro_lpf_coeff;
@@ -50,6 +55,11 @@ static int16_t icm42688_abs_i16(int16_t v)
     return (v >= 0) ? v : (int16_t)(-v);
 }
 
+static int32_t icm42688_abs_i32(int32_t v)
+{
+    return (v >= 0) ? v : -v;
+}
+
 static int16_t icm42688_sub_bias_lsb(int16_t raw, float bias)
 {
     int32_t bias_i = (bias >= 0.0f) ? (int32_t)(bias + 0.5f) : (int32_t)(bias - 0.5f);
@@ -67,6 +77,7 @@ static int16_t icm42688_sub_bias_lsb(int16_t raw, float bias)
     return (int16_t)corrected;
 }
 
+//判断加速度计读数的模长是否在合理范围内，以验证是否接近1g，适用于静止状态的校准和数据有效性检查
 static uint8_t icm42688_acc_norm_is_valid_1g(int16_t ax, int16_t ay, int16_t az)
 {
     float norm_sq = (float)ax * (float)ax + (float)ay * (float)ay + (float)az * (float)az;
@@ -77,7 +88,8 @@ static uint8_t icm42688_acc_norm_is_valid_1g(int16_t ax, int16_t ay, int16_t az)
     return (norm_sq >= min_sq && norm_sq <= max_sq) ? 1U : 0U;
 }
 
-#if ICM42688_GYRO_BIAS_ENABLE//陀螺仪偏置校准函数，采集一定数量的样本并计算平均值作为偏置，校准期间需要保持IMU静止
+//陀螺仪偏置校准函数，采集一定数量的样本并计算平均值作为偏置，校准期间需要保持IMU静止
+#if ICM42688_GYRO_BIAS_ENABLE
     static void icm42688_calibrate_gyro_bias(void)
     {
         uint32_t valid = 0U;
@@ -144,6 +156,108 @@ static uint8_t icm42688_acc_norm_is_valid_1g(int16_t ax, int16_t ay, int16_t az)
     }
 #endif
 
+//加速度计偏置校准函数（静止、水平放置时效果最佳）
+#if ICM42688_ACC_BIAS_ENABLE
+    static uint8_t icm42688_acc_is_near_expected(int16_t ax, int16_t ay, int16_t az)
+    {
+        const int32_t ex = (int32_t)ICM42688_ACC_BIAS_EXPECT_X_LSB;
+        const int32_t ey = (int32_t)ICM42688_ACC_BIAS_EXPECT_Y_LSB;
+        const int32_t ez = (int32_t)ICM42688_ACC_BIAS_EXPECT_Z_LSB;
+
+        if (icm42688_abs_i32((int32_t)ax - ex) > (int32_t)ICM42688_ACC_BIAS_MAX_ABS_XY_LSB)
+        {
+            return 0U;
+        }
+        if (icm42688_abs_i32((int32_t)ay - ey) > (int32_t)ICM42688_ACC_BIAS_MAX_ABS_XY_LSB)
+        {
+            return 0U;
+        }
+        if (icm42688_abs_i32((int32_t)az - ez) > (int32_t)ICM42688_ACC_BIAS_MAX_1G_DEV_LSB)
+        {
+            return 0U;
+        }
+
+        return 1U;
+    }
+
+    static void icm42688_calibrate_acc_bias(void)
+    {
+        uint32_t valid = 0U;
+        uint32_t attempt = 0U;
+        int32_t sum_x = 0;
+        int32_t sum_y = 0;
+        int32_t sum_z = 0;
+        const uint32_t max_attempt = ICM42688_ACC_BIAS_CAL_SAMPLES * 3U;
+
+        s_acc_bias_lsb[0] = 0.0f;
+        s_acc_bias_lsb[1] = 0.0f;
+        s_acc_bias_lsb[2] = 0.0f;
+        s_acc_bias_ready = 0U;
+
+        while ((valid < ICM42688_ACC_BIAS_CAL_SAMPLES) && (attempt < max_attempt))
+        {
+            int16_t gx;
+            int16_t gy;
+            int16_t gz;
+            int16_t ax;
+            int16_t ay;
+            int16_t az;
+
+            attempt++;
+            IIC_Timeout_Cnt = 0U;
+
+            gx = GetData_Gyro(ICM42688_GYRO_XOUT);
+            gy = GetData_Gyro(ICM42688_GYRO_YOUT);
+            gz = GetData_Gyro(ICM42688_GYRO_ZOUT);
+            ax = GetData_Acc(ICM42688_ACCEL_XOUT);
+            ay = GetData_Acc(ICM42688_ACCEL_YOUT);
+            az = GetData_Acc(ICM42688_ACCEL_ZOUT);
+
+            if (IIC_Timeout_Cnt != 0U)
+            {
+                continue;
+            }
+
+            /* Reject samples that indicate motion */
+            if ((icm42688_abs_i16(gx) > ICM42688_GYRO_BIAS_MAX_ABS_LSB) ||
+                (icm42688_abs_i16(gy) > ICM42688_GYRO_BIAS_MAX_ABS_LSB) ||
+                (icm42688_abs_i16(gz) > ICM42688_GYRO_BIAS_MAX_ABS_LSB))
+            {
+                continue;
+            }
+
+            if (icm42688_acc_norm_is_valid_1g(ax, ay, az) == 0U)
+            {
+                continue;
+            }
+
+            if (icm42688_acc_is_near_expected(ax, ay, az) == 0U)
+            {
+                continue;
+            }
+
+            sum_x += ax;
+            sum_y += ay;
+            sum_z += az;
+            valid++;
+        }
+
+        if (valid > 0U)
+        {
+            const float avg_x = (float)sum_x / (float)valid;
+            const float avg_y = (float)sum_y / (float)valid;
+            const float avg_z = (float)sum_z / (float)valid;
+
+            /* bias = measured_avg - expected */
+            s_acc_bias_lsb[0] = avg_x - (float)ICM42688_ACC_BIAS_EXPECT_X_LSB;
+            s_acc_bias_lsb[1] = avg_y - (float)ICM42688_ACC_BIAS_EXPECT_Y_LSB;
+            s_acc_bias_lsb[2] = avg_z - (float)ICM42688_ACC_BIAS_EXPECT_Z_LSB;
+            s_acc_bias_ready = 1U;
+        }
+    }
+#endif
+
+//由于有些I2C库要求7位地址，有些要求8位地址，所以这里做一个统一处理，确保无论传入7位还是8位地址都能正确使用
 static uint8_t icm42688_normalize_address(uint8_t dev_address)
 {
     if (dev_address > 0x7FU)
@@ -154,6 +268,7 @@ static uint8_t icm42688_normalize_address(uint8_t dev_address)
     return dev_address;
 }
 
+//尝试访问指定地址并读取WHO_AM_I寄存器以验证设备是否存在，返回相应的状态码
 static ICM42688_Status icm42688_probe_address(uint8_t addr)
 {
     uint8_t who_am_i = 0;
@@ -167,6 +282,7 @@ static ICM42688_Status icm42688_probe_address(uint8_t addr)
     return (who_am_i == ICM42688_WHOAMI_VALUE) ? ICM42688_OK : ICM42688_ERROR;
 }
 
+//当前使用的寄存器读写函数，内部根据使用的通信接口（SPI或I2C）进行相应的操作，并处理超时情况，更新超时计数器
 static ICM42688_Status icm42688_write_reg_current(uint8_t reg_addr, uint8_t data)
 {
 #if (ICM42688_USE_mod==ICM42688_USE_SPI)
@@ -199,6 +315,7 @@ static ICM42688_Status icm42688_write_reg_current(uint8_t reg_addr, uint8_t data
 #endif
 }
 
+//当前使用的寄存器读写函数，内部根据使用的通信接口（SPI或I2C）进行相应的操作，并处理超时情况，更新超时计数器
 static ICM42688_Status icm42688_read_reg_current(uint8_t reg_addr, uint8_t *data)
 {
 #if (ICM42688_USE_mod==ICM42688_USE_SPI)
@@ -237,6 +354,7 @@ static ICM42688_Status icm42688_read_reg_current(uint8_t reg_addr, uint8_t *data
 	
 }
 
+//读取WHO_AM_I寄存器的值以验证设备是否存在，并返回相应的状态码
 ICM42688_Status ICM42688_ReadWhoAmI(uint8_t *who_am_i)
 {
     if (who_am_i == 0)
@@ -247,6 +365,7 @@ ICM42688_Status ICM42688_ReadWhoAmI(uint8_t *who_am_i)
     return icm42688_read_reg_current(ICM42688_WHO_AM_I, who_am_i);
 }
 
+//对外暴露的寄存器写函数，内部根据使用的通信接口（SPI或I2C）进行相应的操作，并处理超时情况，更新超时计数器
 void ICM42688_WriteReg(uint8_t DevAddress, uint8_t RegAddress, uint8_t Data)
 {
 #if (ICM42688_USE_mod==ICM42688_USE_SPI)
@@ -270,6 +389,7 @@ void ICM42688_WriteReg(uint8_t DevAddress, uint8_t RegAddress, uint8_t Data)
 #endif
 }
 
+//对外暴露的寄存器读函数，内部根据使用的通信接口（SPI或I2C）进行相应的操作，并处理超时情况，更新超时计数器
 uint8_t ICM42688_ReadReg(uint8_t DevAddress, uint8_t RegAddress)
 {
     uint8_t data = 0;
@@ -306,6 +426,7 @@ uint8_t ICM42688_ReadReg(uint8_t DevAddress, uint8_t RegAddress)
 	
 }
 
+//读取陀螺仪或加速度计的高字节和低字节寄存器，并合成一个16位有符号整数返回
 int16_t GetData_Gyro(uint8_t REG_Address)
 {
     uint8_t hd = ICM42688_ReadReg(s_device_address, REG_Address);
@@ -313,6 +434,7 @@ int16_t GetData_Gyro(uint8_t REG_Address)
     return (int16_t)(((uint16_t)hd << 8) | ld);
 }
 
+//读取陀螺仪或加速度计的高字节和低字节寄存器，并合成一个16位有符号整数返回
 int16_t GetData_Acc(uint8_t REG_Address)
 {
     uint8_t hd = ICM42688_ReadReg(s_device_address, REG_Address);
@@ -320,7 +442,8 @@ int16_t GetData_Acc(uint8_t REG_Address)
     return (int16_t)(((uint16_t)hd << 8) | ld);
 }
 
-void ImuSensor_ReadReg_BuffAll(void)//读取ICM42688的所有相关寄存器数据到全局变量MPU_Data中
+//读取ICM42688的所有相关寄存器数据到全局变量MPU_Data中
+void ImuSensor_ReadReg_BuffAll(void)
 {
     int16_t imu_sensor_buff[6];
 
@@ -346,22 +469,41 @@ void ImuSensor_ReadReg_BuffAll(void)//读取ICM42688的所有相关寄存器数�
     }
 }
 
-void ImuSensor_ProcessData(void)
-{
+//处理原始数据得到滤波后的加速度计和陀螺仪数据，并存储在MPU_FilteredData中
+void ImuSensor_ProcessData(void){
     ICM42688_RawData raw_data;
 
     raw_data = MPU_Data;
     MPU_FilteredData = raw_data;
 
-#if ICM42688_GYRO_BIAS_ENABLE //陀螺仪偏置校准和跟踪
+//===========================================================================
+//陀螺仪偏置校准和跟踪
+//===========================================================================
+#if ICM42688_GYRO_BIAS_ENABLE 
     if (s_gyro_bias_ready != 0U)
     {
         MPU_FilteredData.GyroX = icm42688_sub_bias_lsb(MPU_FilteredData.GyroX, s_gyro_bias_lsb[0]);
         MPU_FilteredData.GyroY = icm42688_sub_bias_lsb(MPU_FilteredData.GyroY, s_gyro_bias_lsb[1]);
         MPU_FilteredData.GyroZ = icm42688_sub_bias_lsb(MPU_FilteredData.GyroZ, s_gyro_bias_lsb[2]);
     }
+#endif
+    
+//===========================================================================
+//加速度计偏置校准
+//===========================================================================
+#if ICM42688_ACC_BIAS_ENABLE 
+    if (s_acc_bias_ready != 0U)
+    {
+        MPU_FilteredData.AccX = icm42688_sub_bias_lsb(MPU_FilteredData.AccX, s_acc_bias_lsb[0]);
+        MPU_FilteredData.AccY = icm42688_sub_bias_lsb(MPU_FilteredData.AccY, s_acc_bias_lsb[1]);
+        MPU_FilteredData.AccZ = icm42688_sub_bias_lsb(MPU_FilteredData.AccZ, s_acc_bias_lsb[2]);
+    }
+#endif
 
-#if ICM42688_GYRO_BIAS_TRACK_ENABLE//陀螺仪偏置跟踪
+//===========================================================================
+//陀螺仪偏置跟踪
+//===========================================================================
+#if ICM42688_GYRO_BIAS_TRACK_ENABLE
     if ((icm42688_abs_i16(MPU_FilteredData.GyroX) < ICM42688_GYRO_STILL_THRESH_LSB) &&
         (icm42688_abs_i16(MPU_FilteredData.GyroY) < ICM42688_GYRO_STILL_THRESH_LSB) &&
         (icm42688_abs_i16(MPU_FilteredData.GyroZ) < ICM42688_GYRO_STILL_THRESH_LSB) &&
@@ -372,9 +514,11 @@ void ImuSensor_ProcessData(void)
         s_gyro_bias_lsb[2] += ICM42688_GYRO_BIAS_TRACK_ALPHA * ((float)raw_data.GyroZ - s_gyro_bias_lsb[2]);
     }
 #endif
-#endif
 
-#if ICM42688_SOFT_FILTER_ENABLE//软件低通滤波
+//===========================================================================
+//软件低通滤波
+//===========================================================================
+#if ICM42688_SOFT_FILTER_ENABLE
     MPU_FilteredData.GyroX = (int16_t)IMU_FilterPortable_Process((float)MPU_FilteredData.GyroX, &s_gyro_lpf_state[0], &s_gyro_lpf_coeff);
     MPU_FilteredData.GyroY = (int16_t)IMU_FilterPortable_Process((float)MPU_FilteredData.GyroY, &s_gyro_lpf_state[1], &s_gyro_lpf_coeff);
     MPU_FilteredData.GyroZ = (int16_t)IMU_FilterPortable_Process((float)MPU_FilteredData.GyroZ, &s_gyro_lpf_state[2], &s_gyro_lpf_coeff);
@@ -383,7 +527,10 @@ void ImuSensor_ProcessData(void)
     MPU_FilteredData.AccZ = (int16_t)IMU_FilterPortable_Process((float)MPU_FilteredData.AccZ, &s_acc_lpf_state[2], &s_acc_lpf_coeff);
 #endif
 
-#if ICM42688_KALMAN_ENABLE//卡尔曼滤波
+//===========================================================================
+//卡尔曼滤波
+//===========================================================================
+#if ICM42688_KALMAN_ENABLE
     
     MPU_FilteredData.GyroX = (int16_t)KalmanFilter_Update(&s_gyro_kalman[0], (float)MPU_FilteredData.GyroX);
     MPU_FilteredData.GyroY = (int16_t)KalmanFilter_Update(&s_gyro_kalman[1], (float)MPU_FilteredData.GyroY);
@@ -394,6 +541,7 @@ void ImuSensor_ProcessData(void)
 #endif
 }
 
+//初始化ICM42688传感器，配置通信接口，并进行基本的寄存器设置，最后返回初始化状态
 ICM42688_Status ICM42688_Init(void)
 {
 #if (ICM42688_USE_mod==ICM42688_USE_SPI)
@@ -457,6 +605,7 @@ ICM42688_Status ICM42688_Init(void)
     return ICM42688_OK;
 }
 
+//对外暴露的初始化函数，内部调用ICM42688_Init进行设备初始化，并进行陀螺仪和加速度计的偏置校准，以及软件滤波器和卡尔曼滤波器的初始化
 void ImuSensor_Init(void)
 {
 
@@ -476,6 +625,10 @@ void ImuSensor_Init(void)
 
 #if ICM42688_GYRO_BIAS_ENABLE
     icm42688_calibrate_gyro_bias();
+#endif
+
+#if ICM42688_ACC_BIAS_ENABLE
+    icm42688_calibrate_acc_bias();
 #endif
 	
 	systick_delay_ms(1000);
@@ -504,9 +657,9 @@ void ImuSensor_Init(void)
 #endif
 }
 
-
+//对外暴露的获取数据函数，内部调用ImuSensor_ReadReg_BuffAll读取原始数据，并调用ImuSensor_ProcessData进行数据处理，得到滤波后的结果
 void GET_MPU_DATA(void)
 {
-    ImuSensor_ReadReg_BuffAll();
+    ImuSensor_ReadReg_BuffAll(); 
     ImuSensor_ProcessData();
 }

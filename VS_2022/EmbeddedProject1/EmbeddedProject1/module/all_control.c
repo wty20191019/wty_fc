@@ -75,6 +75,7 @@ extern float yawDeg;
 
 typedef enum
 {
+    
     ALL_CONTROL_MODE_ANGLE_RATE = 0U,
     ALL_CONTROL_MODE_RATE_ONLY  = 1U
 } ALL_ControlMode_t;

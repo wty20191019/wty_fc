@@ -26,11 +26,11 @@
 
 
 #define ESC_AUTO_CALIBRATION         (0)                                    //首次使用或更换电调时建议打开，按文章流程自动完成解锁/行程校准
-#define IMU_TASK_PERIOD_MS           (5)                                    //IMU数据读取和OLED显示更新的周期，单位毫秒    
+
+#define IMU_TASK_PERIOD_MS           (5)                                    //IMU数据读取和OLED显示更新的周期ms 
 #define ATT6_DT_SEC                  ((float)IMU_TASK_PERIOD_MS / 1000.0f)  //姿态算法更新周期，单位秒
 #define ICM42688_ACC_G_PER_LSB       (1.0f / 8192.0f)                       //ICM42688加速度计每LSB对应的重力加速度值，单位g
 #define ICM42688_GYRO_DPS_PER_LSB    (1.0f / 16.4f)                         //ICM42688陀螺仪每LSB对应的角速度值，单位度每秒
-#define ATT_ZERO_CALIB_SAMPLES       (1000U)                                //启动后静止采样次数(1000*5ms=5s)
 #define UART1_ECHO_BUF_SIZE          (64)                                   //串口1回显缓冲区大小
 #define UART1_PACKET_BUF_SIZE        (64)                                   //串口1解析包缓冲区大小
 
@@ -40,19 +40,10 @@ float pitchDeg;
 float rollDeg;
 float yawDeg;
 
-static float g_pitch_zero = 0.0f;
-static float g_roll_zero = 0.0f;
-static float g_yaw_zero = 0.0f;
-static float g_pitch_sum = 0.0f;
-static float g_roll_sum = 0.0f;
-static float g_yaw_sum = 0.0f;
-static uint16_t g_zero_count = 0U;
-static uint8_t g_zero_ready = 0U;
-static uint8_t g_uart1EchoBuf[UART1_ECHO_BUF_SIZE];   //串口1回显缓冲区
-
-static char g_uart1PacketBuf[UART1_PACKET_BUF_SIZE];
-static uint16_t g_uart1PacketLen = 0U;
-static uint8_t g_uart1PacketActive = 0U;
+static uint8_t g_uart1EchoBuf[UART1_ECHO_BUF_SIZE];     //串口1回显缓冲区
+static char g_uart1PacketBuf[UART1_PACKET_BUF_SIZE];    //串口1解析包缓冲区
+static uint16_t g_uart1PacketLen = 0U;                  //当前解析包的长度
+static uint8_t g_uart1PacketActive = 0U;                //当前是否正在解析包的标志
 
 //将滑动条原始值转换为PID增益，支持两种格式：
 static float SliderRawToPidGain(uint32_t sliderId, uint32_t raw)
@@ -61,19 +52,11 @@ static float SliderRawToPidGain(uint32_t sliderId, uint32_t raw)
 }
 
 
-
-
-
-
 //==========================================================================
 ////IMU数据读取
 //==========================================================================
 static void Task_ImuUpdate(void)  
 {
-    
-    float pitch_raw;
-    float roll_raw;
-    float yaw_raw;
     
     ImuSensor_ReadReg_BuffAll();//读取ICM42688的原始数据
     ImuSensor_ProcessData(); //处理原始数据得到滤波后的加速度计和陀螺仪数据，并存储在MPU_FilteredData中
@@ -90,27 +73,8 @@ static void Task_ImuUpdate(void)
         ICM42688_GYRO_DPS_PER_LSB,
         ATT6_DT_SEC);
     
-    Attitude6Axis_GetEulerDeg(&g_attitude, &pitch_raw, &roll_raw, &yaw_raw);//获取欧拉角度
-
-    if (g_zero_ready == 0U)
-    {
-        g_pitch_sum += pitch_raw;
-        g_roll_sum += roll_raw;
-        g_yaw_sum += yaw_raw;
-        g_zero_count++;
-
-        if (g_zero_count >= ATT_ZERO_CALIB_SAMPLES)//当累计的样本数量达到预设的校准样本数量时，计算零偏并标记零偏准备就绪
-        {
-            g_pitch_zero = g_pitch_sum / (float)g_zero_count;
-            g_roll_zero = g_roll_sum / (float)g_zero_count;
-            g_yaw_zero = g_yaw_sum / (float)g_zero_count;
-            g_zero_ready = 1U;
-        }
-    }
-
-    pitchDeg = pitch_raw - g_pitch_zero;//减去零偏得到最终的姿态角度值
-    rollDeg = roll_raw - g_roll_zero;//减去零偏得到最终的姿态角度值
-    yawDeg = yaw_raw - g_yaw_zero;//减去零偏得到最终的姿态角度值
+    Attitude6Axis_GetEulerDeg(&g_attitude, &pitchDeg, &rollDeg, &yawDeg); //获取欧拉角度
+    
 }
 
 //==========================================================================
