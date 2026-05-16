@@ -45,8 +45,7 @@ void OLED_DisplayTurn(u8 i)
 **********************************************************/
 void IIC_delay(void)
 {
-//     delay_us(1);
-
+//    systick_delay_us(1);
 //     uint32_t i = 10;
 //     while(i--);
 }

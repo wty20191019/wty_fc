@@ -481,8 +481,8 @@ void ImuSensor_Init(void)
 	systick_delay_ms(1000);
 	
 #if ICM42688_SOFT_FILTER_ENABLE   
-    IMU_FilterPortable_DesignLP2(ICM42688_SOFT_FILTER_SAMPLE_HZ, ICM42688_SOFT_FILTER_CUTOFF_HZ, &s_acc_lpf_coeff);
-    IMU_FilterPortable_DesignLP2(ICM42688_SOFT_FILTER_SAMPLE_HZ, ICM42688_SOFT_FILTER_CUTOFF_HZ, &s_gyro_lpf_coeff);
+    IMU_FilterPortable_DesignLP2(ICM42688_SOFT_FILTER_SAMPLE_HZ, ICM42688_acc_SOFT_FILTER_CUTOFF_HZ, &s_acc_lpf_coeff);
+    IMU_FilterPortable_DesignLP2(ICM42688_SOFT_FILTER_SAMPLE_HZ, ICM42688_gyro_SOFT_FILTER_CUTOFF_HZ, &s_gyro_lpf_coeff);
 
     IMU_FilterPortable_Init(&s_acc_lpf_state[0], ICM42688_SOFT_FILTER_WARMUP_COUNT);
     IMU_FilterPortable_Init(&s_acc_lpf_state[1], ICM42688_SOFT_FILTER_WARMUP_COUNT);

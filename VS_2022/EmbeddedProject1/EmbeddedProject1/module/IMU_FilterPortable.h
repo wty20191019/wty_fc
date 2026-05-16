@@ -15,7 +15,7 @@
     float a2;
 } IMU_FilterPortableBiquadCoeff;
 
-typedef struct
+typedef struct//二阶低通滤波器的状态结构体，包含了输入和输出的历史值以及预热计数器和预热限制
 {
     float x1;
     float x2;
