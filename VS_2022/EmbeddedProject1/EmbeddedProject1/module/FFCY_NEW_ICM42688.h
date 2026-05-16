@@ -45,7 +45,7 @@
 #define ICM42688_FILTER_BW_8HZ       0x07U
 
 #define ICM42688_ACCEL_UI_FILT_BW    ICM42688_FILTER_BW_8HZ       //加速度计的数字低通滤波档位
-#define ICM42688_GYRO_UI_FILT_BW     ICM42688_FILTER_BW_25HZ        //陀螺仪的数字低通滤波档位       
+#define ICM42688_GYRO_UI_FILT_BW     ICM42688_FILTER_BW_8HZ        //陀螺仪的数字低通滤波档位       
 #define ICM42688_HW_FILTER_CFG       ((uint8_t)(((ICM42688_ACCEL_UI_FILT_BW & 0x0FU) << 4) | (ICM42688_GYRO_UI_FILT_BW & 0x0FU)))
 
 //==========================================================================
@@ -54,9 +54,9 @@
 #define ICM42688_SOFT_FILTER_ENABLE             1           //是否启用软件低通滤波器
 
 #define ICM42688_SOFT_FILTER_SAMPLE_HZ          200.0f      //软件低通滤波器的采样频率，单位Hz，应与实际读取IMU数据的频率相匹配
-#define ICM42688_acc_SOFT_FILTER_CUTOFF_HZ      1.0f        //acc 软件低通滤波器的截止频率，单位Hz
-#define ICM42688_gyro_SOFT_FILTER_CUTOFF_HZ     20.0f        //gyro软件低通滤波器的截止频率，单位Hz
-#define ICM42688_SOFT_FILTER_WARMUP_COUNT       200U        //软件低通滤波器的预热采样次数，滤波器在预热期间不输出有效数据//建议设置为采样频率的1-2秒的采样数量，例如100Hz采样频率可以设置为100-200
+#define ICM42688_acc_SOFT_FILTER_CUTOFF_HZ      8.0f       //acc 软件低通滤波器的截止频率，单位Hz
+#define ICM42688_gyro_SOFT_FILTER_CUTOFF_HZ     8.0f       //gyro软件低通滤波器的截止频率，单位Hz
+#define ICM42688_SOFT_FILTER_WARMUP_COUNT       2000U        //软件低通滤波器的预热采样次数，滤波器在预热期间不输出有效数据//建议设置为采样频率的1-2秒的采样数量，例如100Hz采样频率可以设置为100-200
 
 
 //==========================================================================

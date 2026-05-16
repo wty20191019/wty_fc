@@ -273,13 +273,13 @@ static uint16_t ApplyPpmDeadband(uint16_t input)
 void ALL_Control_Init(void)
 {
     //角度环PID参数
-    PID_Init(&g_pid_roll_angle  , 4.514f  , 0.0f  , 0.0077f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
-    PID_Init(&g_pid_pitch_angle , 4.514f  , 0.0f  , 0.0077f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
+    PID_Init(&g_pid_roll_angle  , 4.514f  , 0.1f  , 0.007f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
+    PID_Init(&g_pid_pitch_angle , 4.514f  , 0.1f  , 0.007f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
     PID_Init(&g_pid_yaw_angle   , 0.001f  , 0.0f  , 0.000f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
 
     //角速度环PID参数
-    PID_Init(&g_pid_roll_rate   , 1.0f  , 0.01f     , 0.08f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX     );
-    PID_Init(&g_pid_pitch_rate  , 1.0f  , 0.01f     , 0.08f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_roll_rate   , 0.573f  , 0.01f     , 0.02f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_pitch_rate  , 0.573f  , 0.01f     , 0.02f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX     );
     PID_Init(&g_pid_yaw_rate    , 0.001f  , 0.01f     , 0.00f     , YAW_PID_OUTPUT_MIX    , YAW_PID_OUTPUT_MAX);
 
     
