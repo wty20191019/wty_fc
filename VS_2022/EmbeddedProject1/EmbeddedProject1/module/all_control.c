@@ -10,7 +10,7 @@
 #include <stddef.h>
 
 
-#define IS_ALL_Control_ApplyPidGains 0      // flash_PID，1=应用 0=不应用（仅用于调试）
+#define IS_ALL_Control_ApplyPidGains 1      // flash_PID，1=应用 0=不应用（仅用于调试）
 
 //PPM_Databuf[0] roll
 //PPM_Databuf[1] pitch
@@ -117,9 +117,10 @@ static void ALL_Control_CollectPidGains(PID_FlashGains_t gains[ALL_PID_COUNT])//
     gains[ALL_PID_ROLL_ANGLE].ki = g_pid_roll_angle.ki;
     gains[ALL_PID_ROLL_ANGLE].kd = g_pid_roll_angle.kd;
 
-    gains[ALL_PID_PITCH_ANGLE].kp = g_pid_pitch_angle.kp;
-    gains[ALL_PID_PITCH_ANGLE].ki = g_pid_pitch_angle.ki;
-    gains[ALL_PID_PITCH_ANGLE].kd = g_pid_pitch_angle.kd;
+    // Roll/Pitch 作为一组调参：Flash 中也使用同一套增益，避免读写后不一致
+    gains[ALL_PID_PITCH_ANGLE].kp = g_pid_roll_angle.kp;
+    gains[ALL_PID_PITCH_ANGLE].ki = g_pid_roll_angle.ki;
+    gains[ALL_PID_PITCH_ANGLE].kd = g_pid_roll_angle.kd;
 
     gains[ALL_PID_YAW_ANGLE].kp = g_pid_yaw_angle.kp;
     gains[ALL_PID_YAW_ANGLE].ki = g_pid_yaw_angle.ki;
@@ -129,9 +130,9 @@ static void ALL_Control_CollectPidGains(PID_FlashGains_t gains[ALL_PID_COUNT])//
     gains[ALL_PID_ROLL_RATE].ki = g_pid_roll_rate.ki;
     gains[ALL_PID_ROLL_RATE].kd = g_pid_roll_rate.kd;
 
-    gains[ALL_PID_PITCH_RATE].kp = g_pid_pitch_rate.kp;
-    gains[ALL_PID_PITCH_RATE].ki = g_pid_pitch_rate.ki;
-    gains[ALL_PID_PITCH_RATE].kd = g_pid_pitch_rate.kd;
+    gains[ALL_PID_PITCH_RATE].kp = g_pid_roll_rate.kp;
+    gains[ALL_PID_PITCH_RATE].ki = g_pid_roll_rate.ki;
+    gains[ALL_PID_PITCH_RATE].kd = g_pid_roll_rate.kd;
 
     gains[ALL_PID_YAW_RATE].kp = g_pid_yaw_rate.kp;
     gains[ALL_PID_YAW_RATE].ki = g_pid_yaw_rate.ki;
@@ -145,9 +146,10 @@ static void ALL_Control_ApplyPidGains(const PID_FlashGains_t gains[ALL_PID_COUNT
     g_pid_roll_angle.ki = gains[ALL_PID_ROLL_ANGLE].ki;
     g_pid_roll_angle.kd = gains[ALL_PID_ROLL_ANGLE].kd;
 
-    g_pid_pitch_angle.kp = gains[ALL_PID_PITCH_ANGLE].kp;
-    g_pid_pitch_angle.ki = gains[ALL_PID_PITCH_ANGLE].ki;
-    g_pid_pitch_angle.kd = gains[ALL_PID_PITCH_ANGLE].kd;
+    // Roll/Pitch 作为一组调参：使用同一套（Roll）增益应用到 Pitch
+    g_pid_pitch_angle.kp = gains[ALL_PID_ROLL_ANGLE].kp;
+    g_pid_pitch_angle.ki = gains[ALL_PID_ROLL_ANGLE].ki;
+    g_pid_pitch_angle.kd = gains[ALL_PID_ROLL_ANGLE].kd;
 
     g_pid_yaw_angle.kp = gains[ALL_PID_YAW_ANGLE].kp;
     g_pid_yaw_angle.ki = gains[ALL_PID_YAW_ANGLE].ki;
@@ -157,9 +159,9 @@ static void ALL_Control_ApplyPidGains(const PID_FlashGains_t gains[ALL_PID_COUNT
     g_pid_roll_rate.ki = gains[ALL_PID_ROLL_RATE].ki;
     g_pid_roll_rate.kd = gains[ALL_PID_ROLL_RATE].kd;
 
-    g_pid_pitch_rate.kp = gains[ALL_PID_PITCH_RATE].kp;
-    g_pid_pitch_rate.ki = gains[ALL_PID_PITCH_RATE].ki;
-    g_pid_pitch_rate.kd = gains[ALL_PID_PITCH_RATE].kd;
+    g_pid_pitch_rate.kp = gains[ALL_PID_ROLL_RATE].kp;
+    g_pid_pitch_rate.ki = gains[ALL_PID_ROLL_RATE].ki;
+    g_pid_pitch_rate.kd = gains[ALL_PID_ROLL_RATE].kd;
 
     g_pid_yaw_rate.kp = gains[ALL_PID_YAW_RATE].kp;
     g_pid_yaw_rate.ki = gains[ALL_PID_YAW_RATE].ki;
@@ -229,38 +231,44 @@ static PID_Handle_t *ALL_Control_GetPidHandle(ALL_PidIndex_t index)
     }
 }
 
-// 通过上位机滑动条在线调参：sliderId 映射到某个 PID 的某个参数(kp/ki/kd)
+// 通过上位机滑动条在线调参：sliderId → PID 参数映射
+//  1-3   ：Roll 和 Pitch 角度环 kp/ki/kd
+//  4-6   ：Yaw 角度环 kp/ki/kd
+//  7-9   ：Roll 和 Pitch 角速度环 kp/ki/kd
+//  10-12 ：Yaw 角速度环 kp/ki/kd
 uint8_t ALL_Control_TunePidBySlider(uint32_t sliderId, float value)
 {
-    PID_Handle_t *pid = NULL;
+    PID_Handle_t *pid1 = NULL;
+    PID_Handle_t *pid2 = NULL;
     ALL_PidParam_t param = ALL_PID_PARAM_KP;
 
     switch (sliderId)
     {
-    case 1U:  pid = ALL_Control_GetPidHandle(ALL_PID_ROLL_ANGLE);  param = ALL_PID_PARAM_KP; break;
-    case 2U:  pid = ALL_Control_GetPidHandle(ALL_PID_ROLL_ANGLE);  param = ALL_PID_PARAM_KI; break;
-    case 3U:  pid = ALL_Control_GetPidHandle(ALL_PID_ROLL_ANGLE);  param = ALL_PID_PARAM_KD; break;
-    case 4U:  pid = ALL_Control_GetPidHandle(ALL_PID_PITCH_ANGLE); param = ALL_PID_PARAM_KP; break;
-    case 5U:  pid = ALL_Control_GetPidHandle(ALL_PID_PITCH_ANGLE); param = ALL_PID_PARAM_KI; break;
-    case 6U:  pid = ALL_Control_GetPidHandle(ALL_PID_PITCH_ANGLE); param = ALL_PID_PARAM_KD; break;
-    case 7U:  pid = ALL_Control_GetPidHandle(ALL_PID_YAW_ANGLE);   param = ALL_PID_PARAM_KP; break;
-    case 8U:  pid = ALL_Control_GetPidHandle(ALL_PID_YAW_ANGLE);   param = ALL_PID_PARAM_KI; break;
-    case 9U:  pid = ALL_Control_GetPidHandle(ALL_PID_YAW_ANGLE);   param = ALL_PID_PARAM_KD; break;
-    case 10U: pid = ALL_Control_GetPidHandle(ALL_PID_ROLL_RATE);   param = ALL_PID_PARAM_KP; break;
-    case 11U: pid = ALL_Control_GetPidHandle(ALL_PID_ROLL_RATE);   param = ALL_PID_PARAM_KI; break;
-    case 12U: pid = ALL_Control_GetPidHandle(ALL_PID_ROLL_RATE);   param = ALL_PID_PARAM_KD; break;
-    case 13U: pid = ALL_Control_GetPidHandle(ALL_PID_PITCH_RATE);  param = ALL_PID_PARAM_KP; break;
-    case 14U: pid = ALL_Control_GetPidHandle(ALL_PID_PITCH_RATE);  param = ALL_PID_PARAM_KI; break;
-    case 15U: pid = ALL_Control_GetPidHandle(ALL_PID_PITCH_RATE);  param = ALL_PID_PARAM_KD; break;
-    case 16U: pid = ALL_Control_GetPidHandle(ALL_PID_YAW_RATE);    param = ALL_PID_PARAM_KP; break;
-    case 17U: pid = ALL_Control_GetPidHandle(ALL_PID_YAW_RATE);    param = ALL_PID_PARAM_KI; break;
-    case 18U: pid = ALL_Control_GetPidHandle(ALL_PID_YAW_RATE);    param = ALL_PID_PARAM_KD; break;
+    // 1-3：Roll & Pitch angle
+    case 1U: param = ALL_PID_PARAM_KP; pid1 = ALL_Control_GetPidHandle(ALL_PID_ROLL_ANGLE);  pid2 = ALL_Control_GetPidHandle(ALL_PID_PITCH_ANGLE); break;
+    case 2U: param = ALL_PID_PARAM_KI; pid1 = ALL_Control_GetPidHandle(ALL_PID_ROLL_ANGLE);  pid2 = ALL_Control_GetPidHandle(ALL_PID_PITCH_ANGLE); break;
+    case 3U: param = ALL_PID_PARAM_KD; pid1 = ALL_Control_GetPidHandle(ALL_PID_ROLL_ANGLE);  pid2 = ALL_Control_GetPidHandle(ALL_PID_PITCH_ANGLE); break;
+
+    // 4-6：Yaw angle
+    case 4U: param = ALL_PID_PARAM_KP; pid1 = ALL_Control_GetPidHandle(ALL_PID_YAW_ANGLE); break;
+    case 5U: param = ALL_PID_PARAM_KI; pid1 = ALL_Control_GetPidHandle(ALL_PID_YAW_ANGLE); break;
+    case 6U: param = ALL_PID_PARAM_KD; pid1 = ALL_Control_GetPidHandle(ALL_PID_YAW_ANGLE); break;
+
+    // 7-9：Roll & Pitch rate
+    case 7U: param = ALL_PID_PARAM_KP; pid1 = ALL_Control_GetPidHandle(ALL_PID_ROLL_RATE);   pid2 = ALL_Control_GetPidHandle(ALL_PID_PITCH_RATE); break;
+    case 8U: param = ALL_PID_PARAM_KI; pid1 = ALL_Control_GetPidHandle(ALL_PID_ROLL_RATE);   pid2 = ALL_Control_GetPidHandle(ALL_PID_PITCH_RATE); break;
+    case 9U: param = ALL_PID_PARAM_KD; pid1 = ALL_Control_GetPidHandle(ALL_PID_ROLL_RATE);   pid2 = ALL_Control_GetPidHandle(ALL_PID_PITCH_RATE); break;
+
+    // 10-12：Yaw rate
+    case 10U: param = ALL_PID_PARAM_KP; pid1 = ALL_Control_GetPidHandle(ALL_PID_YAW_RATE); break;
+    case 11U: param = ALL_PID_PARAM_KI; pid1 = ALL_Control_GetPidHandle(ALL_PID_YAW_RATE); break;
+    case 12U: param = ALL_PID_PARAM_KD; pid1 = ALL_Control_GetPidHandle(ALL_PID_YAW_RATE); break;
+
     default:
-        pid = NULL;
         break;
     }
 
-    if (pid == NULL)
+    if (pid1 == NULL)
     {
         return 0U;
     }
@@ -273,23 +281,35 @@ uint8_t ALL_Control_TunePidBySlider(uint32_t sliderId, float value)
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
 
-    switch (param)
     {
-    case ALL_PID_PARAM_KP:
-        pid->kp = value;
-        break;
-    case ALL_PID_PARAM_KI:
-        pid->ki = value;
-        break;
-    case ALL_PID_PARAM_KD:
-        pid->kd = value;
-        break;
-    default:
-        break;
-    }
+        PID_Handle_t *pids[2] = { pid1, pid2 };
+        for (uint32_t i = 0U; i < 2U; i++)
+        {
+            PID_Handle_t *pid = pids[i];
+            if (pid == NULL)
+            {
+                continue;
+            }
 
-    // 在线调参后重置 PID 状态，避免积分/微分状态突变
-    PID_Reset(pid);
+            switch (param)
+            {
+            case ALL_PID_PARAM_KP:
+                pid->kp = value;
+                break;
+            case ALL_PID_PARAM_KI:
+                pid->ki = value;
+                break;
+            case ALL_PID_PARAM_KD:
+                pid->kd = value;
+                break;
+            default:
+                break;
+            }
+
+            // 在线调参后重置 PID 状态，避免积分/微分状态突变
+            PID_Reset(pid);
+        }
+    }
 
     
     // 标记需要保存到 Flash（延迟保存，避免频繁擦写）
@@ -383,12 +403,12 @@ void ALL_Control_Init(void)
     //角度环PID参数
     PID_Init(&g_pid_roll_angle  , 4.514f  , 0.1f  , 0.007f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
     PID_Init(&g_pid_pitch_angle , 4.514f  , 0.1f  , 0.007f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
-    PID_Init(&g_pid_yaw_angle   , 0.001f  , 0.0f  , 0.000f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
+    PID_Init(&g_pid_yaw_angle   , 0.260f  , 0.0f  , 0.000f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
 
     //角速度环PID参数
     PID_Init(&g_pid_roll_rate   , 0.573f  , 0.01f     , 0.02f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX     );
     PID_Init(&g_pid_pitch_rate  , 0.573f  , 0.01f     , 0.02f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX     );
-    PID_Init(&g_pid_yaw_rate    , 0.001f  , 0.01f     , 0.00f     , YAW_PID_OUTPUT_MIX    , YAW_PID_OUTPUT_MAX);
+    PID_Init(&g_pid_yaw_rate    , 0.100f  , 0.00f     , 0.00f     , YAW_PID_OUTPUT_MIX    , YAW_PID_OUTPUT_MAX);
 
     
     //设置PID微分滤波系数，值越小滤波效果越强，值为1表示不使用滤波

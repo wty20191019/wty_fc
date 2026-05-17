@@ -39,12 +39,11 @@ typedef enum
     
     Slider ID → PID 参数映射
     
-    1-3  ：Roll角度环 kp/ki/kd
-    4-6  ：Pitch角度环 kp/ki/kd
-    7-9  ：Yaw角度环 kp/ki/kd
-    10-12：Roll角速度环 kp/ki/kd
-    13-15：Pitch角速度环 kp/ki/kd
-    16-18：Yaw角速度环 kp/ki/kd
+    1-3  ：Roll和Pitch角度环 kp/ki/kd
+    4-6  ：Yaw角度环 kp/ki/kd
+    
+    7-9：Roll和Pitch角速度环 kp/ki/kd
+    10-12：Yaw角速度环 kp/ki/kd
     
     例如：
     •	[slider,1,500]：设置 Roll角度环 kp（按 0~10 缩放）
