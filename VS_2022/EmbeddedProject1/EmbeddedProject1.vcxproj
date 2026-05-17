@@ -79,6 +79,7 @@
     <ClCompile Include="EmbeddedProject1\module\KalmanFilter.c" />
     <ClCompile Include="EmbeddedProject1\module\pa0_LED_toggle.c" />
     <ClCompile Include="EmbeddedProject1\module\pid.c" />
+    <ClCompile Include="EmbeddedProject1\module\pid_flash_store.c" />
     <ClCompile Include="EmbeddedProject1\module\ppm_input.c" />
     <ClCompile Include="EmbeddedProject1\module\pwm_tim3.c" />
     <ClCompile Include="EmbeddedProject1\module\spi2.c" />
@@ -95,6 +96,7 @@
     <ClCompile Include="system_stm32f4xx.c" />
     <ClInclude Include="EmbeddedProject1\module\Headfile.h" />
     <ClInclude Include="EmbeddedProject1\module\IMU_FilterPortable.h" />
+    <ClInclude Include="EmbeddedProject1\module\pid_flash_store.h" />
     <ClInclude Include="EmbeddedProject1\module\stm32f4xx_conf.h" />
     <ClInclude Include="EmbeddedProject1\OLED\bmp.h" />
     <ClInclude Include="EmbeddedProject1\OLED\oledfont.h" />

@@ -127,27 +127,27 @@ static void Task_Uart1Echo(void)
 
                     if (ALL_Control_TunePidBySlider((uint32_t)sliderId, gain) != 0U)
                     {
-                        Serial1_Printf("[pid] slider=%u gain=%.3f\r\n", sliderId, gain);
+                        //Serial1_Printf("[pid] slider=%u gain=%.3f\r\n", sliderId, gain);
                     }
                     else
                     {
-                        Serial1_Printf("[pid] unknown slider=%u raw=%u\r\n", sliderId, sliderValue);
+                        //Serial1_Printf("[pid] unknown slider=%u raw=%u\r\n", sliderId, sliderValue);
                     }
                 }
                 else if (sscanf(packetCopy, "slider,%u,%f", &sliderId, &sliderValueF) == 2)
                 {
                     if (ALL_Control_TunePidBySlider((uint32_t)sliderId, sliderValueF) != 0U)
                     {
-                        Serial1_Printf("[pid] slider=%u gain=%.3f\r\n", sliderId, sliderValueF);
+                        //Serial1_Printf("[pid] slider=%u gain=%.3f\r\n", sliderId, sliderValueF);
                     }
                     else
                     {
-                        Serial1_Printf("[pid] unknown slider=%u value=%.3f\r\n", sliderId, sliderValueF);
+                        //Serial1_Printf("[pid] unknown slider=%u value=%.3f\r\n", sliderId, sliderValueF);
                     }
                 }
                 else
                 {
-                    Serial1_Printf("[uart1] packet=%s\r\n", packetCopy);
+                    //Serial1_Printf("[uart1] packet=%s\r\n", packetCopy);
                 }
 
                 g_uart1PacketLen = 0U;
@@ -167,18 +167,18 @@ static void Task_Uart1Echo(void)
         }
     }
     
-    {
-        int p10 = (int)(pitchDeg * 10.0f);
-        int r10 = (int)(rollDeg * 10.0f);
-        int y10 = (int)(yawDeg * 10.0f);
-        int p_int = p10 / 10;
-        int r_int = r10 / 10;
-        int y_int = y10 / 10;
-        int p_frac = p10 % 10; if (p_frac < 0) p_frac = -p_frac;
-        int r_frac = r10 % 10; if (r_frac < 0) r_frac = -r_frac;
-        int y_frac = y10 % 10; if (y_frac < 0) y_frac = -y_frac;
-        Serial1_Printf("[plot,%d.%d,%d.%d,%d.%d]\r\n", p_int, p_frac, r_int, r_frac, y_int, y_frac);
-    }
+//    {
+//        int p10 = (int)(pitchDeg * 10.0f);
+//        int r10 = (int)(rollDeg * 10.0f);
+//        int y10 = (int)(yawDeg * 10.0f);
+//        int p_int = p10 / 10;
+//        int r_int = r10 / 10;
+//        int y_int = y10 / 10;
+//        int p_frac = p10 % 10; if (p_frac < 0) p_frac = -p_frac;
+//        int r_frac = r10 % 10; if (r_frac < 0) r_frac = -r_frac;
+//        int y_frac = y10 % 10; if (y_frac < 0) y_frac = -y_frac;
+//        Serial1_Printf("[plot,%d.%d,%d.%d,%d.%d]\r\n", p_int, p_frac, r_int, r_frac, y_int, y_frac);
+//    }
     
     
     
@@ -294,8 +294,8 @@ int main(void)
     
     SCH_Init();
     //调度器==========================================================================
-    SCH_AddTask(Task_ImuUpdate          , IMU_TASK_PERIOD_MS        , 7             );
-    SCH_AddTask(ALL_Control_Task        , IMU_TASK_PERIOD_MS        , 6             );
+    SCH_AddTask(Task_ImuUpdate          , IMU_TASK_PERIOD_MS        , 6             );
+    SCH_AddTask(ALL_Control_Task        , IMU_TASK_PERIOD_MS        , 7             );
     SCH_AddTask(PA0_LED_Toggle          , 20U                       ,14             );
     
     

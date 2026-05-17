@@ -1,5 +1,6 @@
 #include "all_control.h"
 #include "pid.h"
+#include "pid_flash_store.h"
 #include "esc_calibration.h"
 #include "ppm_input.h"
 #include "FFCY_NEW_ICM42688.h"
@@ -8,6 +9,8 @@
 
 #include <stddef.h>
 
+
+#define IS_ALL_Control_ApplyPidGains 0      // flash_PID，1=应用 0=不应用（仅用于调试）
 
 //PPM_Databuf[0] roll
 //PPM_Databuf[1] pitch
@@ -91,6 +94,12 @@ static PID_Handle_t g_pid_yaw_rate;
 static float g_yaw_target = 0.0f;
 static uint8_t g_control_ready = 0U;
 
+// PID增益修改标志和计时器，用于延迟保存到Flash，避免频繁写入影响性能和Flash寿命
+static uint8_t g_pidFlashDirty = 0U;        // 0=干净，1=有修改未保存
+static uint16_t g_pidFlashDirtyTicks = 0U;  // 以控制循环周期为单位的计时器，达到一定值后才允许写入Flash
+
+#define PID_FLASH_SAVE_DELAY_TICKS (400U)   // 400 * 5ms = 2s// 修改PID增益后需要等待2秒（400个控制周期）才会保存到Flash，这期间如果再次修改会重置计时器
+
 static ALL_ControlMode_t g_control_mode = ALL_CONTROL_MODE_ANGLE_RATE;
 
 //================================
@@ -100,6 +109,100 @@ static uint16_t g_lock_count = 0U;      //锁定计数器
 static uint16_t g_unlock_count = 0U;    //解锁计数器
 
 static uint8_t  ESC_lock = 1U;          // ESC_lock: 1=锁定(电机停转)    0=解锁(允许输出)
+
+// 计算摇杆（解锁/锁定）阈值，基于PPM输入范围和设定的比例
+static void ALL_Control_CollectPidGains(PID_FlashGains_t gains[ALL_PID_COUNT])// 从当前PID句柄中收集增益值，准备保存到Flash
+{
+    gains[ALL_PID_ROLL_ANGLE].kp = g_pid_roll_angle.kp;
+    gains[ALL_PID_ROLL_ANGLE].ki = g_pid_roll_angle.ki;
+    gains[ALL_PID_ROLL_ANGLE].kd = g_pid_roll_angle.kd;
+
+    gains[ALL_PID_PITCH_ANGLE].kp = g_pid_pitch_angle.kp;
+    gains[ALL_PID_PITCH_ANGLE].ki = g_pid_pitch_angle.ki;
+    gains[ALL_PID_PITCH_ANGLE].kd = g_pid_pitch_angle.kd;
+
+    gains[ALL_PID_YAW_ANGLE].kp = g_pid_yaw_angle.kp;
+    gains[ALL_PID_YAW_ANGLE].ki = g_pid_yaw_angle.ki;
+    gains[ALL_PID_YAW_ANGLE].kd = g_pid_yaw_angle.kd;
+
+    gains[ALL_PID_ROLL_RATE].kp = g_pid_roll_rate.kp;
+    gains[ALL_PID_ROLL_RATE].ki = g_pid_roll_rate.ki;
+    gains[ALL_PID_ROLL_RATE].kd = g_pid_roll_rate.kd;
+
+    gains[ALL_PID_PITCH_RATE].kp = g_pid_pitch_rate.kp;
+    gains[ALL_PID_PITCH_RATE].ki = g_pid_pitch_rate.ki;
+    gains[ALL_PID_PITCH_RATE].kd = g_pid_pitch_rate.kd;
+
+    gains[ALL_PID_YAW_RATE].kp = g_pid_yaw_rate.kp;
+    gains[ALL_PID_YAW_RATE].ki = g_pid_yaw_rate.ki;
+    gains[ALL_PID_YAW_RATE].kd = g_pid_yaw_rate.kd;
+}
+
+// 将从Flash加载的增益应用到当前的PID句柄，并重置PID状态，确保新增益立即生效且不会受到之前积分状态的影响
+static void ALL_Control_ApplyPidGains(const PID_FlashGains_t gains[ALL_PID_COUNT])
+{
+    g_pid_roll_angle.kp = gains[ALL_PID_ROLL_ANGLE].kp;
+    g_pid_roll_angle.ki = gains[ALL_PID_ROLL_ANGLE].ki;
+    g_pid_roll_angle.kd = gains[ALL_PID_ROLL_ANGLE].kd;
+
+    g_pid_pitch_angle.kp = gains[ALL_PID_PITCH_ANGLE].kp;
+    g_pid_pitch_angle.ki = gains[ALL_PID_PITCH_ANGLE].ki;
+    g_pid_pitch_angle.kd = gains[ALL_PID_PITCH_ANGLE].kd;
+
+    g_pid_yaw_angle.kp = gains[ALL_PID_YAW_ANGLE].kp;
+    g_pid_yaw_angle.ki = gains[ALL_PID_YAW_ANGLE].ki;
+    g_pid_yaw_angle.kd = gains[ALL_PID_YAW_ANGLE].kd;
+
+    g_pid_roll_rate.kp = gains[ALL_PID_ROLL_RATE].kp;
+    g_pid_roll_rate.ki = gains[ALL_PID_ROLL_RATE].ki;
+    g_pid_roll_rate.kd = gains[ALL_PID_ROLL_RATE].kd;
+
+    g_pid_pitch_rate.kp = gains[ALL_PID_PITCH_RATE].kp;
+    g_pid_pitch_rate.ki = gains[ALL_PID_PITCH_RATE].ki;
+    g_pid_pitch_rate.kd = gains[ALL_PID_PITCH_RATE].kd;
+
+    g_pid_yaw_rate.kp = gains[ALL_PID_YAW_RATE].kp;
+    g_pid_yaw_rate.ki = gains[ALL_PID_YAW_RATE].ki;
+    g_pid_yaw_rate.kd = gains[ALL_PID_YAW_RATE].kd;
+
+    PID_Reset(&g_pid_roll_angle);
+    PID_Reset(&g_pid_pitch_angle);
+    PID_Reset(&g_pid_yaw_angle);
+    PID_Reset(&g_pid_roll_rate);
+    PID_Reset(&g_pid_pitch_rate);
+    PID_Reset(&g_pid_yaw_rate);
+}
+
+
+// PID增益保存到Flash的服务函数，定期检查是否需要保存
+static void ALL_Control_PidFlashService(void)
+{
+    if (g_pidFlashDirty == 0U)
+    {
+        return;
+    }
+
+    if (g_pidFlashDirtyTicks < PID_FLASH_SAVE_DELAY_TICKS)
+    {
+        g_pidFlashDirtyTicks++;
+        return;
+    }
+
+    // Only write flash when motors are locked to avoid disturbing control loop timing.
+    if (ESC_lock != 1U)
+    {
+        return;
+    }
+
+    PID_FlashGains_t gains[ALL_PID_COUNT];
+    ALL_Control_CollectPidGains(gains);
+
+    if (PID_FlashStore_Save(gains) != 0U)
+    {
+        g_pidFlashDirty = 0U;
+        g_pidFlashDirtyTicks = 0U;
+    }
+}
 
 
 
@@ -187,6 +290,11 @@ uint8_t ALL_Control_TunePidBySlider(uint32_t sliderId, float value)
 
     // 在线调参后重置 PID 状态，避免积分/微分状态突变
     PID_Reset(pid);
+
+    
+    // 标记需要保存到 Flash（延迟保存，避免频繁擦写）
+    g_pidFlashDirty = 1U;
+    g_pidFlashDirtyTicks = 0U;
 
     if (primask == 0U)
     {
@@ -284,9 +392,19 @@ void ALL_Control_Init(void)
 
     
     //设置PID微分滤波系数，值越小滤波效果越强，值为1表示不使用滤波
-    PID_SetDerivativeFilterAlpha(&g_pid_roll_rate   , 0.8f      );
-    PID_SetDerivativeFilterAlpha(&g_pid_pitch_rate  , 0.8f      );
-    PID_SetDerivativeFilterAlpha(&g_pid_yaw_rate    , 0.8f      );
+    PID_SetDerivativeFilterAlpha(&g_pid_roll_rate   , 1.0f      );
+    PID_SetDerivativeFilterAlpha(&g_pid_pitch_rate  , 1.0f      );
+    PID_SetDerivativeFilterAlpha(&g_pid_yaw_rate    , 1.0f      );
+
+    
+    // 从 Flash 加载上一次保存的 PID 参数（若无有效数据则使用默认值）
+    {
+        PID_FlashGains_t gains[ALL_PID_COUNT];
+        if (PID_FlashStore_Load(gains) != 0U && IS_ALL_Control_ApplyPidGains==1 )
+        {
+            ALL_Control_ApplyPidGains(gains);
+        }
+    }
 
     g_yaw_target = yawDeg;  //将当前偏航角作为初始目标偏航角，避免启动时产生大的偏航误差
     g_control_ready = 1U;   //标记飞控算法准备就绪，可以开始控制循环
@@ -477,7 +595,9 @@ void ALL_Control_Task(void)
                 ClampPulse((uint16_t)motor3, PPM_MIN_US, PPM_MAX_US),
                 ClampPulse((uint16_t)motor4, PPM_MIN_US, PPM_MAX_US));
         }
-    
+
+    //在控制循环中调用PID参数保存服务函数，检查是否需要将修改后的PID参数保存到Flash中
+    ALL_Control_PidFlashService(); 
     
     
     

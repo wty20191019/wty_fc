@@ -54,11 +54,14 @@
     <Filter Include="Source files\app\Control">
       <UniqueIdentifier>{9f08a845-4846-4bca-aaf0-da5d5d529ffe}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source files\module\flash">
+      <UniqueIdentifier>{942fe060-b174-470f-bf62-98a66efae9db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\module\stm32f4xx_">
+      <UniqueIdentifier>{2c2f8310-7b25-48ba-9976-373fce143cb9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="system_stm32f4xx.c">
-      <Filter>Source files</Filter>
-    </ClCompile>
     <None Include="stm32.mak">
       <Filter>Source files\Device-specific files</Filter>
     </None>
@@ -392,9 +395,6 @@
     <ClCompile Include="EmbeddedProject1\module\pwm_tim3.c">
       <Filter>Source files\module</Filter>
     </ClCompile>
-    <ClCompile Include="EmbeddedProject1\module\stm32f4xx_it.c">
-      <Filter>Source files\module</Filter>
-    </ClCompile>
     <ClCompile Include="EmbeddedProject1\module\ppm_input.c">
       <Filter>Source files\module</Filter>
     </ClCompile>
@@ -431,6 +431,12 @@
     <ClCompile Include="$(BSP_ROOT)\STM32F4xxxx\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_fsmc.c">
       <Filter>Source files\Device-specific files\StdPeriph</Filter>
     </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\pid_flash_store.c">
+      <Filter>Source files\module\flash</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedProject1\module\stm32f4xx_it.c">
+      <Filter>Source files\module\stm32f4xx_</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
@@ -445,14 +451,22 @@
     <ClInclude Include="EmbeddedProject1\OLED\oledfont.h">
       <Filter>Source files\module\OLED</Filter>
     </ClInclude>
-    <ClInclude Include="EmbeddedProject1\module\stm32f4xx_conf.h">
-      <Filter>Source files\module</Filter>
-    </ClInclude>
     <ClInclude Include="EmbeddedProject1\module\IMU_FilterPortable.h">
       <Filter>Source files\module\IMU</Filter>
     </ClInclude>
     <ClInclude Include="EmbeddedProject1\module\Headfile.h">
       <Filter>Source files\module</Filter>
     </ClInclude>
+    <ClInclude Include="EmbeddedProject1\module\pid_flash_store.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedProject1\module\stm32f4xx_conf.h">
+      <Filter>Source files\module\stm32f4xx_</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="system_stm32f4xx.c">
+      <Filter>Source files\module\stm32f4xx_</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
