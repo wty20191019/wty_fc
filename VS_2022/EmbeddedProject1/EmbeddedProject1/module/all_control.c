@@ -18,6 +18,7 @@
 //PPM_Databuf[3] yaw
 
 uint16_t yaw_thresh_low;
+
 uint16_t yaw_thresh_high;
 uint16_t yaw_ppm;
 
@@ -50,6 +51,7 @@ extern float yawDeg;
 
 #define PPM_MIN_US            (1000U)   //PPM输入的最小脉宽，单位微秒，通常为1000us
 #define PPM_MAX_US            (2000U)   //PPM输入的最大脉宽，单位微秒，通常为2000us
+#define PPM_MIN_RIN_US        (1050U)   //PPM输入的最小有效脉宽，单位微秒，低于此值视为无效输入
 #define PPM_MID_US            (1500U)   //PPM输入的中立脉宽，单位微秒，通常为1500us
 #define PPM_DEADBAND_US       (20U)     //遥控器死区范围
 #define THROTTLE_ARM_US       (1100U)   //油门解锁的脉宽阈值，单位微秒
@@ -59,16 +61,16 @@ extern float yawDeg;
 #define PITCH_ANGLE_MAX_DEG   (15.0f)   //最大俯仰角度，单位度
 #define YAW_RATE_MAX_DPS      (30.0f)   //最大偏航角速度，单位度每秒
 
-#define ROLL_RATE_MAX_DPS     (160.0f)  //最大横滚角速度，单位度每秒
-#define PITCH_RATE_MAX_DPS    (160.0f)  //最大俯仰角速度，单位度每秒
+#define ROLL_RATE_MAX_DPS     (180.0f)  //最大横滚角速度，单位度每秒
+#define PITCH_RATE_MAX_DPS    (180.0f)  //最大俯仰角速度，单位度每秒
 
 #define ICM42688_GYRO_DPS_PER_LSB    (1.0f / 16.4f) //ICM42688陀螺仪每个LSB对应的角速度，单位度每秒
 
-#define PID_OUTPUT_MIN        (-200.0f) //PID输出最小值
-#define PID_OUTPUT_MAX        (200.0f)  //PID输出最大值
+#define PID_OUTPUT_MIN        (-400.0f) //PID输出最小值
+#define PID_OUTPUT_MAX        (400.0f)  //PID输出最大值
 
-#define YAW_PID_OUTPUT_MAX    ( 100.0f)
-#define YAW_PID_OUTPUT_MIX    (-100.0f)
+#define YAW_PID_OUTPUT_MAX    ( 400.0f)
+#define YAW_PID_OUTPUT_MIX    (-400.0f)
 
 // 通过 PPM_Databuf[6] 切换控制模式：
 // <1090  角速度 + 角度(自稳)
@@ -388,7 +390,7 @@ static uint16_t ApplyPpmDeadband(uint16_t input)
     }
     else
     {
-        if ((PPM_MID_US - clamped) <= PPM_DEADBAND_US)
+        if ((PPM_MID_US - clamped) <= PPM_DEADBAND_US) 
         {
             return PPM_MID_US;
         }
@@ -401,14 +403,14 @@ static uint16_t ApplyPpmDeadband(uint16_t input)
 void ALL_Control_Init(void)
 {
     //角度环PID参数
-    PID_Init(&g_pid_roll_angle  , 4.514f  , 0.1f  , 0.007f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
-    PID_Init(&g_pid_pitch_angle , 4.514f  , 0.1f  , 0.007f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
-    PID_Init(&g_pid_yaw_angle   , 0.260f  , 0.0f  , 0.000f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
+    PID_Init(&g_pid_roll_angle  , 4.514f  , 0.0f  , 0.007f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
+    PID_Init(&g_pid_pitch_angle , 4.514f  , 0.0f  , 0.007f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
+    PID_Init(&g_pid_yaw_angle   , 0.50f   , 0.0f  , 0.000f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
 
     //角速度环PID参数
-    PID_Init(&g_pid_roll_rate   , 0.573f  , 0.01f     , 0.02f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX     );
-    PID_Init(&g_pid_pitch_rate  , 0.573f  , 0.01f     , 0.02f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX     );
-    PID_Init(&g_pid_yaw_rate    , 0.100f  , 0.00f     , 0.00f     , YAW_PID_OUTPUT_MIX    , YAW_PID_OUTPUT_MAX);
+    PID_Init(&g_pid_roll_rate   , 1.000f  , 0.01f     , 0.08f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_pitch_rate  , 1.000f  , 0.01f     , 0.08f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX     );
+    PID_Init(&g_pid_yaw_rate    , 1.000f  , 0.00f     , 0.00f     , YAW_PID_OUTPUT_MIX    , YAW_PID_OUTPUT_MAX);
 
     
     //设置PID微分滤波系数，值越小滤波效果越强，值为1表示不使用滤波
@@ -610,10 +612,10 @@ void ALL_Control_Task(void)
             float motor3 = (float)throttle_run - pitch_out + roll_out + yaw_out;
             float motor4 = (float)throttle_run + pitch_out + roll_out - yaw_out;
 
-            ESC_SetChannelsUs(ClampPulse((uint16_t)motor1, PPM_MIN_US, PPM_MAX_US),
-                ClampPulse((uint16_t)motor2, PPM_MIN_US, PPM_MAX_US),
-                ClampPulse((uint16_t)motor3, PPM_MIN_US, PPM_MAX_US),
-                ClampPulse((uint16_t)motor4, PPM_MIN_US, PPM_MAX_US));
+            ESC_SetChannelsUs(  ClampPulse((uint16_t)motor1, PPM_MIN_RIN_US, PPM_MAX_US),
+                                ClampPulse((uint16_t)motor2, PPM_MIN_RIN_US, PPM_MAX_US),
+                                ClampPulse((uint16_t)motor3, PPM_MIN_RIN_US, PPM_MAX_US),
+                                ClampPulse((uint16_t)motor4, PPM_MIN_RIN_US, PPM_MAX_US));
         }
 
     //在控制循环中调用PID参数保存服务函数，检查是否需要将修改后的PID参数保存到Flash中
