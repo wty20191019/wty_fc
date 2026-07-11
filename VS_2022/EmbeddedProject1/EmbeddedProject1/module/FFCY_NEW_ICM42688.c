@@ -2,6 +2,8 @@
 #include "IMU_FilterPortable.h"  //包含IMU滤波器的头文件
 #include "KalmanFilter.h"//包含卡尔曼滤波器的头文件
 #include "systick_delay.h"
+#include "stm32f4xx_conf.h"
+
 
 #define ICM42688_USE_SPI 0
 #define ICM42688_USE_i2c 1
@@ -547,8 +549,9 @@ ICM42688_Status ICM42688_Init(void)
 #if (ICM42688_USE_mod==ICM42688_USE_SPI)
     /* initialize SPI2 with a reasonable prescaler if using SPI */
     #ifndef ICM42688_SPI_PRESCALER
-    #define ICM42688_SPI_PRESCALER SPI_BaudRatePrescaler_16
+        #define ICM42688_SPI_PRESCALER SPI_BaudRatePrescaler_16
     #endif
+    
     spi2_init(ICM42688_SPI_PRESCALER); 
 	
 #elif (ICM42688_USE_mod==ICM42688_USE_i2c)

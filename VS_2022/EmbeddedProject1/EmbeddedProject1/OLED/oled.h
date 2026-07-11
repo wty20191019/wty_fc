@@ -3,6 +3,8 @@
 
 #include "stm32f4xx.h"
 #include "stdlib.h"	
+#include "stm32f4xx_conf.h"
+
 
 #ifndef u8
 #define u8 uint8_t

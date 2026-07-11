@@ -463,6 +463,9 @@
     <ClInclude Include="EmbeddedProject1\module\stm32f4xx_conf.h">
       <Filter>Source files\module\stm32f4xx_</Filter>
     </ClInclude>
+    <ClInclude Include="header_0.h">
+      <Filter>Header files\Device-specific files\StdPeriph</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="system_stm32f4xx.c">

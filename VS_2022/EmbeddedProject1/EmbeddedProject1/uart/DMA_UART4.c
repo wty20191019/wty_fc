@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include "stm32f4xx_conf.h"
 
 #define UART4_RX_DMA_BUF_SIZE      (256U)
 #define UART4_PRINTF_BUF_SIZE      (256U)

@@ -1,5 +1,7 @@
 #include "tim2_scheduler.h"
 #include "misc.h"
+#include "stm32f4xx_conf.h"
+
 
 typedef struct {
 	TaskFunc func;

@@ -1,4 +1,8 @@
 #include "spi2.h"
+#include "stm32f4xx_conf.h"
+
+
+
 
 #define SPI2_GPIO_CLK          RCC_AHB1Periph_GPIOB
 #define SPI2_GPIO_PORT         GPIOB

@@ -1,4 +1,5 @@
 #include "pa0_LED_toggle.h"
+#include "stm32f4xx_conf.h"
 
 void PA0_LED_Toggle_Init(void)
 {

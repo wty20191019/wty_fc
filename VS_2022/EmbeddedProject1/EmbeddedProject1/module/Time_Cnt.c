@@ -13,6 +13,9 @@
 #include "stm32f4xx.h"
 #include "Time_Cnt.h"
 
+#include "stm32f4xx_conf.h"
+
+
 
 u32 TIME_ISR_CNT = 0;
 

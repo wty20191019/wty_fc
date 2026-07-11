@@ -14,8 +14,8 @@
 void PPM_GPIO_Init(void);
 void PPM_Init(void);
 void TIM4_Configuration_Cnt(void);
-extern uint16 PPM_Isr_Cnt;
-extern uint16 PPM_Databuf[10];
-extern u32 PPM_Time;
+extern uint16_t PPM_Isr_Cnt;
+extern uint16_t PPM_Databuf[10];
+extern uint32_t PPM_Time;
 #endif
 

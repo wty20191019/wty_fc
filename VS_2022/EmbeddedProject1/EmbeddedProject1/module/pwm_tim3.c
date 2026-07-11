@@ -1,4 +1,7 @@
 #include "pwm_tim3.h"
+#include "stm32f4xx_conf.h"
+
+
 
 void PWM_Init(void)
 {

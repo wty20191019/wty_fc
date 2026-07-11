@@ -1,4 +1,6 @@
 #include "i2c1.h"
+#include "stm32f4xx_conf.h"
+
 
 #define I2C1_GPIO_CLK          RCC_AHB1Periph_GPIOB
 #define I2C1_GPIO_PORT         GPIOB

@@ -2,20 +2,20 @@
 #include "ppm_input.h"
 #include "Time_Cnt.h"
 #include <string.h>
-#include <string.h>
+#include "stm32f4xx_conf.h"
 
 
 
-uint16 PPM_Sample_Cnt = 0;
-uint16 PPM_Isr_Cnt = 0;
-u32 Last_PPM_Time = 0;
-u32 PPM_Time = 0;
-u16 PPM_Time_Delta = 0;
-u16 PPM_Time_Max = 0;
-uint16 PPM_Start_Time = 0;
-uint16 PPM_Finished_Time = 0;
-uint16 PPM_Is_Okay = 0;
-uint16 PPM_Databuf[10] = { 0 };
+uint16_t PPM_Sample_Cnt = 0;
+uint16_t PPM_Isr_Cnt = 0;
+uint32_t Last_PPM_Time = 0;
+uint32_t PPM_Time = 0;
+uint16_t PPM_Time_Delta = 0;
+uint16_t PPM_Time_Max = 0;
+uint16_t PPM_Start_Time = 0;
+uint16_t PPM_Finished_Time = 0;
+uint16_t PPM_Is_Okay = 0;
+uint16_t PPM_Databuf[10] = { 0 };
 
 
 //PPM输入引脚初始化
@@ -34,6 +34,7 @@ void PPM_GPIO_Init(void)
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
     GPIO_Init(PPM_GPIO_PORT, &GPIO_InitStructure);
 }
+
 
 //PPM接收初始化
 void PPM_Init()
@@ -81,7 +82,7 @@ void PPM_Init()
 
 
 //PPM接收中断函数
-static uint16 PPM_buf[10] = { 0 };
+static uint16_t PPM_buf[10] = { 0 };
 void EXTI9_5_IRQHandler(void)
 {
     if (EXTI_GetITStatus(PPM_EXTI_LINE) != RESET)
@@ -104,7 +105,7 @@ void EXTI9_5_IRQHandler(void)
                 //单次解析结束
                 if (PPM_Sample_Cnt >= 10)
                 {
-                    memcpy(PPM_Databuf, PPM_buf, PPM_Sample_Cnt * sizeof(uint16));
+                    memcpy(PPM_Databuf, PPM_buf, PPM_Sample_Cnt * sizeof(uint16_t));
                     PPM_Is_Okay = 0;
                 }
             }
