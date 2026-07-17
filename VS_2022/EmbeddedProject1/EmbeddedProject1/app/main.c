@@ -290,7 +290,6 @@ int main(void)
     ESC_SetChannelsUs(1000U,1000U,1000U,1000U);
 
     
-    while (PPM_Databuf[0] == 0) ;                   //等待PPM信号稳定
    
     
     SCH_Init();

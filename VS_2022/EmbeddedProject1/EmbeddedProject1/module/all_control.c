@@ -51,10 +51,12 @@ extern float yawDeg;
 
 #define PPM_MIN_US            (1000U)   //PPM输入的最小脉宽，单位微秒，通常为1000us
 #define PPM_MAX_US            (2000U)   //PPM输入的最大脉宽，单位微秒，通常为2000us
+#define PPM_D                 (100U)
 #define PPM_MIN_RIN_US        (1050U)   //PPM输入的最小有效脉宽，单位微秒，低于此值视为无效输入
 #define PPM_MID_US            (1500U)   //PPM输入的中立脉宽，单位微秒，通常为1500us
 #define PPM_DEADBAND_US       (20U)     //遥控器死区范围
 #define THROTTLE_ARM_US       (1100U)   //油门解锁的脉宽阈值，单位微秒
+#define PPM_5_MID             (1500U)   //LOCK
 #define CONTROL_DT_SEC        (0.005f)  //控制循环的时间间隔 5ms
 
 #define ROLL_ANGLE_MAX_DEG    (15.0f)   //最大横滚角度，单位度
@@ -75,8 +77,10 @@ extern float yawDeg;
 // 通过 PPM_Databuf[6] 切换控制模式：
 // <1090  角速度 + 角度(自稳)
 // >1900  角速度(手动/ACRO)
-#define MODE_SWITCH_LOW_US    (1090U)
-#define MODE_SWITCH_HIGH_US   (1900U)
+#define MODE_SWITCH_LOW_US    (1000U)
+#define MODE_SWITCH_MID_US    (1500U)
+#define MODE_SWITCH_HIGH_US   (2000U)
+#define MODE_SWITCH_D         (100U)
 
 typedef enum
 {
@@ -106,7 +110,7 @@ static ALL_ControlMode_t g_control_mode = ALL_CONTROL_MODE_ANGLE_RATE;
 
 //================================
 #define SCALE_PERCENT_MAX     (0.8f)    //用于计算摇杆（解锁/锁定）阈值的比例，0.9表示需要达到摇杆范围的90%才能触发（解锁/锁定）动作
-#define LOCK_COUNT_THRESHOLD  (100U)    //用于计算摇杆（解锁/锁定）阈值的计数阈值 1s
+#define LOCK_COUNT_THRESHOLD  (20U)    //用于计算摇杆（解锁/锁定）阈值的计数阈值 0.2s
 static uint16_t g_lock_count = 0U;      //锁定计数器
 static uint16_t g_unlock_count = 0U;    //解锁计数器
 
@@ -440,23 +444,35 @@ void ALL_Control_Task(void)
     {
         ALL_Control_Init();
     }
+    
+    #include "oled.h"
+    if (PPM_Databuf[0] == 0)
+    {
+        OLED_Printf(80, 0, 8, 1, "NO_PPM");
+        ESC_lock = 1;
+    }
+
 
     throttle = ClampPulse(PPM_Databuf[2], PPM_MIN_US, PPM_MAX_US);
 
     // 模式切换：中间区域保持当前模式(避免抖动)
     {
-        uint16_t mode_ppm = ClampPulse(PPM_Databuf[6], PPM_MIN_US, PPM_MAX_US);
+        uint16_t mode_ppm = ClampPulse(PPM_Databuf[4], PPM_MIN_US, PPM_MAX_US);
         ALL_ControlMode_t prevMode = g_control_mode;
 
-        if (mode_ppm < MODE_SWITCH_LOW_US)
-        {
-            g_control_mode = ALL_CONTROL_MODE_ANGLE_RATE;
-        }
-        else if (mode_ppm > MODE_SWITCH_HIGH_US)
+        if (   ((MODE_SWITCH_LOW_US + MODE_SWITCH_D) > mode_ppm) && (mode_ppm > (MODE_SWITCH_LOW_US - MODE_SWITCH_D))   )
         {
             g_control_mode = ALL_CONTROL_MODE_RATE_ONLY;
         }
-
+        else if (   ((MODE_SWITCH_MID_US + MODE_SWITCH_D) > mode_ppm) && (mode_ppm > (MODE_SWITCH_MID_US - MODE_SWITCH_D))   )
+        {
+            g_control_mode = ALL_CONTROL_MODE_ANGLE_RATE;
+        }
+        else if (   ((MODE_SWITCH_HIGH_US + MODE_SWITCH_D) > mode_ppm) && (mode_ppm > (MODE_SWITCH_HIGH_US - MODE_SWITCH_D))   )
+        {
+            g_control_mode = ALL_CONTROL_MODE_ANGLE_RATE;
+        }
+        
         if (g_control_mode != prevMode)
         {
             // 切换模式时重置 PID，避免状态突变
@@ -479,10 +495,16 @@ void ALL_Control_Task(void)
         
         if (ESC_lock == 1U) // 当前处于锁定状态
         {
-            // 解锁条件：油门低 + 偏航左
-            if (throttle <= THROTTLE_ARM_US && yaw_ppm <= yaw_thresh_low)
-            {
-                g_unlock_count++;
+            // 解锁条件
+            if ( PPM_Databuf[5] < PPM_5_MID )
+            {                 
+                
+                if ( PPM_Databuf[2] <  (PPM_MIN_US + PPM_D) )
+                {
+                    g_unlock_count++;
+                    
+                }
+                
             }
             else
             {
@@ -515,7 +537,7 @@ void ALL_Control_Task(void)
             throttle_run = throttle;
 
             // 锁定条件：油门低 + 偏航右
-            if (throttle <= THROTTLE_ARM_US && yaw_ppm >= yaw_thresh_high)
+            if (PPM_Databuf[5] > PPM_5_MID)
             {
                 g_lock_count++;
             }
