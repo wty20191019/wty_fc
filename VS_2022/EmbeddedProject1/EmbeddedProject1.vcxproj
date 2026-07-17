@@ -88,11 +88,6 @@
     <ClCompile Include="EmbeddedProject1\module\Time_Cnt.c" />
     <ClCompile Include="EmbeddedProject1\OLED\oled.c" />
     <ClCompile Include="EmbeddedProject1\uart\DMA_UART1.c" />
-    <ClCompile Include="EmbeddedProject1\uart\DMA_UART2.c" />
-    <ClCompile Include="EmbeddedProject1\uart\DMA_UART3.c" />
-    <ClCompile Include="EmbeddedProject1\uart\DMA_UART4.c" />
-    <ClCompile Include="EmbeddedProject1\uart\DMA_UART5.c" />
-    <ClCompile Include="EmbeddedProject1\uart\DMA_UART6.c" />
     <ClCompile Include="system_stm32f4xx.c" />
     <ClInclude Include="EmbeddedProject1\module\Headfile.h" />
     <ClInclude Include="EmbeddedProject1\module\IMU_FilterPortable.h" />

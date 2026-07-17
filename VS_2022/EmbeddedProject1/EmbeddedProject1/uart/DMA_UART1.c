@@ -1,253 +1,150 @@
 #include "DMA_UART1.h"
+#include "stm32f4xx_usart.h"
+#include "stm32f4xx_gpio.h"
+#include "stm32f4xx_rcc.h"
+#include "misc.h"
 
-#include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include "stm32f4xx_conf.h"
+/* 环形缓冲区大小（可根据需要调整）*/
+#define RX_BUF_SIZE     256
 
-#define UART1_RX_DMA_BUF_SIZE      (256U)
-#define UART1_PRINTF_BUF_SIZE      (256U)
+/* 环形缓冲区数据结构 */
+static uint8_t  rx_buf[RX_BUF_SIZE];
+static volatile uint16_t rx_write = 0; // 中断写入位置
+static volatile uint16_t rx_read  = 0; // 用户读取位置
 
-#define UART1_TX_GPIO_PORT         GPIOA
-#define UART1_TX_GPIO_PIN          GPIO_Pin_9
-#define UART1_TX_GPIO_SOURCE       GPIO_PinSource9
-
-#define UART1_RX_GPIO_PORT         GPIOA
-#define UART1_RX_GPIO_PIN          GPIO_Pin_10
-#define UART1_RX_GPIO_SOURCE       GPIO_PinSource10
-
-#define UART1_GPIO_AF              GPIO_AF_USART1
-
-#define UART1_DMA                  DMA2
-#define UART1_TX_STREAM            DMA2_Stream7
-#define UART1_TX_CHANNEL           DMA_Channel_4
-#define UART1_TX_TC_FLAG           DMA_FLAG_TCIF7
-#define UART1_TX_FE_FLAG           DMA_FLAG_FEIF7
-#define UART1_TX_DME_FLAG          DMA_FLAG_DMEIF7
-#define UART1_TX_TE_FLAG           DMA_FLAG_TEIF7
-#define UART1_TX_HT_FLAG           DMA_FLAG_HTIF7
-
-#define UART1_RX_STREAM            DMA2_Stream2
-#define UART1_RX_CHANNEL           DMA_Channel_4
-
-static uint8_t g_uart1TxSingleByte;
-static uint8_t g_uart1RxDmaBuf[UART1_RX_DMA_BUF_SIZE];
-static uint16_t g_uart1RxReadIndex;
-
-static void DMA_USART1_GPIO_Init(void)//初始化USART1的GPIO引脚
+/**
+ * @brief  初始化USART1（不使用DMA，使用接收中断）
+ * @param  baudrate : 波特率
+ */
+void DMA_USART1_Init(uint32_t baudrate)
 {
-    GPIO_InitTypeDef gpioInit;
+    GPIO_InitTypeDef gpio;
+    USART_InitTypeDef usart;
+    NVIC_InitTypeDef nvic;
 
+    /* 1. 时钟使能 */
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-
-    GPIO_PinAFConfig(UART1_TX_GPIO_PORT, UART1_TX_GPIO_SOURCE, UART1_GPIO_AF);
-    GPIO_PinAFConfig(UART1_RX_GPIO_PORT, UART1_RX_GPIO_SOURCE, UART1_GPIO_AF);
-
-    gpioInit.GPIO_Pin = UART1_TX_GPIO_PIN | UART1_RX_GPIO_PIN;
-    gpioInit.GPIO_Mode = GPIO_Mode_AF;
-    gpioInit.GPIO_Speed = GPIO_Speed_50MHz;
-    gpioInit.GPIO_OType = GPIO_OType_PP;
-    gpioInit.GPIO_PuPd = GPIO_PuPd_UP;
-    GPIO_Init(GPIOA, &gpioInit);
-}
-
-static void DMA_USART1_Core_Init(uint32_t baudrate)//初始化USART1的核心功能（波特率、DMA使能等）
-{
-    USART_InitTypeDef usartInit;
-
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
 
+    /* 2. GPIO配置：PA9(TX)复用推挽输出，PA10(RX)浮空输入 */
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_USART1);
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource10, GPIO_AF_USART1);
+
+    gpio.GPIO_Pin   = GPIO_Pin_9 | GPIO_Pin_10;
+    gpio.GPIO_Mode  = GPIO_Mode_AF;
+    gpio.GPIO_OType = GPIO_OType_PP;
+    gpio.GPIO_PuPd  = GPIO_PuPd_UP;
+    gpio.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOA, &gpio);
+
+    /* 3. USART1配置 */
     USART_DeInit(USART1);
-    usartInit.USART_BaudRate = baudrate;
-    usartInit.USART_WordLength = USART_WordLength_8b;
-    usartInit.USART_StopBits = USART_StopBits_1;
-    usartInit.USART_Parity = USART_Parity_No;
-    usartInit.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-    usartInit.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
-    USART_Init(USART1, &usartInit);
+    usart.USART_BaudRate            = baudrate;
+    usart.USART_WordLength          = USART_WordLength_8b;
+    usart.USART_StopBits            = USART_StopBits_1;
+    usart.USART_Parity              = USART_Parity_No;
+    usart.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    usart.USART_Mode                = USART_Mode_Tx | USART_Mode_Rx;
+    USART_Init(USART1, &usart);
 
-    USART_DMACmd(USART1, USART_DMAReq_Tx | USART_DMAReq_Rx, ENABLE);
+    /* 4. 使能接收中断（每收到一个字节触发）*/
+    USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+
+    /* 5. 配置NVIC */
+    nvic.NVIC_IRQChannel                   = USART1_IRQn;
+    nvic.NVIC_IRQChannelPreemptionPriority = 1;
+    nvic.NVIC_IRQChannelSubPriority        = 0;
+    nvic.NVIC_IRQChannelCmd                = ENABLE;
+    NVIC_Init(&nvic);
+
+    /* 6. 使能USART1 */
     USART_Cmd(USART1, ENABLE);
+
+    /* 初始化环形缓冲区指针 */
+    rx_write = 0;
+    rx_read  = 0;
 }
 
-static void DMA_USART1_RX_Init(void)//初始化USART1的DMA接收功能
+/**
+ * @brief  通过USART1发送数据（轮询阻塞）
+ * @param  data : 待发送数据指针
+ * @param  len  : 数据长度
+ */
+void DMA_USART1_Send(const uint8_t *data, uint16_t len)
 {
-    DMA_InitTypeDef dmaInit;
-
-    DMA_DeInit(UART1_RX_STREAM);
-    while (DMA_GetCmdStatus(UART1_RX_STREAM) != DISABLE)
+    uint16_t i;
+    for (i = 0; i < len; i++)
     {
+        /* 等待发送数据寄存器空 */
+        while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET) ;
+        USART_SendData(USART1, data[i]);
     }
-
-    DMA_StructInit(&dmaInit);
-    dmaInit.DMA_Channel = UART1_RX_CHANNEL;
-    dmaInit.DMA_PeripheralBaseAddr = (uint32_t)&USART1->DR;
-    dmaInit.DMA_Memory0BaseAddr = (uint32_t)g_uart1RxDmaBuf;
-    dmaInit.DMA_DIR = DMA_DIR_PeripheralToMemory;
-    dmaInit.DMA_BufferSize = UART1_RX_DMA_BUF_SIZE;
-    dmaInit.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-    dmaInit.DMA_MemoryInc = DMA_MemoryInc_Enable;
-    dmaInit.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
-    dmaInit.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
-    dmaInit.DMA_Mode = DMA_Mode_Circular;
-    dmaInit.DMA_Priority = DMA_Priority_High;
-    dmaInit.DMA_FIFOMode = DMA_FIFOMode_Disable;
-    dmaInit.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
-    dmaInit.DMA_MemoryBurst = DMA_MemoryBurst_Single;
-    dmaInit.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
-    DMA_Init(UART1_RX_STREAM, &dmaInit);
-
-    DMA_Cmd(UART1_RX_STREAM, ENABLE);
+    /* 等待最后一个字节发送完成（TC标志）*/
+    while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET) ;
 }
 
-static void DMA_USART1_TX_Init(void)//初始化USART1的DMA发送功能
+/**
+ * @brief  通过USART1发送字符串
+ * @param  str : 以'\0'结尾的字符串
+ */
+void DMA_USART1_SendString(const char *str)
 {
-    DMA_InitTypeDef dmaInit;
-
-    DMA_DeInit(UART1_TX_STREAM);
-    while (DMA_GetCmdStatus(UART1_TX_STREAM) != DISABLE)
-    {
-    }
-
-    DMA_StructInit(&dmaInit);
-    dmaInit.DMA_Channel = UART1_TX_CHANNEL;
-    dmaInit.DMA_PeripheralBaseAddr = (uint32_t)&USART1->DR;
-    dmaInit.DMA_Memory0BaseAddr = (uint32_t)0;
-    dmaInit.DMA_DIR = DMA_DIR_MemoryToPeripheral;
-    dmaInit.DMA_BufferSize = 0;
-    dmaInit.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-    dmaInit.DMA_MemoryInc = DMA_MemoryInc_Enable;
-    dmaInit.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
-    dmaInit.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
-    dmaInit.DMA_Mode = DMA_Mode_Normal;
-    dmaInit.DMA_Priority = DMA_Priority_High;
-    dmaInit.DMA_FIFOMode = DMA_FIFOMode_Disable;
-    dmaInit.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
-    dmaInit.DMA_MemoryBurst = DMA_MemoryBurst_Single;
-    dmaInit.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
-    DMA_Init(UART1_TX_STREAM, &dmaInit);
+    uint16_t len = 0;
+    const char *p = str;
+    while (*p++) len++;
+    DMA_USART1_Send((const uint8_t *)str, len);
 }
 
-void DMA_USART1_Init(uint32_t baudrate)//初始化USART1的DMA功能
+/**
+ * @brief  从接收环形缓冲区读取数据
+ * @param  out    : 存放数据的用户缓冲区
+ * @param  maxLen : 最大读取字节数
+ * @return 实际读取的字节数
+ */
+uint16_t DMA_USART1_Read(uint8_t *out, uint16_t maxLen)
 {
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
-
-    DMA_USART1_GPIO_Init();
-    DMA_USART1_Core_Init(baudrate);
-    DMA_USART1_RX_Init();
-    DMA_USART1_TX_Init();
-
-    g_uart1RxReadIndex = 0U;
-}
-
-void DMA_USART1_Send(const uint8_t *data, uint16_t len)//通过DMA发送数据
-{
-    if ((data == NULL) || (len == 0U))
-    {
-        return;
-    }
-
-    while (DMA_GetCmdStatus(UART1_TX_STREAM) != DISABLE)
-    {
-    }
-
-    DMA_ClearFlag(UART1_TX_STREAM, UART1_TX_TC_FLAG | UART1_TX_FE_FLAG | UART1_TX_DME_FLAG | UART1_TX_TE_FLAG | UART1_TX_HT_FLAG);
-
-    UART1_TX_STREAM->M0AR = (uint32_t)data;
-    UART1_TX_STREAM->NDTR = len;
-    DMA_Cmd(UART1_TX_STREAM, ENABLE);
-
-    while (DMA_GetFlagStatus(UART1_TX_STREAM, UART1_TX_TC_FLAG) == RESET)
-    {
-    }
-
-    DMA_Cmd(UART1_TX_STREAM, DISABLE);
-    DMA_ClearFlag(UART1_TX_STREAM, UART1_TX_TC_FLAG | UART1_TX_FE_FLAG | UART1_TX_DME_FLAG | UART1_TX_TE_FLAG | UART1_TX_HT_FLAG);
-}
-
-void DMA_USART1_SendString(const char *str)//通过DMA发送字符串
-{
-    if (str == NULL)
-    {
-        return;
-    }
-
-    DMA_USART1_Send((const uint8_t *)str, (uint16_t)strlen(str));
-}
-
-void Serial1_Printf(char *format, ...) //串口1格式化输出
-{
-    char printBuf[UART1_PRINTF_BUF_SIZE];
-    int len;
-    va_list args;
-
-    if (format == NULL)
-    {
-        return;
-    }
-
-    va_start(args, format);
-    len = vsnprintf(printBuf, sizeof(printBuf), format, args);
-    va_end(args);
-
-    if (len <= 0)
-    {
-        return;
-    }
-
-    if ((uint32_t)len >= UART1_PRINTF_BUF_SIZE)
-    {
-        len = (int)(UART1_PRINTF_BUF_SIZE - 1U);
-    }
-
-    DMA_USART1_Send((const uint8_t *)printBuf, (uint16_t)len);
-}
-
-uint16_t DMA_USART1_Read(uint8_t *out, uint16_t maxLen)//从DMA接收缓冲区读取数据
-{
-    uint16_t writeIndex;
+    uint16_t cnt = 0;
     uint16_t available;
-    uint16_t toCopy;
 
-    if ((out == NULL) || (maxLen == 0U))
-    {
-        return 0U;
-    }
-
-    writeIndex = (uint16_t)(UART1_RX_DMA_BUF_SIZE - UART1_RX_STREAM->NDTR);
-
-    if (writeIndex >= g_uart1RxReadIndex)
-    {
-        available = (uint16_t)(writeIndex - g_uart1RxReadIndex);
-    }
+    /* 关中断保护（若在多线程环境下需要，这里简单处理）*/
+    __disable_irq();
+    if (rx_write >= rx_read)
+        available = rx_write - rx_read;
     else
-    {
-        available = (uint16_t)(UART1_RX_DMA_BUF_SIZE - g_uart1RxReadIndex + writeIndex);
-    }
+        available = RX_BUF_SIZE - rx_read + rx_write;
+    __enable_irq();
 
-    toCopy = (available > maxLen) ? maxLen : available;
-    for (uint16_t i = 0U; i < toCopy; ++i)
-    {
-        out[i] = g_uart1RxDmaBuf[g_uart1RxReadIndex];
-        g_uart1RxReadIndex++;
-        if (g_uart1RxReadIndex >= UART1_RX_DMA_BUF_SIZE)
-        {
-            g_uart1RxReadIndex = 0U;
-        }
-    }
+    if (available == 0) return 0;
 
-    return toCopy;
+    if (available > maxLen)
+        available = maxLen;
+
+    while (cnt < available)
+    {
+        out[cnt++] = rx_buf[rx_read++];
+        if (rx_read >= RX_BUF_SIZE)
+            rx_read = 0;
+    }
+    return cnt;
 }
 
-int fputc(int ch, FILE *f)//重定向printf到USART1
+/* ================== 中断服务函数 ================== */
+
+/**
+ * @brief  USART1接收中断服务函数
+ */
+void USART1_IRQHandler(void)
 {
-    (void)f;
+    if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
+    {
+        uint8_t data = USART_ReceiveData(USART1);
 
-    g_uart1TxSingleByte = (uint8_t)ch;
-    DMA_USART1_Send(&g_uart1TxSingleByte, 1U);
+        /* 将数据写入环形缓冲区 */
+        rx_buf[rx_write++] = data;
+        if (rx_write >= RX_BUF_SIZE)
+            rx_write = 0;
 
-    return ch;
+        /* 如果缓冲区满，可以丢弃旧数据（此处简单覆盖，不处理溢出）*/
+        /* 实际应用中可增加溢出计数或丢弃最旧数据 */
+    }
 }
-
-
-

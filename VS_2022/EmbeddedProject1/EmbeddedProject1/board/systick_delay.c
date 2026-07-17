@@ -9,6 +9,10 @@ static __IO uint32_t g_system_tick = 0;
  */
 void board_init(void)
 {
+    
+    
+    SystemInit(); // 初始化系统时钟
+    
     /* NVIC Configuration */
 #define NVIC_VTOR_MASK              0x3FFFFF80
 #ifdef  VECT_TAB_RAM

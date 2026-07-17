@@ -78,112 +78,63 @@ static void Task_ImuUpdate(void)
     
 }
 
-//==========================================================================
-//串口1收到的数据原样回发
-//==========================================================================
-static void Task_Uart1Echo(void)
+
+//==============================================================================
+// brief 从串口接收缓冲区读取数据，回显并解析 [slider,id,gain] 命令
+//==============================================================================
+void Task_Uart1Echo_Process(void)
 {
-    uint16_t rxLen = DMA_USART1_Read(g_uart1EchoBuf, UART1_ECHO_BUF_SIZE);
+    uint8_t recvBuf[512]; // 临时缓冲区，大小可根据实际调整
+    uint16_t len;
 
-    if (rxLen > 0U)
+    // 循环读取，直到缓冲区中没有新数据为止（防止多条命令堆积）
+    while ((len = DMA_USART1_Read(recvBuf, sizeof(recvBuf) - 1)) > 0)
     {
-        DMA_USART1_Send(g_uart1EchoBuf, rxLen);
+        recvBuf[len] = '\0'; // 确保字符串结束
 
-        for (uint16_t i = 0U; i < rxLen; ++i)
+        // ---------- 回发（echo）----------
+        DMA_USART1_SendString("Echo: ");
+        DMA_USART1_Send(recvBuf, len);
+        DMA_USART1_SendString("\r\n");
+
+        // ---------- 解析命令 ----------
+        // 查找 '[' 和 ']'
+        char *pStart = strchr((char *)recvBuf, '[');
+        char *pEnd   = strchr((char *)recvBuf, ']');
+
+        if (pStart && pEnd && pEnd > pStart)
         {
-            uint8_t ch = g_uart1EchoBuf[i];
-
-            if (ch == (uint8_t)'[')
+            // 提取方括号内的内容
+            size_t innerLen = pEnd - pStart - 1;
+            if (innerLen > 0 && innerLen < sizeof(recvBuf))
             {
-                g_uart1PacketActive = 1U;
-                g_uart1PacketLen = 0U;
-                continue;
-            }
+                char inner[64];
+                memcpy(inner, pStart + 1, innerLen);
+                inner[innerLen] = '\0';
 
-            if (g_uart1PacketActive == 0U)
-            {
-                continue;
-            }
-
-            if (ch == (uint8_t)']')
-            {
-                char packetCopy[UART1_PACKET_BUF_SIZE];
-                unsigned int sliderId;
-                unsigned int sliderValue;
-                float sliderValueF;
-
-                g_uart1PacketActive = 0U;
-
-                if (g_uart1PacketLen >= UART1_PACKET_BUF_SIZE)
+                // 用逗号分割三个字段
+                char *token = strtok(inner, ",");
+                if (token && strcmp(token, "slider") == 0)
                 {
-                    g_uart1PacketLen = UART1_PACKET_BUF_SIZE - 1U;
-                }
-
-                memcpy(packetCopy, g_uart1PacketBuf, g_uart1PacketLen);
-                packetCopy[g_uart1PacketLen] = '\0';
-
-                if (sscanf(packetCopy, "slider,%u,%u", &sliderId, &sliderValue) == 2)//尝试解析滑动条数据包，格式为[slider,ID,VALUE]
-                {
-                    float gain = SliderRawToPidGain((uint32_t)sliderId, (uint32_t)sliderValue);
-
-                    if (ALL_Control_TunePidBySlider((uint32_t)sliderId, gain) != 0U)
+                    token = strtok(NULL, ",");
+                    if (token)
                     {
-                        //Serial1_Printf("[pid] slider=%u gain=%.3f\r\n", sliderId, gain);
-                    }
-                    else
-                    {
-                        //Serial1_Printf("[pid] unknown slider=%u raw=%u\r\n", sliderId, sliderValue);
+                        int sliderId = atoi(token);
+                        token = strtok(NULL, ",");
+                        if (token)
+                        {
+                            int gain = atoi(token);
+                            // 调用 PID 调节接口
+                            ALL_Control_TunePidBySlider((uint32_t)sliderId, (float)(gain/1000.0f));
+                        }
                     }
                 }
-                else if (sscanf(packetCopy, "slider,%u,%f", &sliderId, &sliderValueF) == 2)
-                {
-                    if (ALL_Control_TunePidBySlider((uint32_t)sliderId, sliderValueF) != 0U)
-                    {
-                        //Serial1_Printf("[pid] slider=%u gain=%.3f\r\n", sliderId, sliderValueF);
-                    }
-                    else
-                    {
-                        //Serial1_Printf("[pid] unknown slider=%u value=%.3f\r\n", sliderId, sliderValueF);
-                    }
-                }
-                else
-                {
-                    //Serial1_Printf("[uart1] packet=%s\r\n", packetCopy);
-                }
-
-                g_uart1PacketLen = 0U;
-                continue;
-            }
-
-            if (g_uart1PacketLen < (UART1_PACKET_BUF_SIZE - 1U))
-            {
-                g_uart1PacketBuf[g_uart1PacketLen] = (char)ch;
-                g_uart1PacketLen++;
-            }
-            else
-            {
-                g_uart1PacketActive = 0U;
-                g_uart1PacketLen = 0U;
             }
         }
     }
-    
-//    {
-//        int p10 = (int)(pitchDeg * 10.0f);
-//        int r10 = (int)(rollDeg * 10.0f);
-//        int y10 = (int)(yawDeg * 10.0f);
-//        int p_int = p10 / 10;
-//        int r_int = r10 / 10;
-//        int y_int = y10 / 10;
-//        int p_frac = p10 % 10; if (p_frac < 0) p_frac = -p_frac;
-//        int r_frac = r10 % 10; if (r_frac < 0) r_frac = -r_frac;
-//        int y_frac = y10 % 10; if (y_frac < 0) y_frac = -y_frac;
-//        Serial1_Printf("[plot,%d.%d,%d.%d,%d.%d]\r\n", p_int, p_frac, r_int, r_frac, y_int, y_frac);
-//    }
-    
-    
-    
+    //DMA_USART1_SendString("123,ABC\r\n");
 }
+
 
 //==========================================================================
 //OLED显示更新任务
@@ -218,27 +169,27 @@ void NVIC_Configuration(void)
 
     //飞计数定时器
     NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn;                 //定时器4中断通道
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;    //抢占优先级0
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x02;           //子优先级2
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;    //抢占优先级0
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;           //子优先级2
     NVIC_Init(&NVIC_InitStructure);
 
     //PPM接收机
     NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;              //外部中断0
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;    //抢占优先级0
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x04;           //子优先级4
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;    //抢占优先级0
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 4;           //子优先级4
     NVIC_Init(&NVIC_InitStructure);
 
     //DMA中断优先级
     NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream7_IRQn;         //DMA2 Stream7中断通道（USART1）
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01;    //抢占优先级1
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;           //子优先级0
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;    //抢占优先级1
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;           //子优先级0
     NVIC_Init(&NVIC_InitStructure);
 
 
     //飞控任务调度定时器
     NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;                 //定时器2中断通道
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x02;    //抢占优先级2
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x02;           //子优先级2
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;    //抢占优先级2
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;           //子优先级2
     NVIC_Init(&NVIC_InitStructure);
 
 }
@@ -251,7 +202,7 @@ void NVIC_Configuration(void)
 //==========================================================================
 int main(void)
 {
-    
+
     NVIC_Configuration();                       //配置NVIC中断优先级
     
     board_init();                               //初始化系统时钟和SysTick
@@ -290,7 +241,7 @@ int main(void)
     ESC_SetChannelsUs(1000U,1000U,1000U,1000U);
 
     
-   
+    
     
     SCH_Init();
     //调度器==========================================================================
@@ -303,9 +254,8 @@ int main(void)
     while (1)
     {
         Task_OledUpdate();
-        Task_Uart1Echo();
-        
-        systick_delay_ms(20);
+        Task_Uart1Echo_Process();
+        systick_delay_ms(1);
     }
 }
 
