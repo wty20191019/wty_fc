@@ -203,6 +203,7 @@ void NVIC_Configuration(void)
 int main(void)
 {
 
+
     NVIC_Configuration();                       //配置NVIC中断优先级
     
     board_init();                               //初始化系统时钟和SysTick

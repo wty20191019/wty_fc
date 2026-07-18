@@ -59,12 +59,12 @@ extern float yawDeg;
 #define PPM_5_MID             (1500U)   //LOCK
 #define CONTROL_DT_SEC        (0.005f)  //控制循环的时间间隔 5ms
 
-#define ROLL_ANGLE_MAX_DEG    (15.0f)   //最大横滚角度，单位度
-#define PITCH_ANGLE_MAX_DEG   (15.0f)   //最大俯仰角度，单位度
+#define ROLL_ANGLE_MAX_DEG    (10.0f)   //最大横滚角度，单位度
+#define PITCH_ANGLE_MAX_DEG   (10.0f)   //最大俯仰角度，单位度
 #define YAW_RATE_MAX_DPS      (30.0f)   //最大偏航角速度，单位度每秒
 
-#define ROLL_RATE_MAX_DPS     (180.0f)  //最大横滚角速度，单位度每秒
-#define PITCH_RATE_MAX_DPS    (180.0f)  //最大俯仰角速度，单位度每秒
+#define ROLL_RATE_MAX_DPS     (270.0f)  //最大横滚角速度，单位度每秒
+#define PITCH_RATE_MAX_DPS    (270.0f)  //最大俯仰角速度，单位度每秒
 
 #define ICM42688_GYRO_DPS_PER_LSB    (1.0f / 16.4f) //ICM42688陀螺仪每个LSB对应的角速度，单位度每秒
 
@@ -407,14 +407,14 @@ static uint16_t ApplyPpmDeadband(uint16_t input)
 void ALL_Control_Init(void)
 {
     //角度环PID参数
-    PID_Init(&g_pid_roll_angle  , 4.514f  , 0.0f  , 0.007f  , -ROLL_RATE_MAX_DPS , ROLL_RATE_MAX_DPS  );
-    PID_Init(&g_pid_pitch_angle , 4.514f  , 0.0f  , 0.007f  , -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
-    PID_Init(&g_pid_yaw_angle   , 0.50f   , 0.0f  , 0.000f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
+    PID_Init(&g_pid_roll_angle  , 4.89f , 0.92f, 0.26f, -ROLL_RATE_MAX_DPS, ROLL_RATE_MAX_DPS);
+    PID_Init(&g_pid_pitch_angle , 4.89f , 0.92f, 0.26f, -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
+    PID_Init(&g_pid_yaw_angle   , 1.01f , 0.0f  ,1.00f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
 
     //角速度环PID参数
-    PID_Init(&g_pid_roll_rate   , 1.000f  , 0.01f     , 0.08f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX     );
-    PID_Init(&g_pid_pitch_rate  , 1.000f  , 0.01f     , 0.08f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX     );
-    PID_Init(&g_pid_yaw_rate    , 1.000f  , 0.00f     , 0.00f     , YAW_PID_OUTPUT_MIX    , YAW_PID_OUTPUT_MAX);
+    PID_Init(&g_pid_roll_rate   , 0.40f  , 0.47f     , 0.03f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX       );
+    PID_Init(&g_pid_pitch_rate  , 0.40f  , 0.47f     , 0.03f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX       );
+    PID_Init(&g_pid_yaw_rate    , 1.01f  , 0.00f     , 0.00f     , YAW_PID_OUTPUT_MIX    , YAW_PID_OUTPUT_MAX   );
 
     
     //设置PID微分滤波系数，值越小滤波效果越强，值为1表示不使用滤波
