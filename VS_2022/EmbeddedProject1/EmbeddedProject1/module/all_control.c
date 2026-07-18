@@ -409,12 +409,12 @@ void ALL_Control_Init(void)
     //角度环PID参数
     PID_Init(&g_pid_roll_angle  , 4.89f , 0.92f, 0.26f, -ROLL_RATE_MAX_DPS, ROLL_RATE_MAX_DPS);
     PID_Init(&g_pid_pitch_angle , 4.89f , 0.92f, 0.26f, -PITCH_RATE_MAX_DPS, PITCH_RATE_MAX_DPS);
-    PID_Init(&g_pid_yaw_angle   , 1.01f , 0.0f  ,1.00f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
+    PID_Init(&g_pid_yaw_angle   , 3.50f , 0.0f  ,1.00f  , -YAW_RATE_MAX_DPS, YAW_RATE_MAX_DPS);
 
     //角速度环PID参数
     PID_Init(&g_pid_roll_rate   , 0.40f  , 0.47f     , 0.03f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX       );
     PID_Init(&g_pid_pitch_rate  , 0.40f  , 0.47f     , 0.03f     , PID_OUTPUT_MIN        , PID_OUTPUT_MAX       );
-    PID_Init(&g_pid_yaw_rate    , 1.01f  , 0.00f     , 0.00f     , YAW_PID_OUTPUT_MIX    , YAW_PID_OUTPUT_MAX   );
+    PID_Init(&g_pid_yaw_rate    , 1.50f  , 3.00f     , 0.00f     , YAW_PID_OUTPUT_MIX    , YAW_PID_OUTPUT_MAX   );
 
     
     //设置PID微分滤波系数，值越小滤波效果越强，值为1表示不使用滤波
