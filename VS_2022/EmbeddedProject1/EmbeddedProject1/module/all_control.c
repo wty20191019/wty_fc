@@ -608,9 +608,9 @@ void ALL_Control_Task(void)
     }
 
     
-        roll_rate       = (-MPU_FilteredData.GyroY) * ICM42688_GYRO_DPS_PER_LSB;
-        pitch_rate      = (MPU_FilteredData.GyroX)  * ICM42688_GYRO_DPS_PER_LSB;
-        yaw_rate        = (MPU_FilteredData.GyroZ)  * ICM42688_GYRO_DPS_PER_LSB;
+    roll_rate       = (-CH_FT_MPU_FilteredData.GyroY) * ICM42688_GYRO_DPS_PER_LSB;
+    pitch_rate      = (CH_FT_MPU_FilteredData.GyroX)  * ICM42688_GYRO_DPS_PER_LSB;
+    yaw_rate        = (CH_FT_MPU_FilteredData.GyroZ)  * ICM42688_GYRO_DPS_PER_LSB;
 
         //角速度PID计算得到最终的控制输出
         roll_out        = PID_Update(&g_pid_roll_rate, roll_rate_set, roll_rate, CONTROL_DT_SEC);
