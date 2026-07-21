@@ -17,15 +17,16 @@
 //PPM_Databuf[2] throttle
 //PPM_Databuf[3] yaw
 
-uint16_t yaw_thresh_low;
-
-uint16_t yaw_thresh_high;
-uint16_t yaw_ppm;
+uint16_t yaw_thresh_low; //偏航角阈值低值，单位微秒
+uint16_t yaw_thresh_high; //偏航角阈值高值，单位微秒
+uint16_t yaw_ppm; //偏航角PPM输入值，单位微秒
 
 uint16_t throttle;
 uint16_t throttle_run;
+
 float roll_set;
 float pitch_set;
+
 float yaw_rate_set; //角速度设定值由偏航角PID输出得到，因此命名为yaw_rate_set更合适
 float roll_rate_set; //角速度设定值由角度PID输出得到，因此命名为roll_rate_set更合适
 float pitch_rate_set; // 同上，命名为pitch_rate_set更合适
@@ -61,8 +62,8 @@ extern float yawDeg;
 
 #define ROLL_ANGLE_MAX_DEG    (10.0f)   //最大横滚角度，单位度
 #define PITCH_ANGLE_MAX_DEG   (10.0f)   //最大俯仰角度，单位度
-#define YAW_RATE_MAX_DPS      (30.0f)   //最大偏航角速度，单位度每秒
 
+#define YAW_RATE_MAX_DPS      (30.0f)   //最大偏航角速度，单位度每秒
 #define ROLL_RATE_MAX_DPS     (270.0f)  //最大横滚角速度，单位度每秒
 #define PITCH_RATE_MAX_DPS    (270.0f)  //最大俯仰角速度，单位度每秒
 
@@ -84,7 +85,6 @@ extern float yawDeg;
 
 typedef enum
 {
-    
     ALL_CONTROL_MODE_ANGLE_RATE = 0U,
     ALL_CONTROL_MODE_RATE_ONLY  = 1U
 } ALL_ControlMode_t;
@@ -97,7 +97,7 @@ static PID_Handle_t g_pid_roll_rate;
 static PID_Handle_t g_pid_pitch_rate;
 static PID_Handle_t g_pid_yaw_rate;
 
-static float g_yaw_target = 0.0f;
+static float g_yaw_target = 0.0f;//偏航目标角度
 static uint8_t g_control_ready = 0U;
 
 // PID增益修改标志和计时器，用于延迟保存到Flash，避免频繁写入影响性能和Flash寿命
@@ -403,6 +403,7 @@ static uint16_t ApplyPpmDeadband(uint16_t input)
     return clamped;
 }
 
+
 //初始化PID控制器参数和状态
 void ALL_Control_Init(void)
 {
@@ -450,6 +451,7 @@ void ALL_Control_Task(void)
     {
         OLED_Printf(80, 0, 8, 1, "NO_PPM");
         ESC_lock = 1;
+        return;
     }
 
 
